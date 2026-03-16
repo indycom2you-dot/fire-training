@@ -45,40 +45,52 @@
             const [records, setRecords] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
             const [submitted, setSubmitted] = React.useState(false);
-            const [errorMsg, setErrorMsg] = React.useState(''); // สำหรับแจ้งเตือนข้อมูลซ้ำ
+            const [errorMsg, setErrorMsg] = React.useState(''); 
             
             // ล็อกอินแอดมิน
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
 
-            // ฟอร์มลูกค้า (เพิ่ม email)
+            // ฟอร์มลูกค้า
             const [formData, setFormData] = React.useState({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
             const appId = "ppp-registration";
 
+            // 1. Fix: React useEffect cleanup logic
             React.useEffect(() => {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
+                let unsubscribeData = () => {}; // สร้างฟังก์ชันว่างไว้รองรับการ Cleanup
+
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
                     setUser(u);
                     if (u && !u.isAnonymous) {
                         setView('admin');
-                        const unsubscribeData = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations')
+                        // 5. Refactor Firestore Path: อิงตามข้อกำหนดความปลอดภัยของระบบโครงสร้าง
+                        unsubscribeData = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations')
                             .onSnapshot((snapshot) => {
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setRecords(items);
+                            }, (error) => {
+                                console.error("Firestore Error:", error);
                             });
-                        return () => unsubscribeData();
+                    } else {
+                        // เมื่อออกจากระบบ ให้เคลียร์ข้อมูลเก่าและเลิกติดตาม Firestore
+                        unsubscribeData();
+                        setRecords([]);
                     }
                 });
 
-                return () => unsubscribeAuth();
+                // คืนค่าฟังก์ชัน Cleanup ที่ถูกต้องสำหรับ React
+                return () => {
+                    unsubscribeAuth();
+                    unsubscribeData();
+                };
             }, []);
 
-            // 1. ฟังก์ชันล็อกอินแอดมิน
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true);
@@ -91,18 +103,33 @@
                 setLoading(false);
             };
 
-            // 2. ฟังก์ชันออกจากระบบ
-            const handleLogout = () => {
-                firebase.auth().signOut();
-                setView('form');
-                window.location.reload();
+            // 4. Fix: Remove window.location.reload()
+            const handleLogout = async () => {
+                try {
+                    await firebase.auth().signOut();
+                    setView('form');
+                    setSubmitted(false);
+                    setEmail('');
+                    setPassword('');
+                    setErrorMsg('');
+                } catch (err) {
+                    console.error("Logout Error:", err);
+                }
             };
 
-            // 3. ฟังก์ชันบันทึกข้อมูลลูกค้า (อันนี้ที่หายไปครับ นำกลับมาใส่ให้แล้ว)
             const handleSubmitCustomer = async (e) => {
                 e.preventDefault();
                 setLoading(true);
                 setErrorMsg('');
+
+                // 2. Fix: Normalize Thai phone numbers
+                const normalizedPhone = formData.phone.replace(/[\s-]/g, ''); // ลบช่องว่างและขีดออก
+                
+                if (!/^\d{9,10}$/.test(normalizedPhone)) {
+                    setErrorMsg('กรุณาระบุเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 9-10 หลัก)');
+                    setLoading(false);
+                    return;
+                }
 
                 try {
                     const auth = firebase.auth();
@@ -112,14 +139,15 @@
 
                     const registrationsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
                     
-                    // ระบบตรวจสอบข้อมูลซ้ำ
-                    const phoneCheck = await registrationsRef.where('phone', '==', formData.phone.trim()).get();
+                    // 3. Fix: Check duplicates by normalized phone (removed name check)
+                    const phoneCheck = await registrationsRef.where('normalizedPhone', '==', normalizedPhone).get();
                     if (!phoneCheck.empty) {
                         setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
                         setLoading(false);
                         return;
                     }
 
+                    // Optionally check email
                     if (formData.email.trim() !== '') {
                         const emailCheck = await registrationsRef.where('email', '==', formData.email.trim()).get();
                         if (!emailCheck.empty) {
@@ -129,18 +157,13 @@
                         }
                     }
 
-                    const nameCheck = await registrationsRef.where('name', '==', formData.name.trim()).get();
-                    if (!nameCheck.empty) {
-                        setErrorMsg('ชื่อ-นามสกุลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
-                        setLoading(false);
-                        return;
-                    }
-
+                    // บันทึกข้อมูล
                     await registrationsRef.add({
                         ...formData,
                         name: formData.name.trim(),
                         email: formData.email.trim(),
-                        phone: formData.phone.trim(),
+                        phone: formData.phone.trim(), // เก็บรูปแบบที่ลูกค้าพิมพ์มาเพื่อแสดงผล
+                        normalizedPhone: normalizedPhone, // เก็บรูปแบบที่คลีนแล้วไว้ใช้ค้นหาตรวจสอบ
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
@@ -148,7 +171,7 @@
                     setFormData({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
                 } catch (err) {
                     if (err.code === 'permission-denied') {
-                        setErrorMsg('ระบบตรวจสอบข้อมูลไม่ได้ กรุณาอัปเดต Security Rules ให้เป็นเวอร์ชันล่าสุดครับ');
+                        setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบสิทธิ์ Firebase Security Rules');
                     } else {
                         setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
                     }
@@ -156,32 +179,42 @@
                 setLoading(false);
             };
 
-            // 4. ฟังก์ชันล้างข้อมูลทั้งหมด
+            // 6. Fix: Review "Clear all data" feature with safeguards
             const handleClearAll = async () => {
-                if (window.confirm("⚠️ คำเตือน: ยืนยันการลบ 'รายชื่อทั้งหมด'? ข้อมูลจะหายไปถาวร!")) {
-                    const pass = prompt("พิมพ์คำว่า 'DELETE' เพื่อยืนยันการล้างข้อมูลทั้งหมด:");
-                    if (pass === 'DELETE') {
+                if (window.confirm("⚠️ คำเตือน: การลบข้อมูลจากฝั่งผู้ใช้ (Client) มีความเสี่ยงที่จะทำให้ระบบค้างหากมีข้อมูลจำนวนมาก และข้อมูลจะสูญหายถาวร\n\nยืนยันที่จะลบข้อมูลหรือไม่?")) {
+                    const pass = prompt("พิมพ์คำว่า 'CONFIRM_DELETE' เพื่อยืนยันการล้างข้อมูล:");
+                    if (pass === 'CONFIRM_DELETE') {
                         setLoading(true);
                         try {
                             const db = firebase.firestore();
-                            const snapshot = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations').get();
+                            const registrationsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
+                            
+                            // จำกัดการลบที่ 500 รายการต่อครั้ง (ข้อจำกัดของ Firestore Batch)
+                            const snapshot = await registrationsRef.limit(500).get();
+                            
+                            if (snapshot.empty) {
+                                alert("ไม่มีข้อมูลให้ลบครับ");
+                                setLoading(false);
+                                return;
+                            }
+
                             const batch = db.batch();
                             snapshot.docs.forEach((doc) => {
                                 batch.delete(doc.ref);
                             });
+                            
                             await batch.commit();
-                            alert("เคลียร์รายชื่อทั้งหมดเรียบร้อยแล้วครับ");
+                            alert(`เคลียร์ข้อมูลเรียบร้อยแล้ว (${snapshot.size} รายการ)`);
                         } catch (err) {
                             alert("เคลียร์ข้อมูลไม่สำเร็จ: " + err.message);
                         }
                         setLoading(false);
                     } else if (pass !== null) {
-                        alert("ยกเลิกการลบข้อมูล (พิมพ์รหัสยืนยันไม่ถูกต้อง)");
+                        alert("ยกเลิกการลบข้อมูล (รหัสยืนยันไม่ถูกต้อง)");
                     }
                 }
             };
 
-            // 5. ฟังก์ชันลบทีละรายการ
             const handleDelete = async (id) => {
                 if (window.confirm("คุณอภิชิตต้องการลบรายชื่อนี้ใช่หรือไม่?")) {
                     try {
@@ -193,7 +226,6 @@
                 }
             };
 
-            // 6. ฟังก์ชันโหลด Excel
             const exportExcel = () => {
                 const data = records.map((r, i) => ({
                     "ลำดับ": i + 1,
@@ -212,7 +244,7 @@
                 XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
             };
 
-            // หน้าจอแอดมิน
+            // --- หน้าจอแอดมิน ---
             if (user && !user.isAnonymous && view === 'admin') {
                 return (
                     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
@@ -223,7 +255,7 @@
                                     <p className="text-xs text-slate-400">ล็อกอินโดย: {user.email}</p>
                                 </div>
                                 <div className="flex gap-2 w-full md:w-auto flex-wrap">
-                                    <button onClick={handleClearAll} className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-red-200 transition-all">🗑️ ล้างข้อมูลทั้งหมด</button>
+                                    <button onClick={handleClearAll} disabled={loading} className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-red-200 transition-all disabled:opacity-50">🗑️ ล้างข้อมูล 500 รายการ</button>
                                     <button onClick={exportExcel} className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition-all">โหลด Excel</button>
                                     <button onClick={handleLogout} className="flex-1 md:flex-none bg-slate-100 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">ออกจากระบบ</button>
                                 </div>
@@ -278,7 +310,7 @@
                 );
             }
 
-            // หน้าจอล็อกอินแอดมิน
+            // --- หน้าจอล็อกอินแอดมิน ---
             if (view === 'login') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 admin-gradient text-white">
@@ -304,7 +336,7 @@
                 );
             }
 
-            // หน้าจอหลักของลูกค้า
+            // --- หน้าจอหลักของลูกค้า ---
             return (
                 <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
                     <div className="w-full max-w-md">
@@ -313,7 +345,7 @@
                                 <div className="text-6xl mb-6">✅</div>
                                 <h2 className="text-2xl font-bold mb-2 text-slate-800">ลงทะเบียนสำเร็จ</h2>
                                 <p className="text-slate-500 mb-8">ขอบคุณที่ลงทะเบียนครับ</p>
-                                <button onClick={() => setSubmitted(false)} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all">ลงทะเบียนท่านอื่นเพิ่ม</button>
+                                <button onClick={() => { setSubmitted(false); setErrorMsg(''); }} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all">ลงทะเบียนท่านอื่นเพิ่ม</button>
                             </div>
                         ) : (
                             <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
