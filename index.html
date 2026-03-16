@@ -40,7 +40,7 @@
         };
 
         const App = () => {
-            const [view, setView] = React.useState('form'); // 'form', 'login', 'admin'
+            const [view, setView] = React.useState('landing'); // 'landing', 'form', 'login', 'admin'
             const [user, setUser] = React.useState(null);
             const [records, setRecords] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
@@ -112,7 +112,7 @@
             const handleLogout = async () => {
                 try {
                     await firebase.auth().signOut();
-                    setView('form');
+                    setView('landing');
                     setSubmitted(false);
                     setEmail('');
                     setPassword('');
@@ -347,8 +347,63 @@
                                 <button type="submit" disabled={loading} className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all">
                                     {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
                                 </button>
-                                <button type="button" onClick={() => setView('form')} className="w-full text-white/40 text-xs mt-4 hover:text-white transition-colors">กลับหน้าฟอร์มลูกค้า</button>
+                                <button type="button" onClick={() => setView('landing')} className="w-full text-white/40 text-xs mt-4 hover:text-white transition-colors">กลับหน้าหลัก</button>
                             </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- หน้าแรก (Landing Page) มีรูปและรายละเอียด ---
+            if (view === 'landing') {
+                return (
+                    <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
+                        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+                            <img 
+                                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                                alt="บ้านและประกันภัย" 
+                                className="w-full h-56 object-cover"
+                            />
+                            
+                            <div className="p-8">
+                                <span className="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold mb-4">
+                                    สัมมนาฟรี
+                                </span>
+                                <h1 className="text-2xl font-bold text-slate-800 mb-4 leading-tight">
+                                    โครงการอบรมให้ความรู้ <br/> <span className="text-red-600">ประกันอัคคีภัยบ้านอยู่อาศัย</span>
+                                </h1>
+                                
+                                <div className="space-y-3 text-sm text-slate-600 mb-8">
+                                    <p className="flex items-start gap-2">
+                                        <span className="text-lg">📅</span> 
+                                        <span><strong>วันที่:</strong> 15 พฤศจิกายน 2567</span>
+                                    </p>
+                                    <p className="flex items-start gap-2">
+                                        <span className="text-lg">⏰</span> 
+                                        <span><strong>เวลา:</strong> 09:00 - 12:00 น.</span>
+                                    </p>
+                                    <p className="flex items-start gap-2">
+                                        <span className="text-lg">📍</span> 
+                                        <span><strong>สถานที่:</strong> ห้องประชุมอาคาร A ชั้น 2</span>
+                                    </p>
+                                    <p className="flex items-start gap-2">
+                                        <span className="text-lg">💡</span> 
+                                        <span><strong>รายละเอียด:</strong> เรียนรู้วิธีการประเมินความเสี่ยงอัคคีภัย การเลือกซื้อประกันให้ครอบคลุม และการจัดการเมื่อเกิดเหตุฉุกเฉิน</span>
+                                    </p>
+                                </div>
+
+                                <button 
+                                    onClick={() => setView('form')} 
+                                    className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all active:scale-95"
+                                >
+                                    ลงทะเบียนเข้าร่วมอบรม 👉
+                                </button>
+
+                                {/* ปุ่มลับแอดมิน */}
+                                <button onClick={() => setView('login')} className="w-full mt-8 text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase">
+                                    Secure Admin Login
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -363,11 +418,20 @@
                                 <div className="text-6xl mb-6">✅</div>
                                 <h2 className="text-2xl font-bold mb-2 text-slate-800">ลงทะเบียนสำเร็จ</h2>
                                 <p className="text-slate-500 mb-8">ขอบคุณที่ลงทะเบียนครับ</p>
-                                <button onClick={() => { setSubmitted(false); setErrorMsg(''); }} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all">ลงทะเบียนท่านอื่นเพิ่ม</button>
+                                <button onClick={() => { setSubmitted(false); setView('landing'); setErrorMsg(''); }} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all">กลับหน้าหลัก</button>
                             </div>
                         ) : (
                             <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
-                                <div className="mb-6 text-center">
+                                
+                                {/* ปุ่มย้อนกลับไปหน้าแรก */}
+                                <button 
+                                    onClick={() => { setView('landing'); setErrorMsg(''); }} 
+                                    className="absolute top-6 left-6 text-slate-400 hover:text-red-600 text-sm flex items-center gap-1 font-bold transition-colors"
+                                >
+                                    <span>←</span> กลับ
+                                </button>
+
+                                <div className="mb-6 mt-6 text-center">
                                     <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
                                     <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความรู้ประกันอัคคีภัยบ้านอยู่อาศัย"</p>
                                 </div>
@@ -405,10 +469,6 @@
                                         {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "ยืนยันลงทะเบียน"}
                                     </button>
                                 </form>
-                                
-                                <button onClick={() => setView('login')} className="w-full mt-10 text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase">
-                                    Secure Admin Login
-                                </button>
                             </div>
                         )}
                     </div>
