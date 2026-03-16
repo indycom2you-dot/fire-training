@@ -54,22 +54,27 @@
             // ฟอร์มลูกค้า
             const [formData, setFormData] = React.useState({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
-            const appId = "ppp-registration";
-
-            // 1. Fix: React useEffect cleanup logic
+            // 1 & 5. Fix: React useEffect cleanup logic & Listener safety
             React.useEffect(() => {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
-                let unsubscribeData = () => {}; // สร้างฟังก์ชันว่างไว้รองรับการ Cleanup
+                let unsubscribeData = null; // เริ่มต้นด้วย null เพื่อความปลอดภัย
 
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
                     setUser(u);
+                    
+                    // ป้องกัน Listener ซ้อนทับกัน โดยการยกเลิกของเก่าก่อนถ้ามี
+                    if (unsubscribeData) {
+                        unsubscribeData();
+                        unsubscribeData = null;
+                    }
+
                     if (u && !u.isAnonymous) {
                         setView('admin');
-                        // 5. Refactor Firestore Path: อิงตามข้อกำหนดความปลอดภัยของระบบโครงสร้าง
-                        unsubscribeData = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations')
+                        // เปลี่ยน Path ให้สะอาดตามที่ต้องการ: collection('registrations')
+                        unsubscribeData = db.collection('registrations')
                             .onSnapshot((snapshot) => {
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -78,16 +83,17 @@
                                 console.error("Firestore Error:", error);
                             });
                     } else {
-                        // เมื่อออกจากระบบ ให้เคลียร์ข้อมูลเก่าและเลิกติดตาม Firestore
-                        unsubscribeData();
+                        // เคลียร์ข้อมูลจากหน้าจอเมื่อล็อกเอาท์
                         setRecords([]);
                     }
                 });
 
-                // คืนค่าฟังก์ชัน Cleanup ที่ถูกต้องสำหรับ React
+                // Cleanup ฟังก์ชันให้เคลียร์ทั้ง Auth และ Database อย่างถูกต้อง
                 return () => {
                     unsubscribeAuth();
-                    unsubscribeData();
+                    if (unsubscribeData) {
+                        unsubscribeData();
+                    }
                 };
             }, []);
 
@@ -103,7 +109,6 @@
                 setLoading(false);
             };
 
-            // 4. Fix: Remove window.location.reload()
             const handleLogout = async () => {
                 try {
                     await firebase.auth().signOut();
@@ -122,8 +127,8 @@
                 setLoading(true);
                 setErrorMsg('');
 
-                // 2. Fix: Normalize Thai phone numbers
-                const normalizedPhone = formData.phone.replace(/[\s-]/g, ''); // ลบช่องว่างและขีดออก
+                // 2. Fix: Normalize Thai phone numbers before validation
+                const normalizedPhone = formData.phone.replace(/[\s-]/g, '');
                 
                 if (!/^\d{9,10}$/.test(normalizedPhone)) {
                     setErrorMsg('กรุณาระบุเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 9-10 หลัก)');
@@ -131,25 +136,29 @@
                     return;
                 }
 
+                // 3. Fix: Normalize email before checking
+                const normalizedEmail = formData.email.trim().toLowerCase();
+
                 try {
                     const auth = firebase.auth();
                     const db = firebase.firestore();
                     
                     if (!auth.currentUser) await auth.signInAnonymously();
 
-                    const registrationsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
+                    // เปลี่ยน Path เป็น registrations เปล่าๆ ตามที่สั่ง
+                    const registrationsRef = db.collection('registrations');
                     
-                    // 3. Fix: Check duplicates by normalized phone (removed name check)
-                    const phoneCheck = await registrationsRef.where('normalizedPhone', '==', normalizedPhone).get();
-                    if (!phoneCheck.empty) {
+                    // 2. & 3. Fix: Check duplicates directly by Document ID (normalizedPhone)
+                    const docCheck = await registrationsRef.doc(normalizedPhone).get();
+                    if (docCheck.exists) {
                         setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
                         setLoading(false);
                         return;
                     }
 
-                    // Optionally check email
-                    if (formData.email.trim() !== '') {
-                        const emailCheck = await registrationsRef.where('email', '==', formData.email.trim()).get();
+                    // Check email if provided
+                    if (normalizedEmail !== '') {
+                        const emailCheck = await registrationsRef.where('email', '==', normalizedEmail).get();
                         if (!emailCheck.empty) {
                             setErrorMsg('อีเมลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
                             setLoading(false);
@@ -157,13 +166,14 @@
                         }
                     }
 
-                    // บันทึกข้อมูล
-                    await registrationsRef.add({
-                        ...formData,
+                    // 2. & 4. Fix: Use set() with normalizedPhone as Document ID + Trim company
+                    await registrationsRef.doc(normalizedPhone).set({
                         name: formData.name.trim(),
-                        email: formData.email.trim(),
-                        phone: formData.phone.trim(), // เก็บรูปแบบที่ลูกค้าพิมพ์มาเพื่อแสดงผล
-                        normalizedPhone: normalizedPhone, // เก็บรูปแบบที่คลีนแล้วไว้ใช้ค้นหาตรวจสอบ
+                        company: formData.company.trim(),
+                        phone: formData.phone.trim(), 
+                        normalizedPhone: normalizedPhone,
+                        email: normalizedEmail,
+                        attendance: formData.attendance,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
@@ -179,7 +189,7 @@
                 setLoading(false);
             };
 
-            // 6. Fix: Review "Clear all data" feature with safeguards
+            // Review "Clear all data" feature with limits
             const handleClearAll = async () => {
                 if (window.confirm("⚠️ คำเตือน: การลบข้อมูลจากฝั่งผู้ใช้ (Client) มีความเสี่ยงที่จะทำให้ระบบค้างหากมีข้อมูลจำนวนมาก และข้อมูลจะสูญหายถาวร\n\nยืนยันที่จะลบข้อมูลหรือไม่?")) {
                     const pass = prompt("พิมพ์คำว่า 'CONFIRM_DELETE' เพื่อยืนยันการล้างข้อมูล:");
@@ -187,9 +197,9 @@
                         setLoading(true);
                         try {
                             const db = firebase.firestore();
-                            const registrationsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
+                            const registrationsRef = db.collection('registrations');
                             
-                            // จำกัดการลบที่ 500 รายการต่อครั้ง (ข้อจำกัดของ Firestore Batch)
+                            // ลบข้อมูลทีละ 500 รายการเพื่อป้องกัน Request ระเบิด
                             const snapshot = await registrationsRef.limit(500).get();
                             
                             if (snapshot.empty) {
@@ -219,7 +229,7 @@
                 if (window.confirm("คุณอภิชิตต้องการลบรายชื่อนี้ใช่หรือไม่?")) {
                     try {
                         const db = firebase.firestore();
-                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations').doc(id).delete();
+                        await db.collection('registrations').doc(id).delete();
                     } catch (err) {
                         alert("ลบข้อมูลไม่สำเร็จ: " + err.message);
                     }
