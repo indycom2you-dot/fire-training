@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลงทะเบียนอบรมประกันอัคคีภัย</title>
-    <!-- CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
+        .admin-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- Firebase SDK (Version Compat - เสถียรที่สุดสำหรับไฟล์เดียว) -->
+    <!-- Firebase SDK (Version Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -24,11 +24,11 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- SheetJS สำหรับสร้างไฟล์ Excel แบบสมบูรณ์ -->
+    <!-- SheetJS สำหรับ Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <script type="text/babel">
-        // --- ส่วนที่ 1: รหัสเชื่อมต่อ FIREBASE ของคุณอภิชิต ---
+        // รหัสเชื่อมต่อ FIREBASE ของคุณอภิชิต
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -40,233 +40,202 @@
         };
 
         const App = () => {
-            const [view, setView] = React.useState('form');
-            const [isAdminURL, setIsAdminURL] = React.useState(false);
-            const [isUnlocked, setIsUnlocked] = React.useState(false);
-            const [submitted, setSubmitted] = React.useState(false);
-            const [loading, setLoading] = React.useState(false);
+            const [view, setView] = React.useState('form'); // 'form', 'login', 'admin'
+            const [user, setUser] = React.useState(null);
             const [records, setRecords] = React.useState([]);
-            const [formData, setFormData] = React.useState({ 
-                name: '', company: '', phone: '', attendance: 'เข้าร่วม' 
-            });
+            const [loading, setLoading] = React.useState(false);
+            const [submitted, setSubmitted] = React.useState(false);
+            
+            // ล็อกอินแอดมิน
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
+
+            // ฟอร์มลูกค้า
+            const [formData, setFormData] = React.useState({ name: '', company: '', phone: '', attendance: 'เข้าร่วม' });
 
             const appId = "ppp-registration";
 
             React.useEffect(() => {
-                // ตรวจสอบ URL ว่ามี ?mode=admin หรือไม่
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('mode') === 'admin') {
-                    setIsAdminURL(true);
-                }
-
-                // เริ่มต้น Firebase และดึงข้อมูล
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                const db = firebase.firestore();
                 const auth = firebase.auth();
+                const db = firebase.firestore();
 
-                auth.signInAnonymously().then(() => {
-                    const q = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
-                    q.onSnapshot((snapshot) => {
-                        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        // เรียงข้อมูลล่าสุดไว้บนสุด
-                        items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                        setRecords(items);
-                    });
-                }).catch(err => console.error("Auth Error:", err));
+                const unsubscribeAuth = auth.onAuthStateChanged((u) => {
+                    setUser(u);
+                    if (u && !u.isAnonymous) {
+                        setView('admin');
+                        const unsubscribeData = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations')
+                            .onSnapshot((snapshot) => {
+                                const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                                setRecords(items);
+                            });
+                        return () => unsubscribeData();
+                    }
+                });
+
+                return () => unsubscribeAuth();
             }, []);
 
-            // ฟังก์ชันตรวจสอบรหัสผ่านหน้าแอดมิน
-            const handleAdminLogin = () => {
-                const pass = prompt("กรุณาใส่รหัสผ่านแอดมิน (6 หลัก):");
-                if (pass === "123456") { 
-                    setIsUnlocked(true); 
-                    setView('admin'); 
-                } else if (pass !== null) {
-                    alert("รหัสผ่านไม่ถูกต้อง!");
-                }
-            };
-
-            // ฟังก์ชันบันทึกข้อมูลการลงทะเบียน
-            const handleSubmit = async (e) => {
+            const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true);
                 try {
+                    await firebase.auth().signInWithEmailAndPassword(email, password);
+                } catch (err) {
+                    alert("อีเมลหรือรหัสผ่านไม่ถูกต้องครับคุณอภิชิต (กรุณาเช็คในแท็บ Users ของ Firebase)");
+                }
+                setLoading(false);
+            };
+
+            const handleLogout = () => {
+                firebase.auth().signOut();
+                setView('form');
+                window.location.reload();
+            };
+
+            const handleSubmitCustomer = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                try {
+                    const auth = firebase.auth();
                     const db = firebase.firestore();
-                    const q = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
-                    await q.add({
+                    
+                    if (!auth.currentUser) await auth.signInAnonymously();
+                    
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations').add({
                         ...formData,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     setSubmitted(true);
                     setFormData({ name: '', company: '', phone: '', attendance: 'เข้าร่วม' });
-                } catch (err) { 
-                    alert("ส่งข้อมูลไม่สำเร็จ: " + err.message); 
+                } catch (err) {
+                    alert("ส่งข้อมูลไม่สำเร็จ: " + err.message);
                 }
                 setLoading(false);
             };
 
-            // ฟังก์ชันโหลดไฟล์ Excel (ปรับความกว้างคอลัมน์อัตโนมัติ)
-            const exportToExcel = () => {
-                if (records.length === 0) {
-                    alert("ยังไม่มีข้อมูลผู้ลงทะเบียน");
-                    return;
-                }
-
-                // 1. จัดเตรียมข้อมูล
-                const dataForExcel = records.map((r, index) => ({
-                    "ลำดับ": index + 1,
+            const exportExcel = () => {
+                const data = records.map((r, i) => ({
+                    "ลำดับ": i + 1,
                     "ชื่อ-นามสกุล": r.name,
-                    "บริษัท / หน่วยงาน": r.company,
-                    "เบอร์โทรศัพท์": r.phone,
-                    "สถานะการเข้าร่วม": r.attendance,
-                    "วันที่ลงทะเบียน": r.createdAt ? r.createdAt.toDate().toLocaleString('th-TH') : "ไม่ระบุ"
+                    "บริษัท": r.company,
+                    "เบอร์โทร": r.phone,
+                    "ความประสงค์": r.attendance,
+                    "วันที่ลงทะเบียน": r.createdAt?.toDate().toLocaleString('th-TH')
                 }));
-
-                // 2. สร้าง Sheet
-                const ws = XLSX.utils.json_to_sheet(dataForExcel);
-
-                // 3. กำหนดความกว้างคอลัมน์ (ให้สวยงามพอดีคำ)
-                const wscols = [
-                    { wch: 8 },  // ลำดับ
-                    { wch: 30 }, // ชื่อ-นามสกุล
-                    { wch: 35 }, // บริษัท
-                    { wch: 15 }, // เบอร์โทร
-                    { wch: 18 }, // สถานะ
-                    { wch: 22 }  // วันที่ลงทะเบียน
-                ];
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wscols = [{wch:10}, {wch:30}, {wch:30}, {wch:15}, {wch:15}, {wch:25}];
                 ws['!cols'] = wscols;
-
-                // 4. บันทึกเป็นไฟล์ .xlsx
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "รายชื่อผู้ลงทะเบียน");
-                
-                // ตั้งชื่อไฟล์ตามวันที่
-                const dateStr = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
-                const fileName = `รายงานลงทะเบียน_${dateStr}.xlsx`;
-                
-                XLSX.writeFile(wb, fileName);
+                XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
             };
 
-            // ---- หน้าจอสำหรับ Admin ----
-            if (view === 'admin' && isUnlocked) {
+            // หน้าจอแอดมิน (เมื่อล็อกอินสำเร็จ)
+            if (user && !user.isAnonymous && view === 'admin') {
                 return (
-                    <div className="p-4 md:p-8 max-w-5xl mx-auto">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                            <h1 className="text-2xl font-bold text-slate-800 border-b-4 border-red-500 pb-1">
-                                รายชื่อผู้ลงทะเบียน ({records.length})
-                            </h1>
-                            <div className="flex gap-2 w-full md:w-auto">
-                                <button onClick={exportToExcel} className="flex-1 md:flex-none bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-green-700 transition-all">
-                                    📥 โหลดไฟล์ Excel
-                                </button>
-                                <button onClick={() => setView('form')} className="flex-1 md:flex-none bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-50">
-                                    กลับหน้าฟอร์ม
-                                </button>
+                    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+                        <div className="max-w-5xl mx-auto">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
+                                <div>
+                                    <h1 className="text-xl font-bold text-slate-800">ระบบจัดการหลังบ้าน</h1>
+                                    <p className="text-xs text-slate-400">ล็อกอินโดย: {user.email}</p>
+                                </div>
+                                <div className="flex gap-2 w-full md:w-auto">
+                                    <button onClick={exportExcel} className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition-all">โหลด Excel</button>
+                                    <button onClick={handleLogout} className="flex-1 md:flex-none bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-100 transition-all">ออกจากระบบ</button>
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500 uppercase text-xs">
-                                        <tr>
-                                            <th className="px-6 py-4">ลูกค้า / บริษัท</th>
-                                            <th className="px-6 py-4">เบอร์โทร</th>
-                                            <th className="px-6 py-4 text-right">สถานะ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {records.map(item => (
-                                            <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div className="font-bold text-slate-800 text-sm">{item.name}</div>
-                                                    <div className="text-xs text-slate-500 mt-1">{item.company}</div>
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-700 text-sm font-mono">{item.phone}</td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${item.attendance === 'เข้าร่วม' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {item.attendance}
-                                                    </span>
-                                                    <div className="text-[10px] text-slate-400 mt-2">
-                                                        {item.createdAt ? item.createdAt.toDate().toLocaleDateString('th-TH') : ''}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {records.length === 0 && (
-                                            <tr>
-                                                <td colSpan="3" className="px-6 py-10 text-center text-slate-400">
-                                                    ยังไม่มีข้อมูลผู้ลงทะเบียน
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                            
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-slate-50 border-b font-bold text-slate-500">
+                                            <tr><th className="p-4">ผู้ลงทะเบียน</th><th className="p-4">เบอร์โทร</th><th className="p-4 text-right">สถานะ</th></tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {records.map(r => (
+                                                <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="p-4 font-bold min-w-[200px]">{r.name}<div className="text-[10px] font-normal text-slate-400">{r.company}</div></td>
+                                                    <td className="p-4 font-mono">{r.phone}</td>
+                                                    <td className="p-4 text-right">
+                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {r.attendance}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {records.length === 0 && (
+                                                <tr><td colSpan="3" className="p-8 text-center text-slate-400">ยังไม่มีข้อมูลผู้ลงทะเบียน</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 );
             }
 
-            // ---- หน้าจอแบบฟอร์มลงทะเบียน (ลูกค้าเห็นหน้านี้) ----
+            // หน้าจอล็อกอินแอดมิน
+            if (view === 'login') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4 admin-gradient text-white">
+                        <div className="w-full max-w-sm bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/20 shadow-2xl">
+                            <h2 className="text-2xl font-bold mb-6 text-center italic">Admin Secure Login</h2>
+                            <form onSubmit={handleAdminLogin} className="space-y-4">
+                                <input type="email" placeholder="Email (อีเมลแอดมิน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={email} onChange={e => setEmail(e.target.value)} />
+                                <input type="password" placeholder="Password (รหัสผ่าน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={password} onChange={e => setPassword(e.target.value)} />
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all">
+                                    {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
+                                </button>
+                                <button type="button" onClick={() => setView('form')} className="w-full text-white/40 text-xs mt-4 hover:text-white transition-colors">กลับหน้าฟอร์มลูกค้า</button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            // หน้าจอหลักของลูกค้า
             return (
                 <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
                     <div className="w-full max-w-md">
                         {submitted ? (
-                            <div className="bg-white p-10 rounded-3xl shadow-2xl text-center border border-slate-100">
-                                <div className="text-6xl mb-6">🎉</div>
+                            <div className="bg-white p-10 rounded-3xl shadow-xl text-center border border-slate-100">
+                                <div className="text-6xl mb-6">✅</div>
                                 <h2 className="text-2xl font-bold mb-2 text-slate-800">ลงทะเบียนสำเร็จ</h2>
-                                <p className="text-slate-500 mb-8">ขอบคุณที่สนใจเข้าร่วมอบรมครับ</p>
-                                <button onClick={() => setSubmitted(false)} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all active:scale-95">
-                                    ลงทะเบียนท่านอื่นเพิ่ม
-                                </button>
+                                <p className="text-slate-500 mb-8">ขอบคุณที่ลงทะเบียนครับ</p>
+                                <button onClick={() => setSubmitted(false)} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all">ลงทะเบียนท่านอื่นเพิ่ม</button>
                             </div>
                         ) : (
-                            <div className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 overflow-hidden relative">
+                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
                                 <div className="mb-8 text-center">
-                                    <h1 className="text-2xl font-bold text-slate-800 mb-2">ลงทะเบียนอบรม</h1>
-                                    <div className="h-1 w-16 bg-red-500 mx-auto rounded-full mb-4"></div>
-                                    <p className="text-sm text-red-600 font-bold leading-relaxed">
-                                        เข้าร่วมอบรมให้ความรู้ประกันอัคคีภัยบ้านอยู่อาศัย
-                                    </p>
+                                    <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
+                                    <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความรู้ประกันอัคคีภัยบ้านอยู่อาศัย"</p>
                                 </div>
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">ชื่อ - นามสกุล</label>
-                                        <input type="text" required placeholder="ชื่อจริง-นามสกุล" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน</label>
-                                        <input type="text" required placeholder="ชื่อบริษัท" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
-                                        <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                                    </div>
+                                <form onSubmit={handleSubmitCustomer} className="space-y-4">
+                                    <div className="space-y-1"><label className="text-xs font-bold text-slate-500 ml-1">ชื่อ - นามสกุล</label>
+                                    <input type="text" required placeholder="ชื่อจริง-นามสกุล" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
+                                    <div className="space-y-1"><label className="text-xs font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน</label>
+                                    <input type="text" required placeholder="ระบุชื่อบริษัท" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} /></div>
+                                    <div className="space-y-1"><label className="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
+                                    <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
                                     
-                                    <div className="space-y-2 pt-2">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">ความประสงค์</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>
-                                                เข้าร่วม
-                                            </button>
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>
-                                                ไม่เข้าร่วม
-                                            </button>
-                                        </div>
+                                    <div className="grid grid-cols-2 gap-3 pt-2">
+                                        <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>เข้าร่วม</button>
+                                        <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>ไม่เข้าร่วม</button>
                                     </div>
-
-                                    <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-xl hover:bg-red-700 transition-all mt-4 flex justify-center items-center">
+                                    <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all mt-4 flex justify-center items-center">
                                         {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "ยืนยันลงทะเบียน"}
                                     </button>
                                 </form>
+                                
+                                {/* 💡 ปุ่มลับแอดมินอยู่ตรงนี้ครับ! */}
+                                <button onClick={() => setView('login')} className="w-full mt-10 text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase">
+                                    Secure Admin Login
+                                </button>
 
-                                {/* ส่วนนี้ซ่อนจากลูกค้าทั่วไป จะเห็นเฉพาะตอนเข้าลิงก์ ?mode=admin */}
-                                {isAdminURL && !isUnlocked && (
-                                    <button onClick={handleAdminLogin} className="w-full mt-10 text-slate-200 text-[10px] uppercase tracking-widest hover:text-slate-400 transition-colors italic">
-                                        Admin Verification Required
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>
