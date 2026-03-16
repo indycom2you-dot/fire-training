@@ -148,7 +148,7 @@
                     // เปลี่ยน Path เป็น registrations เปล่าๆ ตามที่สั่ง
                     const registrationsRef = db.collection('registrations');
                     
-                    // 2. & 3. Fix: Check duplicates directly by Document ID (normalizedPhone)
+                    // 1. เช็คเบอร์โทรศัพท์ซ้ำ (จาก Document ID โดยตรง)
                     const docCheck = await registrationsRef.doc(normalizedPhone).get();
                     if (docCheck.exists) {
                         setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
@@ -156,7 +156,15 @@
                         return;
                     }
 
-                    // Check email if provided
+                    // 2. เช็คชื่อ-นามสกุลซ้ำ
+                    const nameCheck = await registrationsRef.where('name', '==', formData.name.trim()).get();
+                    if (!nameCheck.empty) {
+                        setErrorMsg('ชื่อ-นามสกุลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // 3. เช็คอีเมลซ้ำ (ถ้าลูกค้ากรอกมา)
                     if (normalizedEmail !== '') {
                         const emailCheck = await registrationsRef.where('email', '==', normalizedEmail).get();
                         if (!emailCheck.empty) {
