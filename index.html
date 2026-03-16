@@ -45,13 +45,14 @@
             const [records, setRecords] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
             const [submitted, setSubmitted] = React.useState(false);
+            const [errorMsg, setErrorMsg] = React.useState(''); // สำหรับแจ้งเตือนข้อมูลซ้ำ
             
             // ล็อกอินแอดมิน
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
 
-            // ฟอร์มลูกค้า
-            const [formData, setFormData] = React.useState({ name: '', company: '', phone: '', attendance: 'เข้าร่วม' });
+            // ฟอร์มลูกค้า (เพิ่ม email)
+            const [formData, setFormData] = React.useState({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
             const appId = "ppp-registration";
 
@@ -80,10 +81,11 @@
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true);
+                setErrorMsg('');
                 try {
                     await firebase.auth().signInWithEmailAndPassword(email, password);
                 } catch (err) {
-                    alert("อีเมลหรือรหัสผ่านไม่ถูกต้องครับคุณอภิชิต (กรุณาเช็คในแท็บ Users ของ Firebase)");
+                    setErrorMsg("อีเมลหรือรหัสผ่านไม่ถูกต้องครับคุณอภิชิต");
                 }
                 setLoading(false);
             };
@@ -97,20 +99,61 @@
             const handleSubmitCustomer = async (e) => {
                 e.preventDefault();
                 setLoading(true);
+                setErrorMsg(''); // เคลียร์ข้อความแจ้งเตือนก่อนเริ่มเช็ค
+
                 try {
                     const auth = firebase.auth();
                     const db = firebase.firestore();
                     
                     if (!auth.currentUser) await auth.signInAnonymously();
+
+                    const registrationsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations');
                     
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations').add({
+                    // --- ระบบตรวจสอบข้อมูลซ้ำ (Duplicate Check) ---
+                    
+                    // 1. เช็คเบอร์โทรศัพท์ซ้ำ
+                    const phoneCheck = await registrationsRef.where('phone', '==', formData.phone.trim()).get();
+                    if (!phoneCheck.empty) {
+                        setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
+                        setLoading(false);
+                        return; // หยุดการทำงาน ไม่บันทึกข้อมูล
+                    }
+
+                    // 2. เช็คอีเมลซ้ำ (ถ้าลูกค้ากรอก)
+                    if (formData.email.trim() !== '') {
+                        const emailCheck = await registrationsRef.where('email', '==', formData.email.trim()).get();
+                        if (!emailCheck.empty) {
+                            setErrorMsg('อีเมลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
+                            setLoading(false);
+                            return;
+                        }
+                    }
+
+                    // 3. เช็คชื่อ-นามสกุลซ้ำ
+                    const nameCheck = await registrationsRef.where('name', '==', formData.name.trim()).get();
+                    if (!nameCheck.empty) {
+                        setErrorMsg('ชื่อ-นามสกุลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // ถ้าผ่านด่านเช็คซ้ำทั้งหมด ค่อยบันทึกข้อมูล
+                    await registrationsRef.add({
                         ...formData,
+                        name: formData.name.trim(),
+                        email: formData.email.trim(),
+                        phone: formData.phone.trim(),
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+
                     setSubmitted(true);
-                    setFormData({ name: '', company: '', phone: '', attendance: 'เข้าร่วม' });
+                    setFormData({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
                 } catch (err) {
-                    alert("ส่งข้อมูลไม่สำเร็จ: " + err.message);
+                    if (err.code === 'permission-denied') {
+                        setErrorMsg('ระบบตรวจสอบข้อมูลไม่ได้ กรุณาอัปเดต Security Rules ให้เป็นเวอร์ชันล่าสุดครับ');
+                    } else {
+                        setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
+                    }
                 }
                 setLoading(false);
             };
@@ -119,24 +162,25 @@
                 const data = records.map((r, i) => ({
                     "ลำดับ": i + 1,
                     "ชื่อ-นามสกุล": r.name,
+                    "อีเมล": r.email || '-',
                     "บริษัท": r.company,
                     "เบอร์โทร": r.phone,
                     "ความประสงค์": r.attendance,
                     "วันที่ลงทะเบียน": r.createdAt?.toDate().toLocaleString('th-TH')
                 }));
                 const ws = XLSX.utils.json_to_sheet(data);
-                const wscols = [{wch:10}, {wch:30}, {wch:30}, {wch:15}, {wch:15}, {wch:25}];
+                const wscols = [{wch:8}, {wch:25}, {wch:25}, {wch:25}, {wch:15}, {wch:15}, {wch:22}];
                 ws['!cols'] = wscols;
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "รายชื่อผู้ลงทะเบียน");
                 XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
             };
 
-            // หน้าจอแอดมิน (เมื่อล็อกอินสำเร็จ)
+            // หน้าจอแอดมิน
             if (user && !user.isAnonymous && view === 'admin') {
                 return (
                     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-                        <div className="max-w-5xl mx-auto">
+                        <div className="max-w-6xl mx-auto">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
                                 <div>
                                     <h1 className="text-xl font-bold text-slate-800">ระบบจัดการหลังบ้าน</h1>
@@ -152,17 +196,30 @@
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-slate-50 border-b font-bold text-slate-500">
-                                            <tr><th className="p-4">ผู้ลงทะเบียน</th><th className="p-4">เบอร์โทร</th><th className="p-4 text-right">สถานะ</th></tr>
+                                            <tr>
+                                                <th className="p-4">ผู้ลงทะเบียน</th>
+                                                <th className="p-4">ข้อมูลติดต่อ (อีเมล / เบอร์โทร)</th>
+                                                <th className="p-4 text-right">สถานะ</th>
+                                            </tr>
                                         </thead>
                                         <tbody className="divide-y">
                                             {records.map(r => (
                                                 <tr key={r.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="p-4 font-bold min-w-[200px]">{r.name}<div className="text-[10px] font-normal text-slate-400">{r.company}</div></td>
-                                                    <td className="p-4 font-mono">{r.phone}</td>
+                                                    <td className="p-4 font-bold min-w-[200px]">
+                                                        {r.name}
+                                                        <div className="text-[10px] font-normal text-slate-400 mt-1">{r.company}</div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="text-slate-600 font-medium">{r.email || '-'}</div>
+                                                        <div className="text-slate-500 font-mono text-xs mt-1">{r.phone}</div>
+                                                    </td>
                                                     <td className="p-4 text-right">
                                                         <span className={`px-2 py-1 rounded text-[10px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                             {r.attendance}
                                                         </span>
+                                                        <div className="text-[10px] text-slate-400 mt-2">
+                                                            {r.createdAt ? r.createdAt.toDate().toLocaleDateString('th-TH') : ''}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -184,6 +241,13 @@
                     <div className="min-h-screen flex items-center justify-center p-4 admin-gradient text-white">
                         <div className="w-full max-w-sm bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/20 shadow-2xl">
                             <h2 className="text-2xl font-bold mb-6 text-center italic">Admin Secure Login</h2>
+                            
+                            {errorMsg && (
+                                <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm text-center">
+                                    {errorMsg}
+                                </div>
+                            )}
+
                             <form onSubmit={handleAdminLogin} className="space-y-4">
                                 <input type="email" placeholder="Email (อีเมลแอดมิน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={email} onChange={e => setEmail(e.target.value)} />
                                 <input type="password" placeholder="Password (รหัสผ่าน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={password} onChange={e => setPassword(e.target.value)} />
@@ -210,17 +274,35 @@
                             </div>
                         ) : (
                             <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
-                                <div className="mb-8 text-center">
+                                <div className="mb-6 text-center">
                                     <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
                                     <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความรู้ประกันอัคคีภัยบ้านอยู่อาศัย"</p>
                                 </div>
+
+                                {errorMsg && (
+                                    <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl text-sm font-bold flex items-start gap-2">
+                                        <span className="text-lg">⚠️</span>
+                                        <span>{errorMsg}</span>
+                                    </div>
+                                )}
+
                                 <form onSubmit={handleSubmitCustomer} className="space-y-4">
-                                    <div className="space-y-1"><label className="text-xs font-bold text-slate-500 ml-1">ชื่อ - นามสกุล</label>
-                                    <input type="text" required placeholder="ชื่อจริง-นามสกุล" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
-                                    <div className="space-y-1"><label className="text-xs font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน</label>
-                                    <input type="text" required placeholder="ระบุชื่อบริษัท" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} /></div>
-                                    <div className="space-y-1"><label className="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
-                                    <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">ชื่อ - นามสกุล</label>
+                                        <input type="text" required placeholder="ชื่อจริง-นามสกุล" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน</label>
+                                        <input type="text" required placeholder="ระบุชื่อบริษัท" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">อีเมล (ถ้ามี)</label>
+                                        <input type="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
+                                        <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                    </div>
                                     
                                     <div className="grid grid-cols-2 gap-3 pt-2">
                                         <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>เข้าร่วม</button>
@@ -231,11 +313,9 @@
                                     </button>
                                 </form>
                                 
-                                {/* 💡 ปุ่มลับแอดมินอยู่ตรงนี้ครับ! */}
                                 <button onClick={() => setView('login')} className="w-full mt-10 text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase">
                                     Secure Admin Login
                                 </button>
-
                             </div>
                         )}
                     </div>
