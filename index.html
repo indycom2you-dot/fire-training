@@ -264,6 +264,12 @@
 
             // --- หน้าจอแอดมิน ---
             if (user && !user.isAnonymous && view === 'admin') {
+                // คำนวณสถิติสำหรับ Dashboard
+                const totalRegistrations = records.length;
+                const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
+                const absentCount = records.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
+                const attendingPercent = totalRegistrations > 0 ? Math.round((attendingCount / totalRegistrations) * 100) : 0;
+
                 return (
                     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
                         <div className="max-w-6xl mx-auto">
@@ -278,6 +284,53 @@
                                     <button onClick={handleLogout} className="flex-1 md:flex-none bg-slate-100 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">ออกจากระบบ</button>
                                 </div>
                             </div>
+
+                            {/* 📊 Dashboard Section (เห็นเฉพาะ Admin) 📊 */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                {/* กล่อง 1: รวมทั้งหมด */}
+                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center justify-between hover:shadow-md transition-shadow">
+                                    <div>
+                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">ยอดลงทะเบียนรวม</p>
+                                        <div className="text-4xl font-extrabold text-slate-800">{totalRegistrations}</div>
+                                    </div>
+                                    <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    </div>
+                                </div>
+                                {/* กล่อง 2: เข้าร่วม */}
+                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                                    <div>
+                                        <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-1">ยืนยันเข้าร่วมงาน</p>
+                                        <div className="text-4xl font-extrabold text-slate-800">{attendingCount}</div>
+                                    </div>
+                                    <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                </div>
+                                {/* กล่อง 3: ไม่เข้าร่วม */}
+                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                                    <div>
+                                        <p className="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">ไม่สามารถเข้าร่วม</p>
+                                        <div className="text-4xl font-extrabold text-slate-800">{absentCount}</div>
+                                    </div>
+                                    <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* หลอดแสดงเปอร์เซ็นต์ (Progress Bar) */}
+                            {totalRegistrations > 0 && (
+                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8">
+                                    <div className="flex justify-between items-end mb-3">
+                                        <span className="text-sm font-bold text-slate-600">อัตราการเข้าร่วมงาน (Attendance Rate)</span>
+                                        <span className="text-xl font-extrabold text-emerald-600">{attendingPercent}%</span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
+                                        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-4 rounded-full transition-all duration-1000 ease-out" style={{ width: `${attendingPercent}%` }}></div>
+                                    </div>
+                                </div>
+                            )}
                             
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                                 <div className="overflow-x-auto">
