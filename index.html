@@ -283,13 +283,14 @@
                     <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
                         <div className="w-full max-w-[420px] bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-700">
                             <div className="relative overflow-hidden group">
+                                {/* 🟢 เปลี่ยนเป็นรูปหน้าปกที่คุณอภิชิตส่งมาใหม่ และขยายความสูงเป็น h-80 (320px) */}
                                 <img 
-                                    src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                                    alt="บ้านและประกันภัย" 
-                                    className="w-full h-60 object-cover brightness-95 transition-transform duration-1000 group-hover:scale-110"
+                                    src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_gwlk25gwlk25gwlk.jpg" 
+                                    alt="ความเสี่ยงรอบด้าน" 
+                                    className="w-full h-80 object-cover brightness-95 transition-transform duration-1000 group-hover:scale-110"
                                 />
-                                <div className="absolute top-6 left-6 flex items-center justify-center">
-                                    <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto mix-blend-multiply object-contain drop-shadow-md" />
+                                <div className="absolute top-6 left-6 flex items-center justify-center drop-shadow-lg">
+                                    <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto mix-blend-multiply object-contain transition-transform group-hover:scale-105" />
                                 </div>
                             </div>
                             
@@ -300,18 +301,17 @@
                                 
                                 <ul className="space-y-4 mb-8 text-[15px] text-slate-600 font-medium">
                                     <li className="flex items-start gap-3"><span className="text-lg">📅</span> <div><span className="font-bold text-slate-800">วันที่:</span> วันอังคาร ที่ 24 มีนาคม 2569</div></li>
-                                    <li className="flex items-start gap-3"><span className="text-lg">⏰</span> <div className="flex gap-1.5"><span className="font-bold text-slate-800">เวลา:</span> <div className="flex flex-col"><span>ลงทะเบียน 14.00 น.</span><span className="mt-0.5 font-semibold">เริ่มประชุม 14.30 น.</span></div></div></li>
+                                    <li className="flex items-start gap-3"><span className="text-lg">⏰</span> <div className="flex gap-1.5"><span className="font-bold text-slate-800">เวลา:</span> <div className="flex flex-col"><span>ลงทะเบียน 14.00 น.</span><span className="mt-0.5 font-semibold text-red-600">เริ่มประชุม 14.30 น.</span></div></div></li>
                                     <li className="flex items-start gap-3"><span className="text-lg">📍</span> <div><span className="font-bold text-slate-800">สถานที่:</span> ร้าน ณ คุณ</div></li>
                                     <li className="flex items-start gap-3"><span className="text-lg pt-0.5 leading-none">🎤</span> <div><span className="font-bold text-slate-800">วิทยากร:</span> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/><span className="text-[13px] text-slate-500 mt-1 block leading-relaxed">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span></div></li>
                                 </ul>
 
-                                {/* 🟢 ปรับขนาดปุ่มในหน้าแรกให้ใหญ่และสูงขึ้น */}
                                 <button onClick={() => setView('form')} className="w-full py-5 bg-[#dc2626] text-white rounded-2xl font-black text-[18px] shadow-xl shadow-red-600/30 hover:bg-red-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
                                     ลงทะเบียนเข้าร่วมอบรม 👉
                                 </button>
 
                                 <div className="mt-8 text-center">
-                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-[0.2em] hover:text-slate-400 transition-colors uppercase font-bold">Secure Admin Login</button>
+                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-[0.2em] hover:text-slate-400 transition-colors uppercase font-bold">Secure Admin Access</button>
                                 </div>
                             </div>
                         </div>
@@ -327,63 +327,31 @@
                             <div className="bg-white p-12 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] text-center border border-slate-100 animate-in zoom-in duration-500">
                                 <div className="text-6xl mb-6">✅</div>
                                 <h2 className="text-2xl font-extrabold mb-2 text-slate-800 tracking-tight">ลงทะเบียนสำเร็จ</h2>
-                                <p className="text-slate-500 mb-10 font-medium">ขอบคุณที่ลงทะเบียนครับ <br/>พบกันในวันงานนะครับ</p>
-                                <button onClick={() => { setSubmitted(false); setView('landing'); setErrorMsg(''); }} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold shadow-xl hover:bg-red-700 transition-all active:scale-95">กลับสู่หน้าหลัก</button>
+                                <p className="text-slate-500 mb-10 font-medium text-lg">ขอบคุณที่ลงทะเบียนครับ <br/>พบกันในวันงานนะครับ</p>
+                                <button onClick={() => { setSubmitted(false); setView('landing'); setErrorMsg(''); }} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold shadow-xl hover:bg-red-700 transition-all active:scale-95 text-lg">กลับสู่หน้าหลัก</button>
                             </div>
                         ) : (
                             <div className="bg-white p-8 md:p-10 rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-slate-100 overflow-hidden relative animate-in fade-in slide-in-from-right-8 duration-500">
-                                
-                                <button 
-                                    onClick={() => { setView('landing'); setErrorMsg(''); }} 
-                                    className="absolute top-8 left-8 text-slate-400 hover:text-red-600 text-[13px] flex items-center gap-1 font-bold transition-colors"
-                                >
-                                    <span>←</span> ย้อนกลับ
-                                </button>
-
+                                <button onClick={() => { setView('landing'); setErrorMsg(''); }} className="absolute top-8 left-8 text-slate-400 hover:text-red-600 text-[13px] flex items-center gap-1 font-bold transition-colors"><span>←</span> ย้อนกลับ</button>
                                 <div className="mb-8 mt-8 text-center">
                                     <h1 className="text-[24px] font-extrabold text-slate-800 mb-2 tracking-tight">ลงทะเบียนอบรม</h1>
                                     <p className="text-[13px] text-red-600 font-bold italic leading-relaxed">"ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
                                     <p className="text-[11px] text-slate-400 mt-4 font-bold uppercase tracking-widest border-t pt-4 border-slate-50">จัดโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                                 </div>
-
-                                {errorMsg && (
-                                    <div className="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-700 rounded-r-2xl text-[13px] font-bold flex items-start gap-2">
-                                        <span>⚠️</span>
-                                        <span>{errorMsg}</span>
-                                    </div>
-                                )}
-
+                                {errorMsg && <div className="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-700 rounded-r-2xl text-[13px] font-bold flex items-start gap-2"><span>⚠️</span><span>{errorMsg}</span></div>}
                                 <form onSubmit={handleSubmitCustomer} className="space-y-5">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อ - นามสกุล *</label>
-                                        <input type="text" required placeholder="พิมพ์ชื่อและนามสกุล" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อเล่น (ถ้ามี)</label>
-                                        <input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[12px] font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน *</label>
-                                        <input type="text" required placeholder="ระบุชื่อหน่วยงาน" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[12px] font-bold text-slate-500 ml-1">อีเมล (ถ้ามี)</label>
-                                        <input type="email" placeholder="example@email.com" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[12px] font-bold text-slate-500 ml-1">เบอร์โทรศัพท์ *</label>
-                                        <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-bold text-[15px] tracking-wider input-focus-effect" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                                    </div>
-                                    
+                                    <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อ - นามสกุล *</label><input type="text" required placeholder="พิมพ์ชื่อและนามสกุล" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
+                                    <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อเล่น (ถ้ามี)</label><input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} /></div>
+                                    <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน *</label><input type="text" required placeholder="ระบุชื่อหน่วยงาน" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} /></div>
+                                    <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">อีเมล (ถ้ามี)</label><input type="email" placeholder="example@email.com" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
+                                    <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">เบอร์โทรศัพท์ *</label><input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-bold text-[15px] tracking-wider input-focus-effect" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
                                     <div className="pt-3">
                                         <label className="text-[12px] font-bold text-slate-500 ml-1 block mb-3 text-center">สะดวกเข้าอบรมหรือไม่</label>
                                         <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100 rounded-[22px]">
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-2xl font-bold text-[14px] transition-all duration-300 ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>เข้าร่วม</button>
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-2xl font-bold text-[14px] transition-all duration-300 ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 text-white shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>ไม่เข้าร่วม</button>
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-4 rounded-2xl font-bold text-[16px] transition-all duration-300 ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>เข้าร่วม</button>
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-4 rounded-2xl font-bold text-[16px] transition-all duration-300 ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 text-white shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>ไม่เข้าร่วม</button>
                                         </div>
                                     </div>
-                                    
-                                    {/* 🟢 ปรับขนาดปุ่มยืนยันให้ใหญ่และสูงขึ้น (ความสูง 16 หรือ h-16) */}
                                     <button type="submit" disabled={loading} className="w-full py-5 bg-[#dc2626] text-white rounded-[20px] font-black text-[18px] shadow-xl shadow-red-600/20 hover:bg-red-700 hover:-translate-y-0.5 transition-all mt-6 flex justify-center items-center h-16">
                                         {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : "ยืนยันการลงทะเบียน"}
                                     </button>
