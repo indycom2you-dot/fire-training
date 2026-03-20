@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลงทะเบียนอบรม - ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         .admin-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .input-focus-effect:focus { border-color: #dc2626; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.05); }
     </style>
 </head>
 <body>
@@ -28,7 +29,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <script type="text/babel">
-        // รหัสเชื่อมต่อ FIREBASE ของคุณอภิชิต
+        // รหัสเชื่อมต่อ FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -40,21 +41,17 @@
         };
 
         const App = () => {
-            const [view, setView] = React.useState('landing'); // 'landing', 'form', 'login', 'admin'
+            const [view, setView] = React.useState('landing'); 
             const [user, setUser] = React.useState(null);
             const [records, setRecords] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
             const [submitted, setSubmitted] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState(''); 
             
-            // ระบบเลือกลบข้อมูล
             const [selectedIds, setSelectedIds] = React.useState([]);
-
-            // ล็อกอินแอดมิน (เปลี่ยนจาก email เป็น username)
             const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
-            // ฟอร์มลูกค้า
             const [formData, setFormData] = React.useState({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
             React.useEffect(() => {
@@ -66,12 +63,10 @@
 
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
                     setUser(u);
-                    
                     if (unsubscribeData) {
                         unsubscribeData();
                         unsubscribeData = null;
                     }
-
                     if (u && !u.isAnonymous) {
                         setView('admin');
                         unsubscribeData = db.collection('registrations')
@@ -79,22 +74,15 @@
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setRecords(items);
-                                // เคลียร์ที่เลือกไว้ถ้าข้อมูลถูกอัปเดต (ป้องกันลบผิดตัว)
-                                setSelectedIds((prev) => prev.filter(id => items.some(item => item.id === id)));
-                            }, (error) => {
-                                console.error("Firestore Error:", error);
-                            });
+                            }, (error) => console.error("Firestore Error:", error));
                     } else {
                         setRecords([]);
-                        setSelectedIds([]);
                     }
                 });
 
                 return () => {
                     unsubscribeAuth();
-                    if (unsubscribeData) {
-                        unsubscribeData();
-                    }
+                    if (unsubscribeData) unsubscribeData();
                 };
             }, []);
 
@@ -103,7 +91,6 @@
                 setLoading(true);
                 setErrorMsg('');
                 try {
-                    // แปลง Username ให้เป็นอีเมลอัตโนมัติ (เช่น พิมพ์ admin จะกลายเป็น admin@ppp.com)
                     const loginEmail = username.includes('@') ? username : `${username}@ppp.com`;
                     await firebase.auth().signInWithEmailAndPassword(loginEmail, password);
                 } catch (err) {
@@ -130,48 +117,24 @@
                 e.preventDefault();
                 setLoading(true);
                 setErrorMsg('');
-
                 const normalizedPhone = formData.phone.replace(/[\s-]/g, '');
-                
                 if (!/^\d{9,10}$/.test(normalizedPhone)) {
                     setErrorMsg('กรุณาระบุเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 9-10 หลัก)');
                     setLoading(false);
                     return;
                 }
-
                 const normalizedEmail = formData.email.trim().toLowerCase();
-
                 try {
                     const auth = firebase.auth();
                     const db = firebase.firestore();
-                    
                     if (!auth.currentUser) await auth.signInAnonymously();
-
                     const registrationsRef = db.collection('registrations');
-                    
                     const docCheck = await registrationsRef.doc(normalizedPhone).get();
                     if (docCheck.exists) {
                         setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
                         setLoading(false);
                         return;
                     }
-
-                    const nameCheck = await registrationsRef.where('name', '==', formData.name.trim()).get();
-                    if (!nameCheck.empty) {
-                        setErrorMsg('ชื่อ-นามสกุลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
-                        setLoading(false);
-                        return;
-                    }
-
-                    if (normalizedEmail !== '') {
-                        const emailCheck = await registrationsRef.where('email', '==', normalizedEmail).get();
-                        if (!emailCheck.empty) {
-                            setErrorMsg('อีเมลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
-                            setLoading(false);
-                            return;
-                        }
-                    }
-
                     await registrationsRef.doc(normalizedPhone).set({
                         name: formData.name.trim(),
                         nickname: formData.nickname.trim(),
@@ -182,84 +145,53 @@
                         attendance: formData.attendance,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-
                     setSubmitted(true);
                     setFormData({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
                 } catch (err) {
-                    if (err.code === 'permission-denied') {
-                        setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบสิทธิ์ Firebase Security Rules');
-                    } else {
-                        setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
-                    }
+                    setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
                 }
                 setLoading(false);
             };
 
-            // จัดการการเลือก Checkbox
             const handleSelectAll = (e) => {
-                if (e.target.checked) {
-                    setSelectedIds(records.map(r => r.id));
-                } else {
-                    setSelectedIds([]);
-                }
+                if (e.target.checked) setSelectedIds(records.map(r => r.id));
+                else setSelectedIds([]);
             };
 
             const handleSelectRow = (id) => {
-                setSelectedIds(prev => 
-                    prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-                );
+                setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
             };
 
-            // ลบข้อมูลที่เลือก (หลายรายการพร้อมกัน)
             const handleDeleteSelected = async () => {
                 if (selectedIds.length === 0) return;
-                
-                if (window.confirm(`คุณอภิชิตต้องการลบรายชื่อที่เลือกจำนวน ${selectedIds.length} รายการ ใช่หรือไม่?\n(ข้อมูลที่ลบจะไม่สามารถกู้คืนได้)`)) {
+                if (window.confirm(`คุณอภิชิตต้องการลบรายชื่อที่เลือกจำนวน ${selectedIds.length} รายการ?`)) {
                     setLoading(true);
                     try {
                         const db = firebase.firestore();
                         const batch = db.batch();
-                        
-                        selectedIds.forEach(id => {
-                            const docRef = db.collection('registrations').doc(id);
-                            batch.delete(docRef);
-                        });
-                        
+                        selectedIds.forEach(id => batch.delete(db.collection('registrations').doc(id)));
                         await batch.commit();
-                        setSelectedIds([]); // เคลียร์รายการที่เลือกหลังลบเสร็จ
-                    } catch (err) {
-                        alert("ลบข้อมูลไม่สำเร็จ: " + err.message);
-                    }
+                        setSelectedIds([]);
+                    } catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
                     setLoading(false);
                 }
             };
 
             const handleDelete = async (id) => {
-                if (window.confirm("คุณอภิชิตต้องการลบรายชื่อนี้ใช่หรือไม่?")) {
+                if (window.confirm("คุณอภิชิตต้องการลบรายชื่อนี้?")) {
                     try {
-                        const db = firebase.firestore();
-                        await db.collection('registrations').doc(id).delete();
-                        setSelectedIds(prev => prev.filter(item => item !== id));
-                    } catch (err) {
-                        alert("ลบข้อมูลไม่สำเร็จ: " + err.message);
-                    }
+                        await firebase.firestore().collection('registrations').doc(id).delete();
+                    } catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
                 }
             };
 
             const exportExcel = () => {
                 const data = records.map((r, i) => ({
-                    "ลำดับ": i + 1,
-                    "ชื่อ-นามสกุล": r.name,
-                    "ชื่อเล่น": r.nickname || '-',
-                    "อีเมล": r.email || '-',
-                    "บริษัท": r.company,
-                    "เบอร์โทร": r.phone,
-                    "ความประสงค์": r.attendance,
-                    "วันที่ลงทะเบียน": r.createdAt?.toDate().toLocaleString('th-TH')
+                    "ลำดับ": i + 1, "ชื่อ-นามสกุล": r.name, "ชื่อเล่น": r.nickname || '-',
+                    "อีเมล": r.email || '-', "บริษัท": r.company, "เบอร์โทร": r.phone,
+                    "ความประสงค์": r.attendance, "วันที่ลงทะเบียน": r.createdAt?.toDate().toLocaleString('th-TH')
                 }));
                 const ws = XLSX.utils.json_to_sheet(data);
-                const wscols = [{wch:8}, {wch:25}, {wch:15}, {wch:25}, {wch:25}, {wch:15}, {wch:15}, {wch:22}];
-                ws['!cols'] = wscols;
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "รายชื่อผู้ลงทะเบียน");
                 XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
@@ -270,184 +202,54 @@
                 const totalRegistrations = records.length;
                 const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
                 const absentCount = records.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
-                const attendingPercent = totalRegistrations > 0 ? Math.round((attendingCount / totalRegistrations) * 100) : 0;
 
                 return (
-                    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans selection:bg-indigo-100">
+                    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans">
                         <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            
-                            {/* Header Section */}
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white p-6 md:px-8 md:py-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 gap-4 relative overflow-hidden">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 gap-4 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-purple-600"></div>
                                 <div>
                                     <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">ระบบจัดการหลังบ้าน <span className="text-indigo-600">Pro</span></h1>
-                                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                        ล็อกอินโดย: <span className="font-medium text-slate-700">{user.email}</span>
-                                    </p>
+                                    <p className="text-sm text-slate-500 mt-1">ล็อกอินโดย: <span className="font-medium text-slate-700">{user.email}</span></p>
                                 </div>
                                 <div className="flex gap-3 w-full md:w-auto flex-wrap">
-                                    <button 
-                                        onClick={handleDeleteSelected} 
-                                        disabled={loading || selectedIds.length === 0} 
-                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-rose-100 hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-                                    >
-                                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        ลบที่เลือก ({selectedIds.length})
-                                    </button>
-                                    <button onClick={exportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-500/20 hover:bg-emerald-600 hover:-translate-y-0.5 transition-all">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                        โหลด Excel
-                                    </button>
-                                    <button onClick={handleLogout} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">
-                                        ออกจากระบบ
-                                    </button>
+                                    <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all">ลบที่เลือก ({selectedIds.length})</button>
+                                    <button onClick={exportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-600 transition-all">โหลด Excel</button>
+                                    <button onClick={handleLogout} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-bold transition-all">ออกจากระบบ</button>
                                 </div>
                             </div>
 
-                            {/* 📊 Dashboard Stats Cards 📊 */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                {/* Card 1: Total */}
-                                <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50/50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div>
-                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">ยอดลงทะเบียนรวม</p>
-                                            <div className="text-5xl font-black text-slate-800 tracking-tight">{totalRegistrations} <span className="text-lg font-bold text-slate-400">ท่าน</span></div>
-                                        </div>
-                                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:rotate-6 transition-transform">
-                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Card 2: Attending */}
-                                <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-50 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50/50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div>
-                                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">ยืนยันเข้าร่วมงาน</p>
-                                            <div className="text-5xl font-black text-slate-800 tracking-tight">{attendingCount} <span className="text-lg font-bold text-slate-400">ท่าน</span></div>
-                                        </div>
-                                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:rotate-6 transition-transform">
-                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Card 3: Not Attending */}
-                                <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-rose-50 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-rose-50/50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div>
-                                            <p className="text-xs text-rose-500 font-bold uppercase tracking-wider mb-2">ไม่สามารถเข้าร่วม</p>
-                                            <div className="text-5xl font-black text-slate-800 tracking-tight">{absentCount} <span className="text-lg font-bold text-slate-400">ท่าน</span></div>
-                                        </div>
-                                        <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-rose-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:rotate-6 transition-transform">
-                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-lg transition-all"><p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">ยอดลงทะเบียนรวม</p><div className="text-5xl font-black text-slate-800 tracking-tighter">{totalRegistrations}</div></div>
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-50 hover:shadow-lg transition-all"><p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">ยืนยันเข้าร่วมงาน</p><div className="text-5xl font-black text-slate-800 tracking-tighter">{attendingCount}</div></div>
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-rose-50 hover:shadow-lg transition-all"><p className="text-xs text-rose-500 font-bold uppercase tracking-wider mb-2">ไม่สามารถเข้าร่วม</p><div className="text-5xl font-black text-slate-800 tracking-tighter">{absentCount}</div></div>
                             </div>
 
-                            {/* Progress Bar Widget */}
-                            {totalRegistrations > 0 && (
-                                <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-8 relative overflow-hidden">
-                                    <div className="flex justify-between items-end mb-4">
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-800">อัตราการเข้าร่วมงาน (Attendance Rate)</h3>
-                                            <p className="text-xs text-slate-400 mt-1">สัดส่วนผู้ที่ยืนยันเข้าร่วมเทียบกับผู้ลงทะเบียนทั้งหมด</p>
-                                        </div>
-                                        <div className="text-3xl font-black text-emerald-500 drop-shadow-sm">{attendingPercent}%</div>
-                                    </div>
-                                    <div className="w-full bg-slate-100 rounded-full h-5 overflow-hidden shadow-inner p-1">
-                                        <div 
-                                            className="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden" 
-                                            style={{ width: `${attendingPercent}%` }}
-                                        >
-                                            <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-[pulse_2s_ease-in-out_infinite]"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Data Table */}
-                            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
-                                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                    <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                                        รายชื่อทั้งหมด
-                                    </h3>
-                                    <span className="text-xs font-bold text-slate-500 bg-slate-200/50 px-3 py-1 rounded-full">{totalRegistrations} รายการ</span>
-                                </div>
+                            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm">
-                                        <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500">
+                                        <thead className="bg-slate-50 border-b font-bold text-slate-500 uppercase tracking-widest text-[11px]">
                                             <tr>
-                                                <th className="p-5 w-12 text-center">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="w-4 h-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-colors"
-                                                        checked={records.length > 0 && selectedIds.length === records.length}
-                                                        onChange={handleSelectAll}
-                                                    />
-                                                </th>
-                                                <th className="p-5 font-bold uppercase tracking-wider text-xs">ผู้ลงทะเบียน</th>
-                                                <th className="p-5 font-bold uppercase tracking-wider text-xs">ข้อมูลติดต่อ (อีเมล / เบอร์โทร)</th>
-                                                <th className="p-5 font-bold uppercase tracking-wider text-xs text-center">สถานะ</th>
-                                                <th className="p-5 font-bold uppercase tracking-wider text-xs text-right">จัดการ</th>
+                                                <th className="p-5 w-12 text-center"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-indigo-600" checked={records.length > 0 && selectedIds.length === records.length} onChange={handleSelectAll} /></th>
+                                                <th className="p-5">ผู้ลงทะเบียน</th>
+                                                <th className="p-5">ข้อมูลติดต่อ</th>
+                                                <th className="p-5 text-center">สถานะ</th>
+                                                <th className="p-5 text-right">จัดการ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {records.map(r => (
-                                                <tr key={r.id} className={`group transition-colors duration-200 ${selectedIds.includes(r.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/80'}`}>
-                                                    <td className="p-5 text-center">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            className="w-4 h-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-colors"
-                                                            checked={selectedIds.includes(r.id)}
-                                                            onChange={() => handleSelectRow(r.id)}
-                                                        />
-                                                    </td>
-                                                    <td className="p-5 min-w-[220px]">
-                                                        <div className="font-extrabold text-slate-800 text-base">
-                                                            {r.name} {r.nickname && <span className="text-indigo-500 font-semibold ml-1">({r.nickname})</span>}
-                                                        </div>
-                                                        <div className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
-                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                                            {r.company}
-                                                        </div>
-                                                    </td>
+                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/50'} transition-colors`}>
+                                                    <td className="p-5 text-center"><input type="checkbox" className="w-4 h-4 rounded border-slate-300" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
                                                     <td className="p-5">
-                                                        <div className="text-slate-600 font-semibold">{r.email || '-'}</div>
-                                                        <div className="text-slate-500 font-mono text-sm mt-1 bg-slate-100/50 inline-block px-2 py-0.5 rounded-md">{r.phone}</div>
+                                                        <div className="font-bold text-slate-800 text-base">{r.name} {r.nickname && <span className="text-indigo-500 ml-1">({r.nickname})</span>}</div>
+                                                        <div className="text-xs font-medium text-slate-400 mt-0.5">{r.company}</div>
                                                     </td>
-                                                    <td className="p-5 text-center">
-                                                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold shadow-sm ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-rose-100 text-rose-700 border border-rose-200'}`}>
-                                                            {r.attendance === 'เข้าร่วม' ? <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> : <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>}
-                                                            {r.attendance}
-                                                        </span>
-                                                        <div className="text-[10px] font-medium text-slate-400 mt-2">
-                                                            {r.createdAt ? r.createdAt.toDate().toLocaleDateString('th-TH') : ''}
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-5 text-right">
-                                                        <button onClick={() => handleDelete(r.id)} className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all p-2.5 rounded-xl group-hover:opacity-100 opacity-50" title="ลบรายชื่อนี้">
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                        </button>
-                                                    </td>
+                                                    <td className="p-5"><div className="text-slate-600 font-semibold">{r.email || '-'}</div><div className="text-slate-500 font-mono text-xs mt-1">{r.phone}</div></td>
+                                                    <td className="p-5 text-center"><span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>{r.attendance}</span></td>
+                                                    <td className="p-5 text-right"><button onClick={() => handleDelete(r.id)} className="text-slate-300 hover:text-rose-500 transition-all">🗑️</button></td>
                                                 </tr>
                                             ))}
-                                            {records.length === 0 && (
-                                                <tr>
-                                                    <td colSpan="5" className="p-16 text-center">
-                                                        <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                                                        </div>
-                                                        <p className="text-slate-500 font-medium">ยังไม่มีข้อมูลผู้ลงทะเบียนในขณะนี้</p>
-                                                    </td>
-                                                </tr>
-                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -463,19 +265,11 @@
                     <div className="min-h-screen flex items-center justify-center p-4 admin-gradient text-white">
                         <div className="w-full max-w-sm bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/20 shadow-2xl">
                             <h2 className="text-2xl font-bold mb-6 text-center italic">Admin Secure Login</h2>
-                            
-                            {errorMsg && (
-                                <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm text-center">
-                                    {errorMsg}
-                                </div>
-                            )}
-
+                            {errorMsg && <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm text-center font-bold">{errorMsg}</div>}
                             <form onSubmit={handleAdminLogin} className="space-y-4">
-                                <input type="text" placeholder="Username (ชื่อผู้ใช้งาน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={username} onChange={e => setUsername(e.target.value)} />
-                                <input type="password" placeholder="Password (รหัสผ่าน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={password} onChange={e => setPassword(e.target.value)} />
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all">
-                                    {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
-                                </button>
+                                <input type="text" placeholder="Username" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40 font-medium" value={username} onChange={e => setUsername(e.target.value)} />
+                                <input type="password" placeholder="Password" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40 font-medium" value={password} onChange={e => setPassword(e.target.value)} />
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all active:scale-95">{loading ? 'ตรวจสอบ...' : 'เข้าสู่ระบบ'}</button>
                                 <button type="button" onClick={() => setView('landing')} className="w-full text-white/40 text-xs mt-4 hover:text-white transition-colors">กลับหน้าหลัก</button>
                             </form>
                         </div>
@@ -483,72 +277,41 @@
                 );
             }
 
-            // --- หน้าแรก (Landing Page) มีรูปและรายละเอียด ---
+            // --- หน้าแรก (Landing Page) ---
             if (view === 'landing') {
                 return (
                     <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
-                        <div className="w-full max-w-[420px] bg-white rounded-[24px] shadow-2xl overflow-hidden border border-slate-100">
-                            <div className="relative">
+                        <div className="w-full max-w-[420px] bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-700">
+                            <div className="relative overflow-hidden group">
                                 <img 
                                     src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
                                     alt="บ้านและประกันภัย" 
-                                    className="w-full h-56 object-cover brightness-95"
+                                    className="w-full h-60 object-cover brightness-95 transition-transform duration-1000 group-hover:scale-110"
                                 />
-                                <div className="absolute top-5 left-5 flex flex-col items-center">
-                                    {/* 🟢 กลับมาใช้ไฟล์รูปโลโก้ PNG โปร่งใสแบบเดิม */}
-                                    <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto object-contain drop-shadow-md" />
+                                <div className="absolute top-6 left-6 flex items-center justify-center">
+                                    <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto mix-blend-multiply object-contain drop-shadow-md" />
                                 </div>
                             </div>
                             
                             <div className="p-8">
-                                <h1 className="text-[26px] font-bold text-slate-800 mb-6 leading-snug">
+                                <h1 className="text-[28px] font-extrabold text-slate-800 mb-6 leading-[1.2] tracking-tight">
                                     ความเสี่ยงรอบด้าน คุ้มครองรอบตัว <br/> <span className="text-[#dc2626]">ด้วยประกันอัคคีภัย</span>
                                 </h1>
                                 
-                                <ul className="space-y-4 mb-8 text-[14.5px] text-slate-600">
-                                    <li className="flex items-start gap-3">
-                                        <span className="text-lg leading-none">📅</span> 
-                                        <div><span className="font-bold text-slate-700">วันที่:</span> วันอังคาร ที่ 24 มีนาคม 2569</div>
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                        <span className="text-lg leading-none mt-0.5">⏰</span> 
-                                        <div className="flex gap-1.5">
-                                            <span className="font-bold text-slate-700 whitespace-nowrap">เวลา:</span> 
-                                            <div className="flex flex-col">
-                                                <span>ลงทะเบียน 14.00 น.</span>
-                                                <span className="mt-0.5">เริ่มประชุม 14.30 น.</span>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                        <span className="text-lg leading-none">📍</span> 
-                                        <div><span className="font-bold text-slate-700">สถานที่:</span> ร้าน ณ คุณ</div>
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                        <span className="text-lg leading-none">🎤</span> 
-                                        <div>
-                                            <span className="font-bold text-slate-700">วิทยากร:</span> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/>
-                                            <span className="text-[13px] text-slate-500 mt-0.5 block">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span>
-                                        </div>
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                        <span className="text-lg leading-none">💡</span> 
-                                        <div><span className="font-bold text-slate-700">รายละเอียด:</span> เรียนรู้วิธีการประเมินความเสี่ยงอัคคีภัย การเลือกซื้อประกันให้ครอบคลุม และการจัดการเมื่อเกิดเหตุฉุกเฉิน</div>
-                                    </li>
+                                <ul className="space-y-4 mb-8 text-[15px] text-slate-600 font-medium">
+                                    <li className="flex items-start gap-3"><span className="text-lg">📅</span> <div><span className="font-bold text-slate-800">วันที่:</span> วันอังคาร ที่ 24 มีนาคม 2569</div></li>
+                                    <li className="flex items-start gap-3"><span className="text-lg">⏰</span> <div className="flex gap-1.5"><span className="font-bold text-slate-800">เวลา:</span> <div className="flex flex-col"><span>ลงทะเบียน 14.00 น.</span><span className="mt-0.5 font-semibold">เริ่มประชุม 14.30 น.</span></div></div></li>
+                                    <li className="flex items-start gap-3"><span className="text-lg">📍</span> <div><span className="font-bold text-slate-800">สถานที่:</span> ร้าน ณ คุณ</div></li>
+                                    <li className="flex items-start gap-3"><span className="text-lg pt-0.5 leading-none">🎤</span> <div><span className="font-bold text-slate-800">วิทยากร:</span> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/><span className="text-[13px] text-slate-500 mt-1 block leading-relaxed">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span></div></li>
                                 </ul>
 
-                                <button 
-                                    onClick={() => setView('form')} 
-                                    className="w-full py-4 bg-[#dc2626] text-white rounded-xl font-bold text-[15px] shadow-lg shadow-red-600/30 hover:bg-red-700 transition-all active:scale-95"
-                                >
+                                {/* 🟢 ปรับขนาดปุ่มในหน้าแรกให้ใหญ่และสูงขึ้น */}
+                                <button onClick={() => setView('form')} className="w-full py-5 bg-[#dc2626] text-white rounded-2xl font-black text-[18px] shadow-xl shadow-red-600/30 hover:bg-red-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
                                     ลงทะเบียนเข้าร่วมอบรม 👉
                                 </button>
 
-                                {/* ปุ่มลับแอดมิน */}
                                 <div className="mt-8 text-center">
-                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase font-bold">
-                                        Secure Admin Login
-                                    </button>
+                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-[0.2em] hover:text-slate-400 transition-colors uppercase font-bold">Secure Admin Login</button>
                                 </div>
                             </div>
                         </div>
@@ -556,75 +319,73 @@
                 );
             }
 
-            // --- หน้าจอหลักของลูกค้า ---
+            // --- หน้าฟอร์มลงทะเบียน (หน้าที่ 2) ---
             return (
                 <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
-                    <div className="w-full max-w-md">
+                    <div className="w-full max-w-[420px]">
                         {submitted ? (
-                            <div className="bg-white p-10 rounded-3xl shadow-xl text-center border border-slate-100">
+                            <div className="bg-white p-12 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] text-center border border-slate-100 animate-in zoom-in duration-500">
                                 <div className="text-6xl mb-6">✅</div>
-                                <h2 className="text-2xl font-bold mb-2 text-slate-800">ลงทะเบียนสำเร็จ</h2>
-                                <p className="text-slate-500 mb-8">ขอบคุณที่ลงทะเบียนครับ</p>
-                                <button onClick={() => { setSubmitted(false); setView('landing'); setErrorMsg(''); }} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all">กลับหน้าหลัก</button>
+                                <h2 className="text-2xl font-extrabold mb-2 text-slate-800 tracking-tight">ลงทะเบียนสำเร็จ</h2>
+                                <p className="text-slate-500 mb-10 font-medium">ขอบคุณที่ลงทะเบียนครับ <br/>พบกันในวันงานนะครับ</p>
+                                <button onClick={() => { setSubmitted(false); setView('landing'); setErrorMsg(''); }} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold shadow-xl hover:bg-red-700 transition-all active:scale-95">กลับสู่หน้าหลัก</button>
                             </div>
                         ) : (
-                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
+                            <div className="bg-white p-8 md:p-10 rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-slate-100 overflow-hidden relative animate-in fade-in slide-in-from-right-8 duration-500">
                                 
-                                {/* ปุ่มย้อนกลับไปหน้าแรก */}
                                 <button 
                                     onClick={() => { setView('landing'); setErrorMsg(''); }} 
-                                    className="absolute top-6 left-6 text-slate-400 hover:text-red-600 text-sm flex items-center gap-1 font-bold transition-colors"
+                                    className="absolute top-8 left-8 text-slate-400 hover:text-red-600 text-[13px] flex items-center gap-1 font-bold transition-colors"
                                 >
-                                    <span>←</span> กลับ
+                                    <span>←</span> ย้อนกลับ
                                 </button>
 
-                                <div className="mb-6 mt-6 text-center">
-                                    <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
-                                    <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
-                                    <div className="flex justify-center mt-5 mb-1">
-                                        {/* 🟢 กลับมาใช้ไฟล์รูปโลโก้ PNG โปร่งใสแบบเดิม */}
-                                        <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto object-contain drop-shadow-sm" />
-                                    </div>
+                                <div className="mb-8 mt-8 text-center">
+                                    <h1 className="text-[24px] font-extrabold text-slate-800 mb-2 tracking-tight">ลงทะเบียนอบรม</h1>
+                                    <p className="text-[13px] text-red-600 font-bold italic leading-relaxed">"ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
+                                    <p className="text-[11px] text-slate-400 mt-4 font-bold uppercase tracking-widest border-t pt-4 border-slate-50">จัดโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                                 </div>
 
                                 {errorMsg && (
-                                    <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl text-sm font-bold flex items-start gap-2">
-                                        <span className="text-lg">⚠️</span>
+                                    <div className="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-700 rounded-r-2xl text-[13px] font-bold flex items-start gap-2">
+                                        <span>⚠️</span>
                                         <span>{errorMsg}</span>
                                     </div>
                                 )}
 
-                                <form onSubmit={handleSubmitCustomer} className="space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">ชื่อ - นามสกุล</label>
-                                        <input type="text" required placeholder="ชื่อจริง-นามสกุล" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <form onSubmit={handleSubmitCustomer} className="space-y-5">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อ - นามสกุล *</label>
+                                        <input type="text" required placeholder="พิมพ์ชื่อและนามสกุล" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">ชื่อเล่น (ถ้ามี)</label>
-                                        <input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อเล่น (ถ้ามี)</label>
+                                        <input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน</label>
-                                        <input type="text" required placeholder="ระบุชื่อบริษัท" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน *</label>
+                                        <input type="text" required placeholder="ระบุชื่อหน่วยงาน" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">อีเมล (ถ้ามี)</label>
-                                        <input type="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] font-bold text-slate-500 ml-1">อีเมล (ถ้ามี)</label>
+                                        <input type="email" placeholder="example@email.com" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
-                                        <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] font-bold text-slate-500 ml-1">เบอร์โทรศัพท์ *</label>
+                                        <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-bold text-[15px] tracking-wider input-focus-effect" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                                     </div>
                                     
-                                    <div className="pt-2">
-                                        <label className="text-xs font-bold text-slate-500 ml-1 block mb-2">สะดวกเข้าอบรมหรือไม่</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}>เข้าร่วม</button>
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}>ไม่เข้าร่วม</button>
+                                    <div className="pt-3">
+                                        <label className="text-[12px] font-bold text-slate-500 ml-1 block mb-3 text-center">สะดวกเข้าอบรมหรือไม่</label>
+                                        <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100 rounded-[22px]">
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-2xl font-bold text-[14px] transition-all duration-300 ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>เข้าร่วม</button>
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-2xl font-bold text-[14px] transition-all duration-300 ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 text-white shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>ไม่เข้าร่วม</button>
                                         </div>
                                     </div>
-                                    <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all mt-4 flex justify-center items-center">
-                                        {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "ยืนยันลงทะเบียน"}
+                                    
+                                    {/* 🟢 ปรับขนาดปุ่มยืนยันให้ใหญ่และสูงขึ้น (ความสูง 16 หรือ h-16) */}
+                                    <button type="submit" disabled={loading} className="w-full py-5 bg-[#dc2626] text-white rounded-[20px] font-black text-[18px] shadow-xl shadow-red-600/20 hover:bg-red-700 hover:-translate-y-0.5 transition-all mt-6 flex justify-center items-center h-16">
+                                        {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : "ยืนยันการลงทะเบียน"}
                                     </button>
                                 </form>
                             </div>
