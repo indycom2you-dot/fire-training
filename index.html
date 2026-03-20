@@ -494,8 +494,8 @@
                                     alt="บ้านและประกันภัย" 
                                     className="w-full h-56 object-cover brightness-95"
                                 />
-                                <div className="absolute top-5 left-5 flex items-center justify-center">
-                                    {/* 🟢 แก้ไข: เอากรอบพื้นหลังออกทั้งหมด ให้โลโก้โปร่งใสลอยบนรูปเลย */}
+                                <div className="absolute top-5 left-5 flex flex-col items-center">
+                                    {/* 🟢 กลับมาใช้ไฟล์รูปโลโก้ PNG โปร่งใสแบบเดิม */}
                                     <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto object-contain drop-shadow-md" />
                                 </div>
                             </div>
@@ -511,8 +511,14 @@
                                         <div><span className="font-bold text-slate-700">วันที่:</span> วันอังคาร ที่ 24 มีนาคม 2569</div>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-lg leading-none">⏰</span> 
-                                        <div><span className="font-bold text-slate-700">เวลา:</span> ลงทะเบียน 14.00 น. | เริ่มประชุม 14.30 น.</div>
+                                        <span className="text-lg leading-none mt-0.5">⏰</span> 
+                                        <div className="flex gap-1.5">
+                                            <span className="font-bold text-slate-700 whitespace-nowrap">เวลา:</span> 
+                                            <div className="flex flex-col">
+                                                <span>ลงทะเบียน 14.00 น.</span>
+                                                <span className="mt-0.5">เริ่มประชุม 14.30 น.</span>
+                                            </div>
+                                        </div>
                                     </li>
                                     <li className="flex items-start gap-3">
                                         <span className="text-lg leading-none">📍</span> 
@@ -575,8 +581,8 @@
                                 <div className="mb-6 mt-6 text-center">
                                     <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
                                     <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
-                                    <div className="flex justify-center mt-4">
-                                        {/* 🟢 แก้ไข: ใช้ลิงก์ตรงจาก GitHub ของคุณอภิชิตเลยครับ รูปขึ้นแน่นอน 100% */}
+                                    <div className="flex justify-center mt-5 mb-1">
+                                        {/* 🟢 กลับมาใช้ไฟล์รูปโลโก้ PNG โปร่งใสแบบเดิม */}
                                         <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto object-contain drop-shadow-sm" />
                                     </div>
                                 </div>
