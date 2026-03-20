@@ -283,14 +283,16 @@
                     <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
                         <div className="w-full max-w-[420px] bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-700">
                             <div className="relative overflow-hidden group">
-                                {/* 🟢 เปลี่ยนเป็นรูปหน้าปกที่คุณอภิชิตส่งมาใหม่ และขยายความสูงเป็น h-80 (320px) */}
+                                {/* 🟢 ลิงก์ตรงรูปหน้าปกใหม่ */}
                                 <img 
                                     src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_gwlk25gwlk25gwlk.jpg" 
                                     alt="ความเสี่ยงรอบด้าน" 
                                     className="w-full h-80 object-cover brightness-95 transition-transform duration-1000 group-hover:scale-110"
+                                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' }}
                                 />
-                                <div className="absolute top-6 left-6 flex items-center justify-center drop-shadow-lg">
-                                    <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.png" alt="PPP Logo" className="h-10 w-auto mix-blend-multiply object-contain transition-transform group-hover:scale-105" />
+                                {/* 🟢 ลิงก์ตรงโลโก้ PPP */}
+                                <div className="absolute top-6 left-6 flex items-center justify-center">
+                                    <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/Gemini_Generated_Image_xih0axxih0axxih0.jpg" alt="PPP Logo" className="h-10 w-auto mix-blend-multiply object-contain drop-shadow-md" />
                                 </div>
                             </div>
                             
@@ -311,7 +313,7 @@
                                 </button>
 
                                 <div className="mt-8 text-center">
-                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-[0.2em] hover:text-slate-400 transition-colors uppercase font-bold">Secure Admin Access</button>
+                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-[0.2em] hover:text-slate-400 transition-colors uppercase font-bold">Secure Admin Login</button>
                                 </div>
                             </div>
                         </div>
@@ -332,13 +334,27 @@
                             </div>
                         ) : (
                             <div className="bg-white p-8 md:p-10 rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-slate-100 overflow-hidden relative animate-in fade-in slide-in-from-right-8 duration-500">
-                                <button onClick={() => { setView('landing'); setErrorMsg(''); }} className="absolute top-8 left-8 text-slate-400 hover:text-red-600 text-[13px] flex items-center gap-1 font-bold transition-colors"><span>←</span> ย้อนกลับ</button>
+                                
+                                <button 
+                                    onClick={() => { setView('landing'); setErrorMsg(''); }} 
+                                    className="absolute top-8 left-8 text-slate-400 hover:text-red-600 text-[13px] flex items-center gap-1 font-bold transition-colors"
+                                >
+                                    <span>←</span> ย้อนกลับ
+                                </button>
+
                                 <div className="mb-8 mt-8 text-center">
                                     <h1 className="text-[24px] font-extrabold text-slate-800 mb-2 tracking-tight">ลงทะเบียนอบรม</h1>
                                     <p className="text-[13px] text-red-600 font-bold italic leading-relaxed">"ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
                                     <p className="text-[11px] text-slate-400 mt-4 font-bold uppercase tracking-widest border-t pt-4 border-slate-50">จัดโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                                 </div>
-                                {errorMsg && <div className="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-700 rounded-r-2xl text-[13px] font-bold flex items-start gap-2"><span>⚠️</span><span>{errorMsg}</span></div>}
+
+                                {errorMsg && (
+                                    <div className="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-700 rounded-r-2xl text-[13px] font-bold flex items-start gap-2">
+                                        <span>⚠️</span>
+                                        <span>{errorMsg}</span>
+                                    </div>
+                                )}
+
                                 <form onSubmit={handleSubmitCustomer} className="space-y-5">
                                     <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อ - นามสกุล *</label><input type="text" required placeholder="พิมพ์ชื่อและนามสกุล" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
                                     <div className="space-y-1.5"><label className="text-[12px] font-bold text-slate-500 ml-1">ชื่อเล่น (ถ้ามี)</label><input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all text-slate-800 font-semibold text-[15px] input-focus-effect" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} /></div>
