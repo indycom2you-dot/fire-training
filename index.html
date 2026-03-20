@@ -487,7 +487,7 @@
             if (view === 'landing') {
                 return (
                     <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
-                        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+                        <div className="w-full max-w-[420px] bg-white rounded-[24px] shadow-2xl overflow-hidden border border-slate-100">
                             <div className="relative">
                                 <img 
                                     src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
@@ -495,52 +495,55 @@
                                     className="w-full h-56 object-cover brightness-95"
                                 />
                                 <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-2 py-1.5 rounded-xl shadow-md flex items-center justify-center">
-                                    <img src="./Gemini_Generated_Image_xih0axxih0axxih0.jpg" alt="PPP Logo" className="h-8 w-auto mix-blend-multiply object-contain" />
+                                    {/* 🟢 จุดที่ 1: แก้ไขเอา ./ ออก หรือเปลี่ยนชื่อไฟล์ให้ตรงกับที่อัปโหลดเป๊ะๆ */}
+                                    <img src="Gemini_Generated_Image_xih0axxih0axxih0.jpg" alt="PPP Logo" className="h-8 w-auto mix-blend-multiply object-contain" />
                                 </div>
                             </div>
                             
                             <div className="p-8">
-                                <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight">
-                                    ความเสี่ยงรอบด้าน คุ้มครองรอบตัว <br/> <span className="text-red-600">ด้วยประกันอัคคีภัย</span>
+                                <h1 className="text-[26px] font-bold text-slate-800 mb-6 leading-snug">
+                                    ความเสี่ยงรอบด้าน คุ้มครองรอบตัว <br/> <span className="text-[#dc2626]">ด้วยประกันอัคคีภัย</span>
                                 </h1>
                                 
-                                <div className="space-y-3 text-sm text-slate-600 mb-8">
-                                    <p className="flex items-start gap-2">
-                                        <span className="text-lg">📅</span> 
-                                        <span><strong>วันที่:</strong> วันอังคาร ที่ 24 มีนาคม 2569</span>
-                                    </p>
-                                    <p className="flex items-start gap-2">
-                                        <span className="text-lg">⏰</span> 
-                                        <span><strong>เวลา:</strong> ลงทะเบียน 14.00 น. | เริ่มประชุม 14.30 น.</span>
-                                    </p>
-                                    <p className="flex items-start gap-2">
-                                        <span className="text-lg">📍</span> 
-                                        <span><strong>สถานที่:</strong> ร้าน ณ คุณ</span>
-                                    </p>
-                                    <p className="flex items-start gap-2">
-                                        <span className="text-lg">🎤</span> 
-                                        <span>
-                                            <strong>วิทยากร:</strong> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/>
-                                            <span className="text-xs text-slate-500 mt-0.5 block">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span>
-                                        </span>
-                                    </p>
-                                    <p className="flex items-start gap-2">
-                                        <span className="text-lg">💡</span> 
-                                        <span><strong>รายละเอียด:</strong> เรียนรู้วิธีการประเมินความเสี่ยงอัคคีภัย การเลือกซื้อประกันให้ครอบคลุม และการจัดการเมื่อเกิดเหตุฉุกเฉิน</span>
-                                    </p>
-                                </div>
+                                <ul className="space-y-4 mb-8 text-[14.5px] text-slate-600">
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-lg leading-none">📅</span> 
+                                        <div><span className="font-bold text-slate-700">วันที่:</span> วันอังคาร ที่ 24 มีนาคม 2569</div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-lg leading-none">⏰</span> 
+                                        <div><span className="font-bold text-slate-700">เวลา:</span> ลงทะเบียน 14.00 น. | เริ่มประชุม 14.30 น.</div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-lg leading-none">📍</span> 
+                                        <div><span className="font-bold text-slate-700">สถานที่:</span> ร้าน ณ คุณ</div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-lg leading-none">🎤</span> 
+                                        <div>
+                                            <span className="font-bold text-slate-700">วิทยากร:</span> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/>
+                                            <span className="text-[13px] text-slate-500 mt-0.5 block">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span>
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-lg leading-none">💡</span> 
+                                        <div><span className="font-bold text-slate-700">รายละเอียด:</span> เรียนรู้วิธีการประเมินความเสี่ยงอัคคีภัย การเลือกซื้อประกันให้ครอบคลุม และการจัดการเมื่อเกิดเหตุฉุกเฉิน</div>
+                                    </li>
+                                </ul>
 
                                 <button 
                                     onClick={() => setView('form')} 
-                                    className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all active:scale-95"
+                                    className="w-full py-4 bg-[#dc2626] text-white rounded-xl font-bold text-[15px] shadow-lg shadow-red-600/30 hover:bg-red-700 transition-all active:scale-95"
                                 >
                                     ลงทะเบียนเข้าร่วมอบรม 👉
                                 </button>
 
                                 {/* ปุ่มลับแอดมิน */}
-                                <button onClick={() => setView('login')} className="w-full mt-8 text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase">
-                                    Secure Admin Login
-                                </button>
+                                <div className="mt-8 text-center">
+                                    <button onClick={() => setView('login')} className="text-slate-200 text-[10px] tracking-widest hover:text-slate-400 transition-colors uppercase font-bold">
+                                        Secure Admin Login
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -573,7 +576,8 @@
                                     <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
                                     <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
                                     <div className="flex justify-center mt-3">
-                                        <img src="./Gemini_Generated_Image_xih0axxih0axxih0.jpg" alt="PPP Logo" className="h-8 w-auto mix-blend-multiply object-contain" />
+                                        {/* 🟢 จุดที่ 2: แก้ไขเอา ./ ออก หรือเปลี่ยนชื่อไฟล์ให้ตรงกับที่อัปโหลดเป๊ะๆ */}
+                                        <img src="Gemini_Generated_Image_xih0axxih0axxih0.jpg" alt="PPP Logo" className="h-8 w-auto mix-blend-multiply object-contain" />
                                     </div>
                                 </div>
 
