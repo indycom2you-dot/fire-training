@@ -47,25 +47,26 @@
             const [submitted, setSubmitted] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState(''); 
             
-            // ล็อกอินแอดมิน
-            const [email, setEmail] = React.useState('');
+            // ระบบเลือกลบข้อมูล
+            const [selectedIds, setSelectedIds] = React.useState([]);
+
+            // ล็อกอินแอดมิน (เปลี่ยนจาก email เป็น username)
+            const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
             // ฟอร์มลูกค้า
             const [formData, setFormData] = React.useState({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
-            // 1 & 5. Fix: React useEffect cleanup logic & Listener safety
             React.useEffect(() => {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
-                let unsubscribeData = null; // เริ่มต้นด้วย null เพื่อความปลอดภัย
+                let unsubscribeData = null;
 
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
                     setUser(u);
                     
-                    // ป้องกัน Listener ซ้อนทับกัน โดยการยกเลิกของเก่าก่อนถ้ามี
                     if (unsubscribeData) {
                         unsubscribeData();
                         unsubscribeData = null;
@@ -73,22 +74,22 @@
 
                     if (u && !u.isAnonymous) {
                         setView('admin');
-                        // เปลี่ยน Path ให้สะอาดตามที่ต้องการ: collection('registrations')
                         unsubscribeData = db.collection('registrations')
                             .onSnapshot((snapshot) => {
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setRecords(items);
+                                // เคลียร์ที่เลือกไว้ถ้าข้อมูลถูกอัปเดต (ป้องกันลบผิดตัว)
+                                setSelectedIds((prev) => prev.filter(id => items.some(item => item.id === id)));
                             }, (error) => {
                                 console.error("Firestore Error:", error);
                             });
                     } else {
-                        // เคลียร์ข้อมูลจากหน้าจอเมื่อล็อกเอาท์
                         setRecords([]);
+                        setSelectedIds([]);
                     }
                 });
 
-                // Cleanup ฟังก์ชันให้เคลียร์ทั้ง Auth และ Database อย่างถูกต้อง
                 return () => {
                     unsubscribeAuth();
                     if (unsubscribeData) {
@@ -102,9 +103,11 @@
                 setLoading(true);
                 setErrorMsg('');
                 try {
-                    await firebase.auth().signInWithEmailAndPassword(email, password);
+                    // แปลง Username ให้เป็นอีเมลอัตโนมัติ (เช่น พิมพ์ admin จะกลายเป็น admin@ppp.com)
+                    const loginEmail = username.includes('@') ? username : `${username}@ppp.com`;
+                    await firebase.auth().signInWithEmailAndPassword(loginEmail, password);
                 } catch (err) {
-                    setErrorMsg("อีเมลหรือรหัสผ่านไม่ถูกต้องครับคุณอภิชิต");
+                    setErrorMsg("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้องครับคุณอภิชิต");
                 }
                 setLoading(false);
             };
@@ -114,9 +117,10 @@
                     await firebase.auth().signOut();
                     setView('landing');
                     setSubmitted(false);
-                    setEmail('');
+                    setUsername('');
                     setPassword('');
                     setErrorMsg('');
+                    setSelectedIds([]);
                 } catch (err) {
                     console.error("Logout Error:", err);
                 }
@@ -127,7 +131,6 @@
                 setLoading(true);
                 setErrorMsg('');
 
-                // 2. Fix: Normalize Thai phone numbers before validation
                 const normalizedPhone = formData.phone.replace(/[\s-]/g, '');
                 
                 if (!/^\d{9,10}$/.test(normalizedPhone)) {
@@ -136,7 +139,6 @@
                     return;
                 }
 
-                // 3. Fix: Normalize email before checking
                 const normalizedEmail = formData.email.trim().toLowerCase();
 
                 try {
@@ -145,10 +147,8 @@
                     
                     if (!auth.currentUser) await auth.signInAnonymously();
 
-                    // เปลี่ยน Path เป็น registrations เปล่าๆ ตามที่สั่ง
                     const registrationsRef = db.collection('registrations');
                     
-                    // 1. เช็คเบอร์โทรศัพท์ซ้ำ (จาก Document ID โดยตรง)
                     const docCheck = await registrationsRef.doc(normalizedPhone).get();
                     if (docCheck.exists) {
                         setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
@@ -156,7 +156,6 @@
                         return;
                     }
 
-                    // 2. เช็คชื่อ-นามสกุลซ้ำ
                     const nameCheck = await registrationsRef.where('name', '==', formData.name.trim()).get();
                     if (!nameCheck.empty) {
                         setErrorMsg('ชื่อ-นามสกุลนี้ถูกใช้ลงทะเบียนไปแล้วครับ');
@@ -164,7 +163,6 @@
                         return;
                     }
 
-                    // 3. เช็คอีเมลซ้ำ (ถ้าลูกค้ากรอกมา)
                     if (normalizedEmail !== '') {
                         const emailCheck = await registrationsRef.where('email', '==', normalizedEmail).get();
                         if (!emailCheck.empty) {
@@ -174,7 +172,6 @@
                         }
                     }
 
-                    // 2. & 4. Fix: Use set() with normalizedPhone as Document ID + Trim company
                     await registrationsRef.doc(normalizedPhone).set({
                         name: formData.name.trim(),
                         nickname: formData.nickname.trim(),
@@ -198,39 +195,42 @@
                 setLoading(false);
             };
 
-            // Review "Clear all data" feature with limits
-            const handleClearAll = async () => {
-                if (window.confirm("⚠️ คำเตือน: การลบข้อมูลจากฝั่งผู้ใช้ (Client) มีความเสี่ยงที่จะทำให้ระบบค้างหากมีข้อมูลจำนวนมาก และข้อมูลจะสูญหายถาวร\n\nยืนยันที่จะลบข้อมูลหรือไม่?")) {
-                    const pass = prompt("พิมพ์คำว่า 'CONFIRM_DELETE' เพื่อยืนยันการล้างข้อมูล:");
-                    if (pass === 'CONFIRM_DELETE') {
-                        setLoading(true);
-                        try {
-                            const db = firebase.firestore();
-                            const registrationsRef = db.collection('registrations');
-                            
-                            // ลบข้อมูลทีละ 500 รายการเพื่อป้องกัน Request ระเบิด
-                            const snapshot = await registrationsRef.limit(500).get();
-                            
-                            if (snapshot.empty) {
-                                alert("ไม่มีข้อมูลให้ลบครับ");
-                                setLoading(false);
-                                return;
-                            }
+            // จัดการการเลือก Checkbox
+            const handleSelectAll = (e) => {
+                if (e.target.checked) {
+                    setSelectedIds(records.map(r => r.id));
+                } else {
+                    setSelectedIds([]);
+                }
+            };
 
-                            const batch = db.batch();
-                            snapshot.docs.forEach((doc) => {
-                                batch.delete(doc.ref);
-                            });
-                            
-                            await batch.commit();
-                            alert(`เคลียร์ข้อมูลเรียบร้อยแล้ว (${snapshot.size} รายการ)`);
-                        } catch (err) {
-                            alert("เคลียร์ข้อมูลไม่สำเร็จ: " + err.message);
-                        }
-                        setLoading(false);
-                    } else if (pass !== null) {
-                        alert("ยกเลิกการลบข้อมูล (รหัสยืนยันไม่ถูกต้อง)");
+            const handleSelectRow = (id) => {
+                setSelectedIds(prev => 
+                    prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+                );
+            };
+
+            // ลบข้อมูลที่เลือก (หลายรายการพร้อมกัน)
+            const handleDeleteSelected = async () => {
+                if (selectedIds.length === 0) return;
+                
+                if (window.confirm(`คุณอภิชิตต้องการลบรายชื่อที่เลือกจำนวน ${selectedIds.length} รายการ ใช่หรือไม่?\n(ข้อมูลที่ลบจะไม่สามารถกู้คืนได้)`)) {
+                    setLoading(true);
+                    try {
+                        const db = firebase.firestore();
+                        const batch = db.batch();
+                        
+                        selectedIds.forEach(id => {
+                            const docRef = db.collection('registrations').doc(id);
+                            batch.delete(docRef);
+                        });
+                        
+                        await batch.commit();
+                        setSelectedIds([]); // เคลียร์รายการที่เลือกหลังลบเสร็จ
+                    } catch (err) {
+                        alert("ลบข้อมูลไม่สำเร็จ: " + err.message);
                     }
+                    setLoading(false);
                 }
             };
 
@@ -239,6 +239,7 @@
                     try {
                         const db = firebase.firestore();
                         await db.collection('registrations').doc(id).delete();
+                        setSelectedIds(prev => prev.filter(item => item !== id));
                     } catch (err) {
                         alert("ลบข้อมูลไม่สำเร็จ: " + err.message);
                     }
@@ -266,113 +267,186 @@
 
             // --- หน้าจอแอดมิน ---
             if (user && !user.isAnonymous && view === 'admin') {
-                // คำนวณสถิติสำหรับ Dashboard
                 const totalRegistrations = records.length;
                 const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
                 const absentCount = records.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
                 const attendingPercent = totalRegistrations > 0 ? Math.round((attendingCount / totalRegistrations) * 100) : 0;
 
                 return (
-                    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-                        <div className="max-w-6xl mx-auto">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
+                    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans selection:bg-indigo-100">
+                        <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            
+                            {/* Header Section */}
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white p-6 md:px-8 md:py-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 gap-4 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-purple-600"></div>
                                 <div>
-                                    <h1 className="text-xl font-bold text-slate-800">ระบบจัดการหลังบ้าน</h1>
-                                    <p className="text-xs text-slate-400">ล็อกอินโดย: {user.email}</p>
+                                    <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">ระบบจัดการหลังบ้าน <span className="text-indigo-600">Pro</span></h1>
+                                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                        ล็อกอินโดย: <span className="font-medium text-slate-700">{user.email}</span>
+                                    </p>
                                 </div>
-                                <div className="flex gap-2 w-full md:w-auto flex-wrap">
-                                    <button onClick={handleClearAll} disabled={loading} className="flex-1 md:flex-none bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-red-200 transition-all disabled:opacity-50">🗑️ ล้างข้อมูล 500 รายการ</button>
-                                    <button onClick={exportExcel} className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition-all">โหลด Excel</button>
-                                    <button onClick={handleLogout} className="flex-1 md:flex-none bg-slate-100 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">ออกจากระบบ</button>
+                                <div className="flex gap-3 w-full md:w-auto flex-wrap">
+                                    <button 
+                                        onClick={handleDeleteSelected} 
+                                        disabled={loading || selectedIds.length === 0} 
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-rose-100 hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                    >
+                                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        ลบที่เลือก ({selectedIds.length})
+                                    </button>
+                                    <button onClick={exportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-500/20 hover:bg-emerald-600 hover:-translate-y-0.5 transition-all">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        โหลด Excel
+                                    </button>
+                                    <button onClick={handleLogout} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">
+                                        ออกจากระบบ
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* 📊 Dashboard Section (เห็นเฉพาะ Admin) 📊 */}
+                            {/* 📊 Dashboard Stats Cards 📊 */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                {/* กล่อง 1: รวมทั้งหมด */}
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center justify-between hover:shadow-md transition-shadow">
-                                    <div>
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">ยอดลงทะเบียนรวม</p>
-                                        <div className="text-4xl font-extrabold text-slate-800">{totalRegistrations}</div>
-                                    </div>
-                                    <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                    </div>
-                                </div>
-                                {/* กล่อง 2: เข้าร่วม */}
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                                    <div>
-                                        <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-1">ยืนยันเข้าร่วมงาน</p>
-                                        <div className="text-4xl font-extrabold text-slate-800">{attendingCount}</div>
-                                    </div>
-                                    <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
-                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                {/* Card 1: Total */}
+                                <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50/50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div>
+                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">ยอดลงทะเบียนรวม</p>
+                                            <div className="text-5xl font-black text-slate-800 tracking-tight">{totalRegistrations} <span className="text-lg font-bold text-slate-400">ท่าน</span></div>
+                                        </div>
+                                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:rotate-6 transition-transform">
+                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                        </div>
                                     </div>
                                 </div>
-                                {/* กล่อง 3: ไม่เข้าร่วม */}
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                                    <div>
-                                        <p className="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">ไม่สามารถเข้าร่วม</p>
-                                        <div className="text-4xl font-extrabold text-slate-800">{absentCount}</div>
+                                
+                                {/* Card 2: Attending */}
+                                <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-50 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50/50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div>
+                                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">ยืนยันเข้าร่วมงาน</p>
+                                            <div className="text-5xl font-black text-slate-800 tracking-tight">{attendingCount} <span className="text-lg font-bold text-slate-400">ท่าน</span></div>
+                                        </div>
+                                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:rotate-6 transition-transform">
+                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </div>
                                     </div>
-                                    <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
-                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                
+                                {/* Card 3: Not Attending */}
+                                <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-rose-50 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-rose-50/50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div>
+                                            <p className="text-xs text-rose-500 font-bold uppercase tracking-wider mb-2">ไม่สามารถเข้าร่วม</p>
+                                            <div className="text-5xl font-black text-slate-800 tracking-tight">{absentCount} <span className="text-lg font-bold text-slate-400">ท่าน</span></div>
+                                        </div>
+                                        <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-rose-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:rotate-6 transition-transform">
+                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* หลอดแสดงเปอร์เซ็นต์ (Progress Bar) */}
+                            {/* Progress Bar Widget */}
                             {totalRegistrations > 0 && (
-                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8">
-                                    <div className="flex justify-between items-end mb-3">
-                                        <span className="text-sm font-bold text-slate-600">อัตราการเข้าร่วมงาน (Attendance Rate)</span>
-                                        <span className="text-xl font-extrabold text-emerald-600">{attendingPercent}%</span>
+                                <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-8 relative overflow-hidden">
+                                    <div className="flex justify-between items-end mb-4">
+                                        <div>
+                                            <h3 className="text-base font-bold text-slate-800">อัตราการเข้าร่วมงาน (Attendance Rate)</h3>
+                                            <p className="text-xs text-slate-400 mt-1">สัดส่วนผู้ที่ยืนยันเข้าร่วมเทียบกับผู้ลงทะเบียนทั้งหมด</p>
+                                        </div>
+                                        <div className="text-3xl font-black text-emerald-500 drop-shadow-sm">{attendingPercent}%</div>
                                     </div>
-                                    <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
-                                        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-4 rounded-full transition-all duration-1000 ease-out" style={{ width: `${attendingPercent}%` }}></div>
+                                    <div className="w-full bg-slate-100 rounded-full h-5 overflow-hidden shadow-inner p-1">
+                                        <div 
+                                            className="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden" 
+                                            style={{ width: `${attendingPercent}%` }}
+                                        >
+                                            <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-[pulse_2s_ease-in-out_infinite]"></div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
-                            
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+                            {/* Data Table */}
+                            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+                                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                        <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                        รายชื่อทั้งหมด
+                                    </h3>
+                                    <span className="text-xs font-bold text-slate-500 bg-slate-200/50 px-3 py-1 rounded-full">{totalRegistrations} รายการ</span>
+                                </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm">
-                                        <thead className="bg-slate-50 border-b font-bold text-slate-500">
+                                        <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500">
                                             <tr>
-                                                <th className="p-4">ผู้ลงทะเบียน</th>
-                                                <th className="p-4">ข้อมูลติดต่อ (อีเมล / เบอร์โทร)</th>
-                                                <th className="p-4 text-center">สถานะ</th>
-                                                <th className="p-4 text-right">จัดการ</th>
+                                                <th className="p-5 w-12 text-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="w-4 h-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-colors"
+                                                        checked={records.length > 0 && selectedIds.length === records.length}
+                                                        onChange={handleSelectAll}
+                                                    />
+                                                </th>
+                                                <th className="p-5 font-bold uppercase tracking-wider text-xs">ผู้ลงทะเบียน</th>
+                                                <th className="p-5 font-bold uppercase tracking-wider text-xs">ข้อมูลติดต่อ (อีเมล / เบอร์โทร)</th>
+                                                <th className="p-5 font-bold uppercase tracking-wider text-xs text-center">สถานะ</th>
+                                                <th className="p-5 font-bold uppercase tracking-wider text-xs text-right">จัดการ</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y">
+                                        <tbody className="divide-y divide-slate-50">
                                             {records.map(r => (
-                                                <tr key={r.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="p-4 font-bold min-w-[200px]">
-                                                        {r.name} {r.nickname && <span className="text-red-500 font-medium ml-1">({r.nickname})</span>}
-                                                        <div className="text-[10px] font-normal text-slate-400 mt-1">{r.company}</div>
+                                                <tr key={r.id} className={`group transition-colors duration-200 ${selectedIds.includes(r.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/80'}`}>
+                                                    <td className="p-5 text-center">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="w-4 h-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-colors"
+                                                            checked={selectedIds.includes(r.id)}
+                                                            onChange={() => handleSelectRow(r.id)}
+                                                        />
                                                     </td>
-                                                    <td className="p-4">
-                                                        <div className="text-slate-600 font-medium">{r.email || '-'}</div>
-                                                        <div className="text-slate-500 font-mono text-xs mt-1">{r.phone}</div>
+                                                    <td className="p-5 min-w-[220px]">
+                                                        <div className="font-extrabold text-slate-800 text-base">
+                                                            {r.name} {r.nickname && <span className="text-indigo-500 font-semibold ml-1">({r.nickname})</span>}
+                                                        </div>
+                                                        <div className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                                            {r.company}
+                                                        </div>
                                                     </td>
-                                                    <td className="p-4 text-center">
-                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    <td className="p-5">
+                                                        <div className="text-slate-600 font-semibold">{r.email || '-'}</div>
+                                                        <div className="text-slate-500 font-mono text-sm mt-1 bg-slate-100/50 inline-block px-2 py-0.5 rounded-md">{r.phone}</div>
+                                                    </td>
+                                                    <td className="p-5 text-center">
+                                                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold shadow-sm ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-rose-100 text-rose-700 border border-rose-200'}`}>
+                                                            {r.attendance === 'เข้าร่วม' ? <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> : <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>}
                                                             {r.attendance}
                                                         </span>
-                                                        <div className="text-[10px] text-slate-400 mt-2">
+                                                        <div className="text-[10px] font-medium text-slate-400 mt-2">
                                                             {r.createdAt ? r.createdAt.toDate().toLocaleDateString('th-TH') : ''}
                                                         </div>
                                                     </td>
-                                                    <td className="p-4 text-right">
-                                                        <button onClick={() => handleDelete(r.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="ลบรายชื่อนี้">
-                                                            🗑️
+                                                    <td className="p-5 text-right">
+                                                        <button onClick={() => handleDelete(r.id)} className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all p-2.5 rounded-xl group-hover:opacity-100 opacity-50" title="ลบรายชื่อนี้">
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                         </button>
                                                     </td>
                                                 </tr>
                                             ))}
                                             {records.length === 0 && (
-                                                <tr><td colSpan="4" className="p-8 text-center text-slate-400">ยังไม่มีข้อมูลผู้ลงทะเบียน</td></tr>
+                                                <tr>
+                                                    <td colSpan="5" className="p-16 text-center">
+                                                        <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                                        </div>
+                                                        <p className="text-slate-500 font-medium">ยังไม่มีข้อมูลผู้ลงทะเบียนในขณะนี้</p>
+                                                    </td>
+                                                </tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -397,7 +471,7 @@
                             )}
 
                             <form onSubmit={handleAdminLogin} className="space-y-4">
-                                <input type="email" placeholder="Email (อีเมลแอดมิน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={email} onChange={e => setEmail(e.target.value)} />
+                                <input type="text" placeholder="Username (ชื่อผู้ใช้งาน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={username} onChange={e => setUsername(e.target.value)} />
                                 <input type="password" placeholder="Password (รหัสผ่าน)" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40" value={password} onChange={e => setPassword(e.target.value)} />
                                 <button type="submit" disabled={loading} className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all">
                                     {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
@@ -533,8 +607,8 @@
                                     <div className="pt-2">
                                         <label className="text-xs font-bold text-slate-500 ml-1 block mb-2">สะดวกเข้าอบรมหรือไม่</label>
                                         <div className="grid grid-cols-2 gap-3">
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>เข้าร่วม</button>
-                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>ไม่เข้าร่วม</button>
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}>เข้าร่วม</button>
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}>ไม่เข้าร่วม</button>
                                         </div>
                                     </div>
                                     <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all mt-4 flex justify-center items-center">
