@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลงทะเบียนอบรมประกันอัคคีภัย</title>
+    <title>ลงทะเบียนอบรม - ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -52,7 +52,7 @@
             const [password, setPassword] = React.useState('');
 
             // ฟอร์มลูกค้า
-            const [formData, setFormData] = React.useState({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
+            const [formData, setFormData] = React.useState({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
             // 1 & 5. Fix: React useEffect cleanup logic & Listener safety
             React.useEffect(() => {
@@ -177,6 +177,7 @@
                     // 2. & 4. Fix: Use set() with normalizedPhone as Document ID + Trim company
                     await registrationsRef.doc(normalizedPhone).set({
                         name: formData.name.trim(),
+                        nickname: formData.nickname.trim(),
                         company: formData.company.trim(),
                         phone: formData.phone.trim(), 
                         normalizedPhone: normalizedPhone,
@@ -186,7 +187,7 @@
                     });
 
                     setSubmitted(true);
-                    setFormData({ name: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
+                    setFormData({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
                 } catch (err) {
                     if (err.code === 'permission-denied') {
                         setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบสิทธิ์ Firebase Security Rules');
@@ -248,6 +249,7 @@
                 const data = records.map((r, i) => ({
                     "ลำดับ": i + 1,
                     "ชื่อ-นามสกุล": r.name,
+                    "ชื่อเล่น": r.nickname || '-',
                     "อีเมล": r.email || '-',
                     "บริษัท": r.company,
                     "เบอร์โทร": r.phone,
@@ -255,7 +257,7 @@
                     "วันที่ลงทะเบียน": r.createdAt?.toDate().toLocaleString('th-TH')
                 }));
                 const ws = XLSX.utils.json_to_sheet(data);
-                const wscols = [{wch:8}, {wch:25}, {wch:25}, {wch:25}, {wch:15}, {wch:15}, {wch:22}];
+                const wscols = [{wch:8}, {wch:25}, {wch:15}, {wch:25}, {wch:25}, {wch:15}, {wch:15}, {wch:22}];
                 ws['!cols'] = wscols;
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "รายชื่อผู้ลงทะเบียน");
@@ -347,7 +349,7 @@
                                             {records.map(r => (
                                                 <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                                                     <td className="p-4 font-bold min-w-[200px]">
-                                                        {r.name}
+                                                        {r.name} {r.nickname && <span className="text-red-500 font-medium ml-1">({r.nickname})</span>}
                                                         <div className="text-[10px] font-normal text-slate-400 mt-1">{r.company}</div>
                                                     </td>
                                                     <td className="p-4">
@@ -424,11 +426,8 @@
                             </div>
                             
                             <div className="p-8">
-                                <span className="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold mb-4">
-                                    สัมมนาฟรี
-                                </span>
-                                <h1 className="text-2xl font-bold text-slate-800 mb-4 leading-tight">
-                                    โครงการอบรมให้ความรู้ <br/> <span className="text-red-600">ประกันอัคคีภัยบ้านอยู่อาศัย</span>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight">
+                                    ความเสี่ยงรอบด้าน คุ้มครองรอบตัว <br/> <span className="text-red-600">ด้วยประกันอัคคีภัย</span>
                                 </h1>
                                 
                                 <div className="space-y-3 text-sm text-slate-600 mb-8">
@@ -443,6 +442,13 @@
                                     <p className="flex items-start gap-2">
                                         <span className="text-lg">📍</span> 
                                         <span><strong>สถานที่:</strong> ห้องประชุมอาคาร A ชั้น 2</span>
+                                    </p>
+                                    <p className="flex items-start gap-2">
+                                        <span className="text-lg">🎤</span> 
+                                        <span>
+                                            <strong>วิทยากร:</strong> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/>
+                                            <span className="text-xs text-slate-500 mt-0.5 block">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span>
+                                        </span>
                                     </p>
                                     <p className="flex items-start gap-2">
                                         <span className="text-lg">💡</span> 
@@ -491,7 +497,7 @@
 
                                 <div className="mb-6 mt-6 text-center">
                                     <h1 className="text-xl font-bold text-slate-800 mb-2 underline decoration-red-500 decoration-4">ลงทะเบียนอบรม</h1>
-                                    <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความรู้ประกันอัคคีภัยบ้านอยู่อาศัย"</p>
+                                    <p className="text-xs text-red-600 font-bold italic leading-relaxed">หัวข้อ: "ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"</p>
                                     <p className="text-[10px] text-slate-500 mt-2 font-medium">จัดโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                                 </div>
 
@@ -508,6 +514,10 @@
                                         <input type="text" required placeholder="ชื่อจริง-นามสกุล" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                     </div>
                                     <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">ชื่อเล่น (ถ้ามี)</label>
+                                        <input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
                                         <label className="text-xs font-bold text-slate-500 ml-1">บริษัท / หน่วยงาน</label>
                                         <input type="text" required placeholder="ระบุชื่อบริษัท" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
                                     </div>
@@ -520,9 +530,12 @@
                                         <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-3 pt-2">
-                                        <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>เข้าร่วม</button>
-                                        <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>ไม่เข้าร่วม</button>
+                                    <div className="pt-2">
+                                        <label className="text-xs font-bold text-slate-500 ml-1 block mb-2">สะดวกเข้าอบรมหรือไม่</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>เข้าร่วม</button>
+                                            <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 border-slate-800 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400'}`}>ไม่เข้าร่วม</button>
+                                        </div>
                                     </div>
                                     <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg hover:bg-red-700 transition-all mt-4 flex justify-center items-center">
                                         {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "ยืนยันลงทะเบียน"}
