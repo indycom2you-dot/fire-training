@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลงทะเบียนอบรม - ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- เพิ่ม Chart.js สำหรับสร้างกราฟ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         .admin-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
         .input-focus-effect:focus { border-color: #dc2626; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.05); }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); }
+        .chart-container { position: relative; width: 100%; height: 220px; }
     </style>
 </head>
 <body>
@@ -29,10 +32,6 @@
     <!-- SheetJS สำหรับ Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
-    <!-- Chosen Palette: Slate Neutrals, Crimson Red (Action), Emerald Green (Logo) -->
-    <!-- Application Structure Plan: แบบฟอร์มลงทะเบียนแบบหน้าเดียว (SPA) แบ่งเป็น 3 ส่วน: 1. หน้า Landing ให้ข้อมูลที่จำเป็น (Hero Image, Info) 2. หน้าลงทะเบียน (Form) 3. ระบบหลังบ้าน (Admin) เพื่อให้ Khun Apichit จัดการข้อมูลได้ง่ายขึ้น -->
-    <!-- Visualization & Content Choices: สถาปัตยกรรมข้อมูลเน้นการเข้าถึง (Accessibility) โดยใช้สีแดงสำหรับปุ่ม Call-to-action หลัก และใช้ฟอนต์ Sarabun เพื่อความเป็นทางการระดับมืออาชีพ -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script type="text/babel">
         // รหัสเชื่อมต่อ FIREBASE
         const firebaseConfig = {
@@ -52,13 +51,18 @@
             const [loading, setLoading] = React.useState(false);
             const [submitted, setSubmitted] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState(''); 
-            const [isAcknowledged, setIsAcknowledged] = React.useState(false); // 🟢 เพิ่ม State สำหรับปุ่มรับทราบ
+            const [isAcknowledged, setIsAcknowledged] = React.useState(false); 
+            const [searchTerm, setSearchTerm] = React.useState(''); // สำหรับช่องค้นหา
             
             const [selectedIds, setSelectedIds] = React.useState([]);
             const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
             const [formData, setFormData] = React.useState({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
+
+            // Refs สำหรับ Chart.js
+            const chartRef = React.useRef(null);
+            const chartInstance = React.useRef(null);
 
             React.useEffect(() => {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -92,6 +96,61 @@
                 };
             }, []);
 
+            // 🟢 Effect สำหรับวาดกราฟ Chart.js
+            React.useEffect(() => {
+                if (view === 'admin' && chartRef.current) {
+                    const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
+                    const absentCount = records.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
+
+                    // ทำลายกราฟเก่าก่อนวาดใหม่ (ป้องกันการซ้อนทับ)
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    const ctx = chartRef.current.getContext('2d');
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['ยืนยันเข้าร่วม', 'ไม่เข้าร่วม'],
+                            datasets: [{
+                                data: [attendingCount, absentCount],
+                                backgroundColor: ['#10b981', '#f43f5e'], // Emerald & Rose
+                                borderWidth: 0,
+                                hoverOffset: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '75%',
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: { family: "'Sarabun', sans-serif", size: 12, weight: 'bold' },
+                                        color: '#64748b'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                    padding: 12,
+                                    cornerRadius: 12,
+                                    bodyFont: { family: "'Sarabun', sans-serif", size: 14 }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                return () => {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                };
+            }, [view, records]); // วาดใหม่ทุกครั้งที่ records อัปเดต
+
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true);
@@ -114,6 +173,7 @@
                     setPassword('');
                     setErrorMsg('');
                     setSelectedIds([]);
+                    setSearchTerm('');
                 } catch (err) {
                     console.error("Logout Error:", err);
                 }
@@ -124,9 +184,8 @@
                 setLoading(true);
                 setErrorMsg('');
 
-                // 🟢 เพิ่มเช็คเงื่อนไขบังคับกดยอมรับ เฉพาะกรณีที่เลือกเข้าร่วม
                 if (formData.attendance === 'เข้าร่วม' && !isAcknowledged) {
-                    setErrorMsg('กรุณากดติ๊กถูกที่ช่อง "รับทราบและยอมรับเงื่อนไข" ก่อนยืนยันครับ');
+                    setErrorMsg('กรุณากดติ๊กถูกที่ช่อง "รับทราบเงื่อนไข" ก่อนยืนยันครับ');
                     setLoading(false);
                     return;
                 }
@@ -161,7 +220,7 @@
                     });
                     setSubmitted(true);
                     setFormData({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
-                    setIsAcknowledged(false); // 🟢 รีเซ็ตปุ่มรับทราบเมื่อส่งฟอร์มสำเร็จ
+                    setIsAcknowledged(false);
                 } catch (err) {
                     setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
                 }
@@ -169,7 +228,7 @@
             };
 
             const handleSelectAll = (e) => {
-                if (e.target.checked) setSelectedIds(records.map(r => r.id));
+                if (e.target.checked) setSelectedIds(filteredRecords.map(r => r.id));
                 else setSelectedIds([]);
             };
 
@@ -212,58 +271,168 @@
                 XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
             };
 
+            // ระบบค้นหาข้อมูล (Filter)
+            const filteredRecords = records.filter(r => 
+                r.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                r.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                r.phone?.includes(searchTerm)
+            );
+
+            // --- หน้าจอแอดมิน (Dashboard Pro) ---
             if (user && !user.isAnonymous && view === 'admin') {
                 const totalRegistrations = records.length;
                 const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
                 const absentCount = records.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
+                const attendPercent = totalRegistrations > 0 ? Math.round((attendingCount / totalRegistrations) * 100) : 0;
 
                 return (
-                    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans">
-                        <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 gap-4 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-purple-600"></div>
+                    <div className="min-h-screen bg-[#f1f5f9] font-sans pb-12">
+                        {/* Top Navbar */}
+                        <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-30 flex justify-between items-center shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
                                 <div>
-                                    <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">ระบบจัดการหลังบ้าน <span className="text-indigo-600">Pro</span></h1>
-                                    <p className="text-sm text-slate-500 mt-1">ล็อกอินโดย: <span className="font-medium text-slate-700">{user.email}</span></p>
+                                    <h1 className="text-lg font-extrabold text-slate-800 leading-tight tracking-tight">Admin Dashboard</h1>
+                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Workspace for Khun Apichit</p>
                                 </div>
-                                <div className="flex gap-3 w-full md:w-auto flex-wrap">
-                                    <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all">ลบที่เลือก ({selectedIds.length})</button>
-                                    <button onClick={exportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-600 transition-all">โหลด Excel</button>
-                                    <button onClick={handleLogout} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-bold transition-all">ออกจากระบบ</button>
+                            </div>
+                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors px-4 py-2 rounded-xl hover:bg-red-50 flex items-center gap-2">
+                                <span>🚪</span> ออกจากระบบ
+                            </button>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            
+                            {/* Title */}
+                            <div className="mb-6 flex justify-between items-end">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">ภาพรวมสถิติผู้เข้าร่วมงาน</h2>
+                                    <p className="text-sm text-slate-500 mt-1">ข้อมูลสรุปแบบเรียลไทม์ (Real-time Analytics)</p>
+                                </div>
+                                <button onClick={exportExcel} className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all hover:-translate-y-0.5">
+                                    <span>⬇️</span> Export to Excel
+                                </button>
+                            </div>
+
+                            {/* 🟢 Grid Layout สำหรับ Cards และ Chart */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                                
+                                {/* 3 KPI Cards (ซ้ายมือ) */}
+                                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                    <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col justify-between group hover:shadow-md transition-all">
+                                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">👥</div>
+                                        <div>
+                                            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">ยอดลงทะเบียนรวม</p>
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-4xl font-black text-slate-800">{totalRegistrations}</span>
+                                                <span className="text-sm font-bold text-slate-400 mb-1">ท่าน</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-[24px] p-6 shadow-sm border border-emerald-50 flex flex-col justify-between group hover:shadow-md transition-all">
+                                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">✅</div>
+                                        <div>
+                                            <p className="text-xs font-extrabold text-emerald-500 uppercase tracking-widest mb-1">ยืนยันเข้าร่วม</p>
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-4xl font-black text-emerald-600">{attendingCount}</span>
+                                                <span className="text-sm font-bold text-emerald-400 mb-1">ท่าน</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-[24px] p-6 shadow-sm border border-rose-50 flex flex-col justify-between group hover:shadow-md transition-all">
+                                        <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">❌</div>
+                                        <div>
+                                            <p className="text-xs font-extrabold text-rose-500 uppercase tracking-widest mb-1">ไม่เข้าร่วม</p>
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-4xl font-black text-slate-700">{absentCount}</span>
+                                                <span className="text-sm font-bold text-slate-400 mb-1">ท่าน</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 🟢 Chart.js Card (ขวามือ) */}
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col items-center relative overflow-hidden">
+                                    <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 w-full text-left">สัดส่วนผู้เข้าร่วมงาน</h3>
+                                    <div className="chart-container w-full relative">
+                                        <canvas ref={chartRef}></canvas>
+                                        {/* ตัวเลขเปอร์เซ็นต์ตรงกลางวงกลม */}
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-2 pr-16 md:pr-24">
+                                            <div className="text-center">
+                                                <span className="text-3xl font-black text-slate-800">{attendPercent}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            {/* Toolbar (Search & Delete) */}
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                                <div className="relative w-full md:w-[400px]">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                    <input 
+                                        type="text" 
+                                        placeholder="ค้นหาชื่อ, บริษัท, เบอร์โทร..." 
+                                        className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex w-full md:w-auto gap-3">
+                                    <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 px-5 py-3 rounded-2xl text-sm font-bold disabled:opacity-50 hover:bg-rose-50 transition-all shadow-sm">
+                                        <span>🗑️</span> ลบ ({selectedIds.length})
+                                    </button>
+                                    <button onClick={exportExcel} className="md:hidden flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg">
+                                        โหลด Excel
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
-                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-lg transition-all"><p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">ยอดลงทะเบียนรวม</p><div className="text-5xl font-black text-slate-800 tracking-tighter">{totalRegistrations}</div></div>
-                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-50 hover:shadow-lg transition-all"><p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">ยืนยันเข้าร่วมงาน</p><div className="text-5xl font-black text-slate-800 tracking-tighter">{attendingCount}</div></div>
-                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-rose-50 hover:shadow-lg transition-all"><p className="text-xs text-rose-500 font-bold uppercase tracking-wider mb-2">ไม่สามารถเข้าร่วม</p><div className="text-5xl font-black text-slate-800 tracking-tighter">{absentCount}</div></div>
-                            </div>
-
-                            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            {/* Data Table */}
+                            <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="bg-slate-50 border-b font-bold text-slate-500 uppercase tracking-widest text-[11px]">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-slate-50/80 border-b border-slate-200">
                                             <tr>
-                                                <th className="p-5 w-12 text-center"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-indigo-600" checked={records.length > 0 && selectedIds.length === records.length} onChange={handleSelectAll} /></th>
-                                                <th className="p-5">ผู้ลงทะเบียน</th>
-                                                <th className="p-5">ข้อมูลติดต่อ</th>
-                                                <th className="p-5 text-center">สถานะ</th>
-                                                <th className="p-5 text-right">จัดการ</th>
+                                                <th className="py-4 pl-6 pr-3 w-12"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-indigo-600 cursor-pointer" checked={filteredRecords.length > 0 && selectedIds.length === filteredRecords.length} onChange={handleSelectAll} /></th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลผู้ลงทะเบียน</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลการติดต่อ</th>
+                                                <th className="py-4 px-4 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">สถานะ</th>
+                                                <th className="py-4 pr-6 pl-4 text-right text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">จัดการ</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {records.map(r => (
-                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/50'} transition-colors`}>
-                                                    <td className="p-5 text-center"><input type="checkbox" className="w-4 h-4 rounded border-slate-300" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
-                                                    <td className="p-5">
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredRecords.length > 0 ? filteredRecords.map(r => (
+                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-indigo-50/40' : 'hover:bg-slate-50/60'} transition-colors group`}>
+                                                    <td className="py-4 pl-6 pr-3"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
+                                                    <td className="py-4 px-4">
                                                         <div className="font-bold text-slate-800 text-base">{r.name} {r.nickname && <span className="text-indigo-500 ml-1">({r.nickname})</span>}</div>
-                                                        <div className="text-xs font-medium text-slate-400 mt-0.5">{r.company}</div>
+                                                        <div className="text-xs font-semibold text-slate-400 mt-0.5">{r.company}</div>
                                                     </td>
-                                                    <td className="p-5"><div className="text-slate-600 font-semibold">{r.email || '-'}</div><div className="text-slate-500 font-mono text-xs mt-1">{r.phone}</div></td>
-                                                    <td className="p-5 text-center"><span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>{r.attendance}</span></td>
-                                                    <td className="p-5 text-right"><button onClick={() => handleDelete(r.id)} className="text-slate-300 hover:text-rose-500 transition-all">🗑️</button></td>
+                                                    <td className="py-4 px-4">
+                                                        <div className="text-sm font-bold text-slate-700">{r.phone}</div>
+                                                        <div className="text-xs font-medium text-slate-400 mt-0.5">{r.email || '-'}</div>
+                                                    </td>
+                                                    <td className="py-4 px-4 text-center">
+                                                        <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[11px] font-extrabold border ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full mr-2 ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                                                            {r.attendance}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 pr-6 pl-4 text-right">
+                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100">
+                                                            🗑️
+                                                        </button>
+                                                    </td>
                                                 </tr>
-                                            ))}
+                                            )) : (
+                                                <tr>
+                                                    <td colSpan="5" className="py-12 text-center text-slate-500 font-bold">
+                                                        ไม่พบข้อมูลที่ค้นหา
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -366,7 +535,6 @@
                                         </div>
                                     </div>
 
-                                    {/* 🟢 ส่วนหมายเหตุที่เพิ่มเข้ามาใหม่ (จะแสดงเฉพาะเมื่อลูกค้ากดเลือก 'เข้าร่วม' เท่านั้น) */}
                                     {formData.attendance === 'เข้าร่วม' && (
                                         <div className="mt-5 p-4 bg-red-50 border border-red-100 rounded-2xl animate-in fade-in zoom-in duration-300">
                                             <p className="text-[13px] font-bold text-red-600 mb-1 flex items-center gap-1">
