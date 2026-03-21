@@ -260,15 +260,58 @@
             };
 
             const exportExcel = () => {
-                const data = records.map((r, i) => ({
-                    "ลำดับ": i + 1, "ชื่อ-นามสกุล": r.name, "ชื่อเล่น": r.nickname || '-',
-                    "อีเมล": r.email || '-', "บริษัท": r.company, "เบอร์โทร": r.phone,
-                    "ความประสงค์": r.attendance, "วันที่ลงทะเบียน": r.createdAt?.toDate().toLocaleString('th-TH')
-                }));
-                const ws = XLSX.utils.json_to_sheet(data);
+                // 1. สร้างหัวกระดาษรายงาน (Title & Date)
+                const titleRow = [["รายงานผู้ลงทะเบียนอบรม: ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"]];
+                const exportDateRow = [[`อัปเดตข้อมูล ณ วันที่: ${new Date().toLocaleString('th-TH')}`]];
+                const emptyRow = [[]];
+                
+                // 2. สร้างหัวตาราง (Header)
+                const headerRow = [["ลำดับ", "ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท / หน่วยงาน", "เบอร์โทรศัพท์", "อีเมล", "สถานะ", "วันที่ลงทะเบียน"]];
+
+                // 3. จัดเตรียมข้อมูล (Data)
+                const dataRows = records.map((r, i) => [
+                    i + 1,
+                    r.name || '-',
+                    r.nickname || '-',
+                    r.company || '-',
+                    r.phone || '-',
+                    r.email || '-',
+                    r.attendance || '-',
+                    r.createdAt?.toDate().toLocaleString('th-TH') || '-'
+                ]);
+
+                // รวมข้อมูลทั้งหมดเข้าด้วยกัน
+                const wsData = [...titleRow, ...exportDateRow, ...emptyRow, ...headerRow, ...dataRows];
+
+                // สร้าง Worksheet
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // 4. ปรับความกว้างของคอลัมน์ให้ดูเป็นมืออาชีพ (ไม่ให้ตัวหนังสือโดนตัด)
+                const wscols = [
+                    { wch: 8 },  // A: ลำดับ
+                    { wch: 25 }, // B: ชื่อ-นามสกุล
+                    { wch: 15 }, // C: ชื่อเล่น
+                    { wch: 35 }, // D: บริษัท / หน่วยงาน
+                    { wch: 15 }, // E: เบอร์โทรศัพท์
+                    { wch: 30 }, // F: อีเมล
+                    { wch: 15 }, // G: สถานะ
+                    { wch: 22 }  // H: วันที่ลงทะเบียน
+                ];
+                ws['!cols'] = wscols;
+
+                // 5. รวมเซลล์ (Merge Cells) สำหรับหัวกระดาษให้สวยงาม
+                ws['!merges'] = [
+                    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // รวมคอลัมน์ A ถึง H ในบรรทัดที่ 1 (ชื่อรายงาน)
+                    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }  // รวมคอลัมน์ A ถึง H ในบรรทัดที่ 2 (วันที่พิมพ์)
+                ];
+
+                // 6. สร้าง Workbook และบันทึกไฟล์
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "รายชื่อผู้ลงทะเบียน");
-                XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
+                
+                // ตั้งชื่อไฟล์ให้มีวันที่ติดไปด้วย
+                const fileName = `รายงานลงทะเบียนอบรม_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
             };
 
             // ระบบค้นหาข้อมูล (Filter)
@@ -405,22 +448,38 @@
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredRecords.length > 0 ? filteredRecords.map(r => (
                                                 <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-indigo-50/40' : 'hover:bg-slate-50/60'} transition-colors group`}>
-                                                    <td className="py-4 pl-6 pr-3"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
+                                                    <td className="py-4 pl-6 pr-3 align-top pt-5"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
                                                     <td className="py-4 px-4">
-                                                        <div className="font-bold text-slate-800 text-base">{r.name} {r.nickname && <span className="text-indigo-500 ml-1">({r.nickname})</span>}</div>
-                                                        <div className="text-xs font-semibold text-slate-400 mt-0.5">{r.company}</div>
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-xs shadow-sm border border-blue-100">👤</div>
+                                                                <div className="font-bold text-slate-800 text-[15px]">{r.name} {r.nickname && <span className="text-indigo-500 ml-1 text-xs">({r.nickname})</span>}</div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs shadow-sm border border-slate-200">🏢</div>
+                                                                <div className="text-xs font-semibold text-slate-500">{r.company}</div>
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                     <td className="py-4 px-4">
-                                                        <div className="text-sm font-bold text-slate-700">{r.phone}</div>
-                                                        <div className="text-xs font-medium text-slate-400 mt-0.5">{r.email || '-'}</div>
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center text-xs shadow-sm border border-emerald-100">📞</div>
+                                                                <div className="text-sm font-bold text-slate-700 tracking-wide">{r.phone}</div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center text-xs shadow-sm border border-amber-100">✉️</div>
+                                                                <div className="text-xs font-medium text-slate-500">{r.email || '-'}</div>
+                                                            </div>
+                                                        </div>
                                                     </td>
-                                                    <td className="py-4 px-4 text-center">
+                                                    <td className="py-4 px-4 text-center align-top pt-5">
                                                         <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[11px] font-extrabold border ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
                                                             <span className={`w-1.5 h-1.5 rounded-full mr-2 ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                                                             {r.attendance}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 pr-6 pl-4 text-right">
+                                                    <td className="py-4 pr-6 pl-4 text-right align-top pt-5">
                                                         <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100">
                                                             🗑️
                                                         </button>
