@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลงทะเบียนอบรม - ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- เพิ่ม Chart.js สำหรับสร้างกราฟ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -19,7 +18,7 @@
 <body>
     <div id="root"></div>
 
-    <!-- Firebase SDK (Version Compat) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -29,8 +28,9 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- SheetJS สำหรับ Excel -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- ExcelJS และ FileSaver สำหรับ Export Excel แบบจัดรูปแบบพรีเมียม (แทน SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script type="text/babel">
         // รหัสเชื่อมต่อ FIREBASE
@@ -52,7 +52,7 @@
             const [submitted, setSubmitted] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState(''); 
             const [isAcknowledged, setIsAcknowledged] = React.useState(false); 
-            const [searchTerm, setSearchTerm] = React.useState(''); // สำหรับช่องค้นหา
+            const [searchTerm, setSearchTerm] = React.useState('');
             
             const [selectedIds, setSelectedIds] = React.useState([]);
             const [username, setUsername] = React.useState('');
@@ -60,7 +60,6 @@
 
             const [formData, setFormData] = React.useState({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
 
-            // Refs สำหรับ Chart.js
             const chartRef = React.useRef(null);
             const chartInstance = React.useRef(null);
 
@@ -96,13 +95,12 @@
                 };
             }, []);
 
-            // 🟢 Effect สำหรับวาดกราฟ Chart.js
+            // วาดกราฟ Chart.js
             React.useEffect(() => {
                 if (view === 'admin' && chartRef.current) {
                     const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
                     const absentCount = records.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
 
-                    // ทำลายกราฟเก่าก่อนวาดใหม่ (ป้องกันการซ้อนทับ)
                     if (chartInstance.current) {
                         chartInstance.current.destroy();
                     }
@@ -114,7 +112,7 @@
                             labels: ['ยืนยันเข้าร่วม', 'ไม่เข้าร่วม'],
                             datasets: [{
                                 data: [attendingCount, absentCount],
-                                backgroundColor: ['#10b981', '#f43f5e'], // Emerald & Rose
+                                backgroundColor: ['#10b981', '#f43f5e'],
                                 borderWidth: 0,
                                 hoverOffset: 8
                             }]
@@ -149,7 +147,7 @@
                         chartInstance.current.destroy();
                     }
                 };
-            }, [view, records]); // วาดใหม่ทุกครั้งที่ records อัปเดต
+            }, [view, records]);
 
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
@@ -185,7 +183,7 @@
                 setErrorMsg('');
 
                 if (formData.attendance === 'เข้าร่วม' && !isAcknowledged) {
-                    setErrorMsg('กรุณากดติ๊กถูกที่ช่อง "รับทราบเงื่อนไข" ก่อนยืนยันครับ');
+                    setErrorMsg('กรุณากดติ๊กถูกที่ช่อง "รับทราบและยอมรับเงื่อนไข" ก่อนยืนยันครับ');
                     setLoading(false);
                     return;
                 }
@@ -259,66 +257,102 @@
                 }
             };
 
-            const exportExcel = () => {
-                // 1. สร้างหัวกระดาษรายงาน (Title & Date)
-                const titleRow = [["รายงานผู้ลงทะเบียนอบรม: ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย"]];
-                const exportDateRow = [[`อัปเดตข้อมูล ณ วันที่: ${new Date().toLocaleString('th-TH')}`]];
-                const emptyRow = [[]];
-                
-                // 2. สร้างหัวตาราง (Header)
-                const headerRow = [["ลำดับ", "ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท / หน่วยงาน", "เบอร์โทรศัพท์", "อีเมล", "สถานะ", "วันที่ลงทะเบียน"]];
+            const exportExcel = async () => {
+                // สร้าง Workbook และ Worksheet ใหม่ด้วย ExcelJS
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน');
 
-                // 3. จัดเตรียมข้อมูล (Data)
-                const dataRows = records.map((r, i) => [
-                    i + 1,
-                    r.name || '-',
-                    r.nickname || '-',
-                    r.company || '-',
-                    r.phone || '-',
-                    r.email || '-',
-                    r.attendance || '-',
-                    r.createdAt?.toDate().toLocaleString('th-TH') || '-'
-                ]);
+                // 1. สร้างหัวกระดาษ (Header Title) พื้นหลังสีเข้ม ตัวหนังสือสีขาว
+                worksheet.mergeCells('A1:H1');
+                const titleCell = worksheet.getCell('A1');
+                titleCell.value = 'รายงานผู้ลงทะเบียนอบรม: ความเสี่ยงรอบด้าน คุ้มครองรอบตัว ด้วยประกันอัคคีภัย';
+                titleCell.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; // สี Slate-800
+                titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+                worksheet.getRow(1).height = 40;
 
-                // รวมข้อมูลทั้งหมดเข้าด้วยกัน
-                const wsData = [...titleRow, ...exportDateRow, ...emptyRow, ...headerRow, ...dataRows];
+                // 2. สร้างแถบวันที่ (Export Date)
+                worksheet.mergeCells('A2:H2');
+                const dateCell = worksheet.getCell('A2');
+                dateCell.value = `พิมพ์รายงาน ณ วันที่: ${new Date().toLocaleString('th-TH')}`;
+                dateCell.font = { name: 'Sarabun', size: 11, italic: true, color: { argb: 'FF64748B' } };
+                dateCell.alignment = { vertical: 'middle', horizontal: 'right' };
+                worksheet.getRow(2).height = 25;
 
-                // สร้าง Worksheet
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                // 3. เว้นบรรทัด
+                worksheet.addRow([]);
 
-                // 4. ปรับความกว้างของคอลัมน์ให้ดูเป็นมืออาชีพ (ไม่ให้ตัวหนังสือโดนตัด)
-                const wscols = [
-                    { wch: 8 },  // A: ลำดับ
-                    { wch: 25 }, // B: ชื่อ-นามสกุล
-                    { wch: 15 }, // C: ชื่อเล่น
-                    { wch: 35 }, // D: บริษัท / หน่วยงาน
-                    { wch: 15 }, // E: เบอร์โทรศัพท์
-                    { wch: 30 }, // F: อีเมล
-                    { wch: 15 }, // G: สถานะ
-                    { wch: 22 }  // H: วันที่ลงทะเบียน
+                // 4. สร้างหัวตาราง (Table Headers) สีแดง ขอบตารางชัดเจน
+                const headers = ['ลำดับ', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'บริษัท / หน่วยงาน', 'เบอร์โทรศัพท์', 'อีเมล', 'สถานะ', 'วันที่ลงทะเบียน'];
+                const headerRow = worksheet.addRow(headers);
+                headerRow.eachCell((cell) => {
+                    cell.font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; // สี Red-600
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = {
+                        top: { style: 'thin' }, left: { style: 'thin' },
+                        bottom: { style: 'thin' }, right: { style: 'thin' }
+                    };
+                });
+                headerRow.height = 30;
+
+                // 5. นำข้อมูลลูกค้าใส่ลงตาราง พร้อมตีเส้นขอบและจัดสีสลับบรรทัด (Zebra Striping)
+                records.forEach((r, index) => {
+                    const row = worksheet.addRow([
+                        index + 1,
+                        r.name || '-',
+                        r.nickname || '-',
+                        r.company || '-',
+                        r.phone || '-',
+                        r.email || '-',
+                        r.attendance || '-',
+                        r.createdAt?.toDate().toLocaleString('th-TH') || '-'
+                    ]);
+
+                    row.eachCell((cell, colNumber) => {
+                        cell.font = { name: 'Sarabun', size: 11 };
+                        // จัดให้อยู่กึ่งกลางเฉพาะ ลำดับ, เบอร์โทร, สถานะ, วันที่
+                        cell.alignment = { 
+                            vertical: 'middle', 
+                            horizontal: [1, 5, 7, 8].includes(colNumber) ? 'center' : 'left' 
+                        };
+                        cell.border = {
+                            top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, 
+                            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, 
+                            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                        };
+                        // สลับสีบรรทัด (ขาว / ฟ้าอ่อนๆ) ให้ดูอ่านง่าย
+                        if (index % 2 === 1) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                        }
+                    });
+                    row.height = 25;
+                });
+
+                // 6. ปรับความกว้างคอลัมน์อัตโนมัติให้พอดีกับข้อความ
+                worksheet.columns = [
+                    { width: 10 },  // A: ลำดับ
+                    { width: 30 },  // B: ชื่อ-นามสกุล
+                    { width: 15 },  // C: ชื่อเล่น
+                    { width: 40 },  // D: บริษัท
+                    { width: 18 },  // E: เบอร์โทร
+                    { width: 35 },  // F: อีเมล
+                    { width: 15 },  // G: สถานะ
+                    { width: 25 }   // H: วันที่
                 ];
-                ws['!cols'] = wscols;
 
-                // 5. รวมเซลล์ (Merge Cells) สำหรับหัวกระดาษให้สวยงาม
-                ws['!merges'] = [
-                    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // รวมคอลัมน์ A ถึง H ในบรรทัดที่ 1 (ชื่อรายงาน)
-                    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }  // รวมคอลัมน์ A ถึง H ในบรรทัดที่ 2 (วันที่พิมพ์)
-                ];
-
-                // 6. สร้าง Workbook และบันทึกไฟล์
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "รายชื่อผู้ลงทะเบียน");
-                
-                // ตั้งชื่อไฟล์ให้มีวันที่ติดไปด้วย
-                const fileName = `รายงานลงทะเบียนอบรม_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                XLSX.writeFile(wb, fileName);
+                // 7. สร้างไฟล์และสั่งดาวน์โหลด
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, `รายงานลงทะเบียนอบรม_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
-            // ระบบค้นหาข้อมูล (Filter)
+            // ระบบค้นหาข้อมูล (ป้องกัน Error กรณีไม่มีข้อมูล)
             const filteredRecords = records.filter(r => 
-                r.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                r.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                r.phone?.includes(searchTerm)
+                (r.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                (r.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (r.phone || '').includes(searchTerm)
             );
 
             // --- หน้าจอแอดมิน (Dashboard Pro) ---
@@ -346,7 +380,6 @@
 
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             
-                            {/* Title */}
                             <div className="mb-6 flex justify-between items-end">
                                 <div>
                                     <h2 className="text-2xl font-black text-slate-800 tracking-tight">ภาพรวมสถิติผู้เข้าร่วมงาน</h2>
@@ -357,10 +390,8 @@
                                 </button>
                             </div>
 
-                            {/* 🟢 Grid Layout สำหรับ Cards และ Chart */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                
-                                {/* 3 KPI Cards (ซ้ายมือ) */}
+                                {/* 3 KPI Cards */}
                                 <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col justify-between group hover:shadow-md transition-all">
                                         <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">👥</div>
@@ -394,12 +425,11 @@
                                     </div>
                                 </div>
 
-                                {/* 🟢 Chart.js Card (ขวามือ) */}
+                                {/* Chart.js Card */}
                                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col items-center relative overflow-hidden">
                                     <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 w-full text-left">สัดส่วนผู้เข้าร่วมงาน</h3>
                                     <div className="chart-container w-full relative">
                                         <canvas ref={chartRef}></canvas>
-                                        {/* ตัวเลขเปอร์เซ็นต์ตรงกลางวงกลม */}
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-2 pr-16 md:pr-24">
                                             <div className="text-center">
                                                 <span className="text-3xl font-black text-slate-800">{attendPercent}%</span>
@@ -407,7 +437,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
 
                             {/* Toolbar (Search & Delete) */}
@@ -432,7 +461,7 @@
                                 </div>
                             </div>
 
-                            {/* Data Table */}
+                            {/* 🟢 Data Table (ปรับปรุงไอคอนหน้าชื่อ บริษัท ตามที่ขอแล้วครับ) */}
                             <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
