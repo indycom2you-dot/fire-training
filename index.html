@@ -29,6 +29,10 @@
     <!-- SheetJS สำหรับ Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
+    <!-- Chosen Palette: Slate Neutrals, Crimson Red (Action), Emerald Green (Logo) -->
+    <!-- Application Structure Plan: แบบฟอร์มลงทะเบียนแบบหน้าเดียว (SPA) แบ่งเป็น 3 ส่วน: 1. หน้า Landing ให้ข้อมูลที่จำเป็น (Hero Image, Info) 2. หน้าลงทะเบียน (Form) 3. ระบบหลังบ้าน (Admin) เพื่อให้ Khun Apichit จัดการข้อมูลได้ง่ายขึ้น -->
+    <!-- Visualization & Content Choices: สถาปัตยกรรมข้อมูลเน้นการเข้าถึง (Accessibility) โดยใช้สีแดงสำหรับปุ่ม Call-to-action หลัก และใช้ฟอนต์ Sarabun เพื่อความเป็นทางการระดับมืออาชีพ -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script type="text/babel">
         // รหัสเชื่อมต่อ FIREBASE
         const firebaseConfig = {
@@ -48,6 +52,7 @@
             const [loading, setLoading] = React.useState(false);
             const [submitted, setSubmitted] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState(''); 
+            const [isAcknowledged, setIsAcknowledged] = React.useState(false); // 🟢 เพิ่ม State สำหรับปุ่มรับทราบ
             
             const [selectedIds, setSelectedIds] = React.useState([]);
             const [username, setUsername] = React.useState('');
@@ -118,6 +123,14 @@
                 e.preventDefault();
                 setLoading(true);
                 setErrorMsg('');
+
+                // 🟢 เพิ่มเช็คเงื่อนไขบังคับกดยอมรับ เฉพาะกรณีที่เลือกเข้าร่วม
+                if (formData.attendance === 'เข้าร่วม' && !isAcknowledged) {
+                    setErrorMsg('กรุณากดติ๊กถูกที่ช่อง "รับทราบและยอมรับเงื่อนไข" ก่อนยืนยันครับ');
+                    setLoading(false);
+                    return;
+                }
+
                 const normalizedPhone = formData.phone.replace(/[\s-]/g, '');
                 if (!/^\d{9,10}$/.test(normalizedPhone)) {
                     setErrorMsg('กรุณาระบุเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 9-10 หลัก)');
@@ -148,6 +161,7 @@
                     });
                     setSubmitted(true);
                     setFormData({ name: '', nickname: '', company: '', phone: '', email: '', attendance: 'เข้าร่วม' });
+                    setIsAcknowledged(false); // 🟢 รีเซ็ตปุ่มรับทราบเมื่อส่งฟอร์มสำเร็จ
                 } catch (err) {
                     setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
                 }
@@ -198,7 +212,6 @@
                 XLSX.writeFile(wb, `รายงานลงทะเบียน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
             };
 
-            // --- หน้าจอแอดมิน ---
             if (user && !user.isAnonymous && view === 'admin') {
                 const totalRegistrations = records.length;
                 const attendingCount = records.filter(r => r.attendance === 'เข้าร่วม').length;
@@ -260,7 +273,6 @@
                 );
             }
 
-            // --- หน้าจอล็อกอินแอดมิน ---
             if (view === 'login') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 admin-gradient text-white">
@@ -278,7 +290,6 @@
                 );
             }
 
-            // --- หน้าแรก (Landing Page) ---
             if (view === 'landing') {
                 return (
                     <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
@@ -305,7 +316,6 @@
                                     <li className="flex items-start gap-3"><span className="text-lg">⏰</span> <div className="flex gap-1.5"><span className="font-bold text-slate-800">เวลา:</span> <div className="flex flex-col"><span>ลงทะเบียน 14.00 น.</span><span className="mt-0.5 font-semibold text-red-600">เริ่มประชุม 14.30 น.</span></div></div></li>
                                     <li className="flex items-start gap-3"><span className="text-lg">📍</span> <div><span className="font-bold text-slate-800">สถานที่:</span> ร้าน ณ คุณ</div></li>
                                     <li className="flex items-start gap-3"><span className="text-lg pt-0.5 leading-none">🎤</span> <div><span className="font-bold text-slate-800">วิทยากร:</span> คุณกฤตภาส ชีวชัชวาล (คุณกริต) <br/><span className="text-[13px] text-slate-500 mt-1 block leading-relaxed font-normal">ผู้จัดการอาวุโสฝ่ายพัฒนาธุรกิจ บริษัท MSIG สาขา หาดใหญ่</span></div></li>
-                                    {/* 🟢 อัปเดตรายละเอียดตามที่คุณอภิชิตต้องการล่าสุดครับ */}
                                     <li className="flex items-start gap-3"><span className="text-lg">💡</span> <div className="leading-relaxed"><span className="font-bold text-slate-800">รายละเอียด:</span> เรียนรู้วิธีการประเมินความเสี่ยงอัคคีภัย การเลือกซื้อประกันให้ครอบคลุม และ <span className="text-indigo-600 font-bold italic underline decoration-indigo-200">การเคลมแบบมืออาชีพ</span></div></li>
                                 </ul>
 
@@ -322,7 +332,6 @@
                 );
             }
 
-            // --- หน้าฟอร์มลงทะเบียน (หน้าที่ 2) ---
             return (
                 <div className="flex items-center justify-center p-4 pt-10 md:pt-20">
                     <div className="w-full max-w-[420px]">
@@ -356,6 +365,29 @@
                                             <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม'})} className={`py-4 rounded-2xl font-bold text-[16px] transition-all duration-300 ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-800 text-white shadow-sm scale-[1.02]' : 'bg-transparent text-slate-400 hover:text-slate-500'}`}>ไม่เข้าร่วม</button>
                                         </div>
                                     </div>
+
+                                    {/* 🟢 ส่วนหมายเหตุที่เพิ่มเข้ามาใหม่ (จะแสดงเฉพาะเมื่อลูกค้ากดเลือก 'เข้าร่วม' เท่านั้น) */}
+                                    {formData.attendance === 'เข้าร่วม' && (
+                                        <div className="mt-5 p-4 bg-red-50 border border-red-100 rounded-2xl animate-in fade-in zoom-in duration-300">
+                                            <p className="text-[13px] font-bold text-red-600 mb-1 flex items-center gap-1">
+                                                <span className="text-base">📌</span> หมายเหตุ
+                                            </p>
+                                            <p className="text-[12px] text-slate-600 leading-relaxed mb-3">
+                                                หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท <br/>(ค่าสั่งอาหารและเครื่องดื่มล่วงหน้า)
+                                            </p>
+                                            <label className="flex items-start gap-2 cursor-pointer group">
+                                                <input 
+                                                    type="checkbox" 
+                                                    required 
+                                                    className="mt-0.5 w-4 h-4 text-red-600 border-slate-300 rounded focus:ring-red-500 cursor-pointer"
+                                                    checked={isAcknowledged}
+                                                    onChange={(e) => setIsAcknowledged(e.target.checked)}
+                                                />
+                                                <span className="text-[13px] font-bold text-slate-700 group-hover:text-red-600 transition-colors">รับทราบและยอมรับเงื่อนไข</span>
+                                            </label>
+                                        </div>
+                                    )}
+
                                     <button type="submit" disabled={loading} className="w-full py-5 bg-[#dc2626] text-white rounded-[20px] font-black text-[18px] shadow-xl shadow-red-600/20 hover:bg-red-700 hover:-translate-y-0.5 transition-all mt-6 flex justify-center items-center h-16">
                                         {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : "ยืนยันการลงทะเบียน"}
                                     </button>
