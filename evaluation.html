@@ -246,19 +246,21 @@
                 const avgOverall = calcAvg('scoreOverall');
 
                 // ==========================================
-                // SHEET 1: EXECUTIVE DASHBOARD (PROFESSIONAL WITH REAL CHART)
+                // SHEET 1: EXECUTIVE DASHBOARD (PERFECT GRID ALIGNMENT)
                 // ==========================================
                 const dashSheet = workbook.addWorksheet('📊 Executive Dashboard', { views: [{ showGridLines: false }] });
+                
+                // กำหนดความสูงมาตรฐานให้กว้างขึ้นเพื่อให้อ่านง่าย
                 dashSheet.properties.defaultRowHeight = 25;
 
-                // กำหนดความกว้างคอลัมน์ให้เป๊ะ เพื่อไม่ให้เบี้ยว (Grid System)
+                // แก้ไขปัญหาบรรทัดบีบ: กำหนดความกว้างคอลัมน์ให้เพียงพอกับข้อความ (Grid System)
                 dashSheet.columns = [
-                    { width: 3 },  // A: Margin
-                    { width: 20 }, // B: KPI Label / Feedback Name
-                    { width: 20 }, // C: KPI Value / Feedback Text
-                    { width: 20 }, // D: Chart Area
-                    { width: 20 }, // E: Chart Area
-                    { width: 3 }   // F: Margin
+                    { width: 3 },   // A: Margin
+                    { width: 40 },  // B: KPI Label / Chart Left
+                    { width: 40 },  // C: KPI Value / Chart Right
+                    { width: 25 },  // D: Feedback Name
+                    { width: 60 },  // E: Feedback Text
+                    { width: 3 }    // F: Margin
                 ];
 
                 // 1. หัวกระดาษ (Header)
@@ -275,10 +277,10 @@
                 printDate.font = { name: 'Sarabun', size: 10, italic: true, color: { argb: 'FF64748B' } };
                 printDate.alignment = { vertical: 'middle', horizontal: 'right' };
 
-                // 2. KPI Boxes (กล่องสรุปข้อมูล)
+                // 2. KPI Boxes (กล่องสรุปข้อมูล) ปรับแก้ข้อความไม่ให้บีบ
                 dashSheet.mergeCells('B6:C8');
                 const kpi1 = dashSheet.getCell('B6');
-                kpi1.value = `👥 จำนวนผู้ประเมินทั้งหมด\n\n${totalEvals} ท่าน`;
+                kpi1.value = `👥 จำนวนผู้ประเมินทั้งหมด\n${totalEvals} ท่าน`;
                 kpi1.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FF1E293B' } };
                 kpi1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
                 kpi1.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
@@ -286,7 +288,7 @@
 
                 dashSheet.mergeCells('D6:E8');
                 const kpi2 = dashSheet.getCell('D6');
-                kpi2.value = `⭐ คะแนนความพึงพอใจโดยรวม\n\n${avgOverall} / 5.0`;
+                kpi2.value = `⭐ คะแนนความพึงพอใจโดยรวม\n${avgOverall} / 5.0`;
                 kpi2.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FF065F46' } };
                 kpi2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } };
                 kpi2.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
@@ -305,65 +307,72 @@
                 dashSheet.getCell('D10').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
                 dashSheet.getCell('D10').alignment = { vertical: 'middle', horizontal: 'center' };
 
-                // 4. แทรกรูปภาพกราฟ (ดึงกราฟจากหน้าเว็บมาใส่ Excel เลย)
+                // 4. สร้างกริดสำหรับรูปภาพและข้อเสนอแนะ (บังคับความสูง 5 บรรทัดให้เท่ากัน)
+                const feedbacks = evaluations.filter(e => e.suggestion && e.suggestion.trim() !== '').slice(0, 5);
+                let startRow = 11;
+                
+                for (let i = 0; i < 5; i++) {
+                    // กำหนดความสูงบรรทัดละ 65px (5 บรรทัด = 325px พอดีสำหรับกราฟ)
+                    dashSheet.getRow(startRow).height = 65; 
+                    
+                    const fb = feedbacks[i];
+                    if (fb) {
+                        dashSheet.getCell(`D${startRow}`).value = fb.name || 'ไม่ระบุชื่อ';
+                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FF334155' } };
+                        dashSheet.getCell(`D${startRow}`).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                        dashSheet.getCell(`D${startRow}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
+
+                        dashSheet.getCell(`E${startRow}`).value = fb.suggestion;
+                        dashSheet.getCell(`E${startRow}`).font = { name: 'Sarabun', size: 12, color: { argb: 'FF475569' } };
+                        dashSheet.getCell(`E${startRow}`).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                        dashSheet.getCell(`E${startRow}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                    } else {
+                        // ถ้าคนคอมเมนต์ไม่ถึง 5 คน ให้ใส่ช่องว่างเพื่อรักษาสัดส่วน
+                        dashSheet.getCell(`D${startRow}`).value = i === 0 ? '- ยังไม่มีข้อเสนอแนะ -' : '-';
+                        dashSheet.getCell(`D${startRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
+                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 12, color: { argb: 'FF94A3B8' } };
+                        dashSheet.getCell(`D${startRow}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
+
+                        dashSheet.getCell(`E${startRow}`).value = '';
+                        dashSheet.getCell(`E${startRow}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                    }
+                    startRow++;
+                }
+
+                // 5. แทรกรูปภาพกราฟ (ยึดติดกับมุมเซลล์เพื่อป้องกันการเลื่อน)
                 if (chartRef.current) {
                     const canvas = chartRef.current;
-                    // ดึงภาพจาก Canvas แบบ PNG พื้นฐานสีขาว
                     const base64Image = canvas.toDataURL('image/png', 1.0);
                     const imageId = workbook.addImage({
                         base64: base64Image,
                         extension: 'png',
                     });
-                    // แปะรูปลงใน Excel ในพื้นที่เซลล์ B12 ถึง C21
+                    
+                    // ใช้ระบบพิกัด tl (Top-Left) และ br (Bottom-Right) เพื่อตรึงภาพให้พอดีกับช่อง B11 ถึง C15 เสมอ
                     dashSheet.addImage(imageId, {
-                        tl: { col: 1, row: 11 }, // เริ่มที่มุมบนซ้ายของ B12 (index column=1, row=11)
-                        ext: { width: 400, height: 260 } // ขนาดรูปกราฟ
+                        tl: { col: 1.05, row: 10.1 }, // เริ่มเยื้องจากขอบบนซ้ายของ B11 นิดหน่อย (สวยงาม)
+                        br: { col: 2.95, row: 14.9 }  // จบที่ขอบล่างขวาของ C15 
                     });
                 }
 
-                // 5. ดึง Feedback ล่าสุด 5 อันดับ
-                const feedbacks = evaluations.filter(e => e.suggestion && e.suggestion.trim() !== '').slice(0, 5);
-                let startRow = 12;
-                if(feedbacks.length > 0) {
-                    feedbacks.forEach((fb) => {
-                        // ไม่ใช้ mergeCells ที่ซับซ้อน เพื่อป้องกันบรรทัดเบี้ยว
-                        dashSheet.getCell(`D${startRow}`).value = fb.name || 'ไม่ระบุชื่อ';
-                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 11, bold: true, color: { argb: 'FF334155' } };
-                        dashSheet.getCell(`D${startRow}`).alignment = { vertical: 'top', horizontal: 'left' };
-                        dashSheet.getCell(`D${startRow}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFF1F5F9'}} };
-
-                        dashSheet.getCell(`E${startRow}`).value = fb.suggestion;
-                        dashSheet.getCell(`E${startRow}`).font = { name: 'Sarabun', size: 11, color: { argb: 'FF475569' } };
-                        dashSheet.getCell(`E${startRow}`).alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
-                        dashSheet.getCell(`E${startRow}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFF1F5F9'}} };
-                        
-                        dashSheet.getRow(startRow).height = 45; // ให้พื้นที่ข้อความกว้างขึ้น
-                        startRow++;
-                    });
-                } else {
-                    dashSheet.mergeCells('D12:E13');
-                    dashSheet.getCell('D12').value = '- ยังไม่มีข้อเสนอแนะ -';
-                    dashSheet.getCell('D12').alignment = { vertical: 'middle', horizontal: 'center' };
-                    dashSheet.getCell('D12').border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
-                }
 
                 // ==========================================
                 // SHEET 2: ข้อมูลดิบ (RAW DATA)
                 // ==========================================
-                const worksheet = workbook.addWorksheet('📝 ข้อมูลดิบรายบุคคล');
+                const rawSheet = workbook.addWorksheet('📝 ข้อมูลดิบรายบุคคล');
 
-                worksheet.mergeCells('A1:G1');
-                const titleCell = worksheet.getCell('A1');
-                titleCell.value = 'ฐานข้อมูลผลแบบประเมินความพึงพอใจ: งานอบรมประกันอัคคีภัย';
-                titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
-                titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-                worksheet.getRow(1).height = 35;
+                rawSheet.mergeCells('A1:G1');
+                const rawTitleCell = rawSheet.getCell('A1');
+                rawTitleCell.value = 'ฐานข้อมูลผลแบบประเมินความพึงพอใจ: งานอบรมประกันอัคคีภัย';
+                rawTitleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+                rawTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
+                rawTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+                rawSheet.getRow(1).height = 35;
 
-                worksheet.addRow([]);
+                rawSheet.addRow([]);
 
                 const headers = ['ลำดับ', 'ผู้ประเมิน', 'เนื้อหา (5)', 'วิทยากร (5)', 'สถานที่ (5)', 'ภาพรวม (5)', 'ข้อเสนอแนะเพิ่มเติม'];
-                const headerRow = worksheet.addRow(headers);
+                const headerRow = rawSheet.addRow(headers);
                 headerRow.eachCell((cell) => {
                     cell.font = { name: 'Sarabun', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0284C7' } };
@@ -372,7 +381,7 @@
                 });
 
                 evaluations.forEach((r, index) => {
-                    const row = worksheet.addRow([
+                    const row = rawSheet.addRow([
                         index + 1, r.name || 'ไม่ประสงค์ออกนาม',
                         r.scoreContent, r.scoreSpeaker, r.scoreVenue, r.scoreOverall,
                         r.suggestion || '-'
@@ -386,7 +395,7 @@
                     });
                 });
 
-                worksheet.columns = [
+                rawSheet.columns = [
                     { width: 8 }, { width: 30 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 60 }
                 ];
 
