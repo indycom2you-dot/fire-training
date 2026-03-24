@@ -263,7 +263,79 @@
 
             const exportExcel = async () => {
                 const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('สรุปแบบประเมิน');
+
+                // --- แผ่นที่ 1: Dashboard สรุปผล (สร้างใหม่ให้ดูพรีเมียม) ---
+                const dashSheet = workbook.addWorksheet('📊 Dashboard สรุปผล', { views: [{ showGridLines: false }] });
+                
+                // คำนวณสถิติ
+                const total = evaluations.length;
+                const calcAvg = (key) => total > 0 ? (evaluations.reduce((sum, ev) => sum + ev[key], 0) / total).toFixed(2) : "0.00";
+                const avgOverall = calcAvg('scoreOverall');
+                const avgContent = calcAvg('scoreContent');
+                const avgSpeaker = calcAvg('scoreSpeaker');
+                const avgVenue = calcAvg('scoreVenue');
+
+                // หัวกระดาษ Dashboard
+                dashSheet.mergeCells('B2:H3');
+                const dashTitle = dashSheet.getCell('B2');
+                dashTitle.value = 'รายงานสรุปผลประเมินความพึงพอใจ (EXECUTIVE DASHBOARD)';
+                dashTitle.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+                dashTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+                dashTitle.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                // KPI 1: จำนวนผู้ตอบ
+                dashSheet.mergeCells('B5:D7');
+                const kpi1 = dashSheet.getCell('B5');
+                kpi1.value = `👥 จำนวนผู้ประเมินทั้งหมด\n\n${total} ท่าน`;
+                kpi1.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+                kpi1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                kpi1.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                kpi1.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thick', color:{argb:'FF3B82F6'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
+
+                // KPI 2: คะแนนรวม
+                dashSheet.mergeCells('F5:H7');
+                const kpi2 = dashSheet.getCell('F5');
+                kpi2.value = `⭐ คะแนนความพึงพอใจโดยรวม\n\n${avgOverall} / 5.0`;
+                kpi2.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+                kpi2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } };
+                kpi2.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                kpi2.border = { top: {style:'thin', color:{argb:'FFA7F3D0'}}, left: {style:'thin', color:{argb:'FFA7F3D0'}}, bottom: {style:'thick', color:{argb:'FF10B981'}}, right: {style:'thin', color:{argb:'FFA7F3D0'}} };
+
+                // หัวข้อคะแนนย่อย
+                dashSheet.mergeCells('B9:H9');
+                const subTitle = dashSheet.getCell('B9');
+                subTitle.value = 'รายละเอียดคะแนนเฉลี่ยรายหัวข้อ';
+                subTitle.font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+                subTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
+                subTitle.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                // สร้างฟังก์ชันตีกรอบคะแนนย่อย
+                const createBar = (row, label, score, color) => {
+                    dashSheet.mergeCells(`B${row}:E${row}`);
+                    dashSheet.getCell(`B${row}`).value = label;
+                    dashSheet.getCell(`B${row}`).font = { name: 'Sarabun', size: 12, bold: true };
+                    dashSheet.getCell(`B${row}`).alignment = { vertical: 'middle', horizontal: 'right' };
+                    dashSheet.getCell(`B${row}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                    dashSheet.getCell(`E${row}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
+
+                    dashSheet.mergeCells(`F${row}:H${row}`);
+                    dashSheet.getCell(`F${row}`).value = `${score} / 5.0`;
+                    dashSheet.getCell(`F${row}`).font = { name: 'Sarabun', size: 12, bold: true, color: { argb: color } };
+                    dashSheet.getCell(`F${row}`).alignment = { vertical: 'middle', horizontal: 'center' };
+                    dashSheet.getCell(`F${row}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                    dashSheet.getRow(row).height = 25;
+                };
+
+                createBar(10, '📚 ความมีประโยชน์ของเนื้อหาการอบรม :', avgContent, 'FF2563EB'); // Blue
+                createBar(11, '🎤 ความรู้และการถ่ายทอดของวิทยากร :', avgSpeaker, 'FFD97706'); // Amber
+                createBar(12, '🏢 ความเหมาะสมของสถานที่และอาหาร :', avgVenue, 'FFDB2777'); // Pink
+
+                // ปรับความกว้างคอลัมน์ Dashboard
+                dashSheet.columns = [ {width: 5}, {width: 15}, {width: 15}, {width: 15}, {width: 5}, {width: 15}, {width: 15}, {width: 15} ];
+
+
+                // --- แผ่นที่ 2: ข้อมูลดิบ (Raw Data) ---
+                const worksheet = workbook.addWorksheet('📝 ข้อมูลดิบ (Raw Data)');
 
                 worksheet.mergeCells('A1:G1');
                 const titleCell = worksheet.getCell('A1');
