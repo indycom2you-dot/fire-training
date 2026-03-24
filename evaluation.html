@@ -99,6 +99,18 @@
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
+                // เรียกใช้ Anonymous Auth ล่วงหน้าก่อนเริ่มคิวรี่เพื่อป้องกัน Permission Error 
+                const initAuth = async () => {
+                    if (!auth.currentUser) {
+                        try {
+                            await auth.signInAnonymously();
+                        } catch(e) {
+                            console.error("Auth init error:", e);
+                        }
+                    }
+                };
+                initAuth();
+
                 let unsubscribeData = null;
 
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
@@ -109,13 +121,18 @@
                     }
                     if (u && !u.isAnonymous) {
                         setView('admin');
-                        // สร้าง Collection ใหม่ชื่อ 'evaluations' เพื่อไม่ปนกับ 'registrations'
+                        
                         unsubscribeData = db.collection('evaluations')
                             .onSnapshot((snapshot) => {
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setEvaluations(items);
-                            }, (error) => console.error("Firestore Error:", error));
+                            }, (error) => {
+                                console.error("Firestore Error:", error);
+                                if (error.message.includes('permission')) {
+                                    setErrorMsg("ติดปัญหา Permission: กรุณาไปที่ Firebase Console -> Firestore -> Rules และตั้งค่าเป็น allow read, write: if true;");
+                                }
+                            });
                     } else {
                         setEvaluations([]);
                     }
@@ -188,6 +205,7 @@
                 setLoading(false);
             };
 
+            // 🟢 เพิ่มฟังก์ชัน handleSubmitEvaluation ที่หายไปกลับมาครับ
             const handleSubmitEvaluation = async (e) => {
                 e.preventDefault();
                 // เช็คว่าให้คะแนนครบทุกข้อไหม
@@ -211,9 +229,22 @@
                     setSubmitted(true);
                     setFormData({ name: '', scoreContent: 0, scoreSpeaker: 0, scoreVenue: 0, scoreOverall: 0, suggestion: '' });
                 } catch (err) {
-                    setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
+                    // ดักจับ Error แจ้งเตือนผู้ใช้ให้ไปแก้ Rules ใน Firebase
+                    if (err.message.includes('permission')) {
+                        setErrorMsg("ไม่สามารถส่งข้อมูลได้: โปรดตั้งค่า Firebase Rules ให้ถูกต้อง");
+                    } else {
+                        setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
+                    }
                 }
                 setLoading(false);
+            };
+
+            const handleDelete = async (id) => {
+                if (window.confirm("คุณอภิชิตต้องการลบข้อมูลแบบประเมินนี้ใช่หรือไม่?")) {
+                    try {
+                        await firebase.firestore().collection('evaluations').doc(id).delete();
+                    } catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
+                }
             };
 
             const exportExcel = async () => {
@@ -388,6 +419,7 @@
                             {/* Chart Card */}
                             <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-sm border border-slate-100 mb-8">
                                 <h3 className="text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-6">กราฟคะแนนเฉลี่ยรายหัวข้อ (เต็ม 5)</h3>
+                                {errorMsg && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{errorMsg}</div>}
                                 {evaluations.length > 0 ? (
                                     <div className="chart-container"><canvas ref={chartRef}></canvas></div>
                                 ) : (
@@ -416,21 +448,27 @@
                                                 <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase text-center">สถานที่</th>
                                                 <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase text-center">ภาพรวม</th>
                                                 <th className="py-4 px-6 text-[11px] font-extrabold text-slate-500 uppercase">ข้อเสนอแนะ</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-500 uppercase text-right">จัดการ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredRecords.map(r => (
-                                                <tr key={r.id} className="hover:bg-slate-50/60">
+                                                <tr key={r.id} className="hover:bg-slate-50/60 group transition-colors">
                                                     <td className="py-4 px-6 font-bold text-sm text-slate-800">{r.name || <span className="text-slate-400 italic">ไม่ประสงค์ออกนาม</span>}</td>
                                                     <td className="py-4 px-4 text-center font-bold text-blue-600">{r.scoreContent}</td>
                                                     <td className="py-4 px-4 text-center font-bold text-amber-500">{r.scoreSpeaker}</td>
                                                     <td className="py-4 px-4 text-center font-bold text-pink-500">{r.scoreVenue}</td>
                                                     <td className="py-4 px-4 text-center font-bold text-emerald-500">{r.scoreOverall}</td>
                                                     <td className="py-4 px-6 text-sm text-slate-600">{r.suggestion || '-'}</td>
+                                                    <td className="py-4 px-6 text-right">
+                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100">
+                                                            🗑️
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))}
                                             {filteredRecords.length === 0 && (
-                                                <tr><td colSpan="6" className="py-8 text-center text-slate-400 font-bold">ไม่พบข้อมูล</td></tr>
+                                                <tr><td colSpan="7" className="py-8 text-center text-slate-400 font-bold">ไม่พบข้อมูล</td></tr>
                                             )}
                                         </tbody>
                                     </table>
