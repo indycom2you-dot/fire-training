@@ -14,6 +14,9 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* ซ่อน scrollbar สำหรับเมนูแนวนอนแต่ยังเลื่อนได้ */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
@@ -42,7 +45,7 @@
         };
 
         const App = () => {
-            const [view, setView] = React.useState('landing'); // landing, form, success, login, admin
+            const [view, setView] = React.useState('landing'); 
             const [user, setUser] = React.useState(null);
             const [registrations, setRegistrations] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
@@ -51,7 +54,7 @@
             const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
-            // ฟอร์มเก็บข้อมูลแบบละเอียด
+            // ฟอร์มเก็บข้อมูล
             const [formData, setFormData] = React.useState({
                 name: '',
                 nickname: '',
@@ -59,6 +62,7 @@
                 email: '',
                 phone: '',
                 attendance: 'เข้าร่วม',
+                foodMenu: '', // ยกเลิก beverage/snack เปลี่ยนเป็นช่องเดียวให้ลูกค้าพิมพ์เอง
                 acceptedTerms: false
             });
 
@@ -97,10 +101,16 @@
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
-                // เช็คเงื่อนไขถ้าเข้าร่วมต้องติ๊กยอมรับ
-                if (formData.attendance === 'เข้าร่วม' && !formData.acceptedTerms) {
-                    setErrorMsg('กรุณากดยอมรับเงื่อนไขการเข้าร่วมอบรมครับ');
-                    return;
+                
+                if (formData.attendance === 'เข้าร่วม') {
+                    if (!formData.acceptedTerms) {
+                        setErrorMsg('กรุณากดยอมรับเงื่อนไขการเข้าร่วมอบรมครับ');
+                        return;
+                    }
+                    if (!formData.foodMenu || formData.foodMenu.trim() === '') {
+                        setErrorMsg('กรุณาระบุเมนูอาหารว่างหรือเครื่องดื่มที่ต้องการครับ');
+                        return;
+                    }
                 }
 
                 setLoading(true);
@@ -112,7 +122,7 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     setView('success');
-                    setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', acceptedTerms: false });
+                    setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false });
                 } catch (err) {
                     setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
                 }
@@ -144,9 +154,10 @@
             };
 
             const exportToCSV = () => {
-                const headers = ["ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท/หน่วยงาน", "อีเมล", "เบอร์โทรศัพท์", "สถานะ", "วันที่ลงทะเบียน"];
+                // อัปเดตส่วนของคอลัมน์ Excel ให้เป็นเมนูที่ระบุเอง
+                const headers = ["ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท/หน่วยงาน", "อีเมล", "เบอร์โทรศัพท์", "สถานะ", "เมนูอาหาร/เครื่องดื่ม", "วันที่ลงทะเบียน"];
                 const rows = registrations.map(r => [
-                    `"${r.name}"`, `"${r.nickname || '-'}"`, `"${r.company}"`, `"${r.email || '-'}"`, `"${r.phone}"`, `"${r.attendance}"`, 
+                    `"${r.name}"`, `"${r.nickname || '-'}"`, `"${r.company}"`, `"${r.email || '-'}"`, `"${r.phone}"`, `"${r.attendance}"`, `"${r.foodMenu || '-'}"`,
                     `"${r.createdAt?.toDate().toLocaleString('th-TH') || ''}"`
                 ]);
                 const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
@@ -162,7 +173,6 @@
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4">
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative">
-                            {/* Hero Image */}
                             <div className="h-56 w-full relative bg-slate-800">
                                 <img 
                                     src="https://images.unsplash.com/photo-1502877338535-766e1452684a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
@@ -176,7 +186,6 @@
                                 </div>
                             </div>
 
-                            {/* Content */}
                             <div className="p-6 md:p-8 relative z-10 -mt-6 bg-white rounded-t-[32px]">
                                 <h1 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2">
                                     ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม
@@ -208,15 +217,6 @@
                                         <div>
                                             <div className="font-bold text-slate-700 text-sm">วิทยากร: คุณณัฐพัตร์ เพ็ชรสุวรรณ (คุณวี)</div>
                                             <div className="text-xs text-slate-500 mt-0.5 font-bold">บริษัท CHUBB</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                        <div className="text-xl">💡</div>
-                                        <div>
-                                            <div className="font-bold text-slate-700 text-sm">รายละเอียด:</div>
-                                            <div className="text-sm text-slate-500 mt-1">
-                                                เจาะลึกแผนประกันรถยนต์ 2+ ที่ตอบโจทย์ความเสี่ยงในปัจจุบัน โดยเฉพาะ <span className="text-blue-600 font-bold italic">ความคุ้มครองน้ำท่วม</span> ที่กำลังเป็นปัญหาหลัก
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -256,37 +256,29 @@
                             {errorMsg && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100">{errorMsg}</div>}
 
                             <form onSubmit={handleSubmit} className="space-y-5">
-                                {/* 1. ชื่อ-นามสกุล */}
+                                {/* ข้อมูลส่วนตัว */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">ชื่อ - นามสกุล *</label>
                                     <input type="text" required placeholder="พิมพ์ชื่อและนามสกุล" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                 </div>
-
-                                {/* 2. ชื่อเล่น */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">ชื่อเล่น (ถ้ามี)</label>
                                     <input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
                                 </div>
-
-                                {/* 3. บริษัท/หน่วยงาน */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">บริษัท / หน่วยงาน *</label>
                                     <input type="text" required placeholder="ระบุชื่อหน่วยงาน" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
                                 </div>
-
-                                {/* 4. อีเมล */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">อีเมล (ถ้ามี)</label>
                                     <input type="email" placeholder="example@email.com" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                                 </div>
-
-                                {/* 5. เบอร์โทรศัพท์ */}
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">เบอร์โทรศัพท์ *</label>
                                     <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                                 </div>
 
-                                {/* 6. สถานะเข้าร่วม (Segmented Control แบบในรูป) */}
+                                {/* สถานะเข้าร่วม */}
                                 <div className="pt-2">
                                     <label className="block text-sm font-bold text-slate-700 mb-3 text-center">สะดวกเข้าอบรมหรือไม่</label>
                                     <div className="bg-slate-50 p-1.5 rounded-2xl flex border border-slate-100">
@@ -300,7 +292,7 @@
                                         <button 
                                             type="button" 
                                             onClick={() => {
-                                                setFormData({...formData, attendance: 'ไม่เข้าร่วม', acceptedTerms: false});
+                                                setFormData({...formData, attendance: 'ไม่เข้าร่วม', acceptedTerms: false, foodMenu: ''});
                                                 setErrorMsg('');
                                             }} 
                                             className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-white text-slate-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
@@ -310,31 +302,50 @@
                                     </div>
                                 </div>
 
-                                {/* 7. กล่องหมายเหตุ และ ยอมรับเงื่อนไข (แสดงเฉพาะตอนกดเข้าร่วม) */}
+                                {/* ช่องใส่เมนูอาหารและเงื่อนไข (แสดงเมื่อเข้าร่วม) */}
                                 {formData.attendance === 'เข้าร่วม' && (
-                                    <div className="bg-red-50 p-5 rounded-2xl border border-red-100 mt-4 animate-in fade-in duration-300">
-                                        <p className="text-sm text-slate-700 leading-relaxed mb-4">
-                                            <strong className="text-red-600">📌 หมายเหตุ</strong> <br/>
-                                            หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา <span className="font-bold text-red-600">ขอสงวนสิทธิ์เก็บเงิน 300 บาท</span> <br/>
-                                            <span className="text-xs text-slate-500">(ค่าสั่งอาหารและเครื่องดื่มล่วงหน้า)</span>
-                                        </p>
+                                    <div className="space-y-6 animate-in fade-in duration-300 mt-6 border-t border-slate-100 pt-6">
                                         
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <div className="relative flex items-center justify-center mt-0.5">
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-red-600 checked:border-red-600 transition-colors cursor-pointer"
-                                                    checked={formData.acceptedTerms}
-                                                    onChange={(e) => setFormData({...formData, acceptedTerms: e.target.checked})}
-                                                />
-                                                {formData.acceptedTerms && <span className="absolute text-white pointer-events-none text-xs">✓</span>}
-                                            </div>
-                                            <span className="text-sm font-bold text-slate-800 group-hover:text-red-600 transition-colors">รับทราบและยอมรับเงื่อนไข</span>
-                                        </label>
+                                        {/* ช่องให้ลูกค้าระบุเมนูเอง */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">🍽️ ระบุเมนู ขนม และ เครื่องดื่ม ที่ต้องการ <span className="text-red-500">*</span></label>
+                                            <input 
+                                                type="text" 
+                                                required 
+                                                placeholder="เช่น ชาไทยเย็น ไม่หวาน, อเมริกาโน่ + แซนด์วิช" 
+                                                className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                                value={formData.foodMenu} 
+                                                onChange={e => setFormData({...formData, foodMenu: e.target.value})} 
+                                            />
+                                            <p className="text-xs text-slate-400 mt-2 font-medium">*เพื่อความสะดวกในการเตรียมรับรอง โปรดระบุเมนูที่ท่านต้องการ</p>
+                                        </div>
+
+                                        {/* เงื่อนไขมัดจำ */}
+                                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-4 -mt-4 z-0"></div>
+                                            <p className="text-sm text-slate-700 leading-relaxed mb-4 relative z-10">
+                                                <strong className="text-red-600">📌 หมายเหตุ</strong> <br/>
+                                                หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา <span className="font-bold text-red-600">ขอสงวนสิทธิ์เก็บเงิน 300 บาท</span> <br/>
+                                                <span className="text-xs text-slate-500">(ค่าสั่งอาหารและเครื่องดื่มล่วงหน้า)</span>
+                                            </p>
+                                            
+                                            <label className="flex items-start gap-3 cursor-pointer group relative z-10">
+                                                <div className="relative flex items-center justify-center mt-0.5">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-red-600 checked:border-red-600 transition-colors cursor-pointer"
+                                                        checked={formData.acceptedTerms}
+                                                        onChange={(e) => setFormData({...formData, acceptedTerms: e.target.checked})}
+                                                    />
+                                                    {formData.acceptedTerms && <span className="absolute text-white pointer-events-none text-xs">✓</span>}
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-800 group-hover:text-red-600 transition-colors">รับทราบและยอมรับเงื่อนไข</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 )}
 
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold text-lg mt-6 shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] hover:bg-red-700 hover:-translate-y-1 transition-all">
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold text-lg mt-6 shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] hover:bg-red-700 hover:-translate-y-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                                     {loading ? "กำลังบันทึก..." : "ยืนยันการลงทะเบียน"}
                                 </button>
                             </form>
@@ -350,7 +361,7 @@
                         <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-2xl text-center border border-slate-100 animate-in zoom-in duration-300">
                             <div className="text-6xl mb-6">✅</div>
                             <h2 className="text-2xl font-black mb-2 text-slate-800">บันทึกข้อมูลเรียบร้อย</h2>
-                            <p className="text-slate-500 mb-8 font-medium">ระบบได้รับข้อมูลการลงทะเบียนของคุณแล้ว ขอบคุณครับ</p>
+                            <p className="text-slate-500 mb-8 font-medium">ระบบได้รับข้อมูลการลงทะเบียนและเมนูอาหารของคุณแล้ว ขอบคุณครับ</p>
                             <button onClick={() => setView('landing')} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">กลับหน้าแรก</button>
                         </div>
                     </div>
@@ -379,7 +390,7 @@
             // --- หน้า 5: Admin Dashboard ---
             if (view === 'admin' && user) {
                 return (
-                    <div className="min-h-screen bg-slate-50">
+                    <div className="min-h-screen bg-slate-50 pb-12">
                         <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
                             <div className="font-black text-red-600 text-lg">PPP Admin Dashboard</div>
                             <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-500">ออกจากระบบ</button>
@@ -391,19 +402,22 @@
                                     <h1 className="text-2xl font-black text-slate-800">รายชื่อผู้ลงทะเบียน (รถยนต์ 2+)</h1>
                                     <p className="text-slate-500 text-sm mt-1">ทั้งหมด {registrations.length} ท่าน</p>
                                 </div>
-                                <button onClick={exportToCSV} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all">📥 โหลดข้อมูลเป็น Excel</button>
+                                <button onClick={exportToCSV} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
+                                    📥 โหลดข้อมูลเป็น Excel
+                                </button>
                             </div>
 
                             <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left whitespace-nowrap">
-                                        <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+                                        <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                                             <tr>
                                                 <th className="px-6 py-4">ลำดับ</th>
                                                 <th className="px-6 py-4">ชื่อ-นามสกุล / ชื่อเล่น</th>
                                                 <th className="px-6 py-4">บริษัท</th>
                                                 <th className="px-6 py-4">เบอร์โทร / อีเมล</th>
                                                 <th className="px-6 py-4 text-center">สถานะ</th>
+                                                <th className="px-6 py-4">เมนูที่ต้องการ</th>
                                                 <th className="px-6 py-4 text-right">ลบ</th>
                                             </tr>
                                         </thead>
@@ -423,13 +437,22 @@
                                                     <td className="px-6 py-4 text-center">
                                                         <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>{r.attendance}</span>
                                                     </td>
+                                                    <td className="px-6 py-4">
+                                                        {r.attendance === 'เข้าร่วม' ? (
+                                                            <div className="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 whitespace-normal min-w-[150px]">
+                                                                {r.foodMenu || 'ไม่ระบุ'}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400">-</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button onClick={() => handleDelete(r.id)} className="text-slate-300 hover:text-red-500 font-bold text-lg">🗑️</button>
+                                                        <button onClick={() => handleDelete(r.id)} className="text-slate-300 hover:text-red-500 font-bold text-lg p-2 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
                                                     </td>
                                                 </tr>
                                             ))}
                                             {registrations.length === 0 && (
-                                                <tr><td colSpan="6" className="py-12 text-center text-slate-400 font-bold">ยังไม่มีข้อมูลผู้ลงทะเบียน</td></tr>
+                                                <tr><td colSpan="7" className="py-12 text-center text-slate-400 font-bold">ยังไม่มีข้อมูลผู้ลงทะเบียน</td></tr>
                                             )}
                                         </tbody>
                                     </table>
