@@ -17,7 +17,7 @@
 <body>
     <div id="root"></div>
 
-    <!-- Firebase SDK (Compat Version) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -27,11 +27,12 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- เพิ่มไลบรารีสร้างไฟล์ Excel -->
+    <!-- ไลบรารีสร้างไฟล์ Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script type="text/babel">
+        // รหัสเชื่อมต่อ FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -109,7 +110,6 @@
                         setLoading(false);
                         return;
                     }
-                    // -----------------------------
 
                     await db.collection('registrations').add({
                         ...formData,
@@ -165,7 +165,7 @@
                     views: [{ showGridLines: false, state: 'frozen', xSplit: 0, ySplit: 3 }] 
                 });
 
-                // 1. ตั้งค่าความกว้างคอลัมน์ (ขยายช่องอีเมลเป็น 28 ป้องกันตัวหนังสือซ้อนกัน)
+                // ตั้งค่าความกว้างคอลัมน์ (ขยายอีเมลเป็น 28 เพื่อให้ไม่ซ้อนกัน)
                 sheet.columns = [
                     { header: 'ลำดับ', key: 'index', width: 6 },
                     { header: 'ชื่อ-นามสกุล', key: 'name', width: 22 },
@@ -178,10 +178,8 @@
                     { header: 'วันที่บันทึก', key: 'date', width: 18 }
                 ];
 
-                // 2. ดันแถวหัวตารางลงไปอยู่บรรทัดที่ 3
                 sheet.spliceRows(1, 0, [], []);
 
-                // 3. ตกแต่งหัวกระดาษ
                 sheet.mergeCells('A1:I1');
                 const titleCell = sheet.getCell('A1');
                 titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม';
@@ -198,7 +196,6 @@
                 metaCell.alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
                 sheet.getRow(2).height = 18;
 
-                // 4. ตกแต่งหัวตาราง และเปิดระบบ Filter
                 const headerRow = sheet.getRow(3);
                 headerRow.eachCell((cell) => {
                     cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }; 
@@ -209,7 +206,6 @@
                 headerRow.height = 25; 
                 sheet.autoFilter = 'A3:I3'; 
 
-                // 5. ใส่ข้อมูลลูกค้า
                 registrations.forEach((r, idx) => {
                     const row = sheet.addRow({
                         index: idx + 1,
