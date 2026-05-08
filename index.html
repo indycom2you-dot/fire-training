@@ -152,14 +152,14 @@
                     views: [{ showGridLines: false, state: 'frozen', xSplit: 0, ySplit: 3 }] 
                 });
 
-                // 1. ตั้งค่าความกว้างคอลัมน์ (ปรับให้แคบลงอีกนิดให้พอดีกับฟอนต์ที่เล็กลง)
+                // 1. ตั้งค่าความกว้างคอลัมน์ (ขยายช่องอีเมลให้กว้างขึ้นป้องกันตัวอักษรซ้อนกัน)
                 sheet.columns = [
                     { header: 'ลำดับ', key: 'index', width: 6 },
                     { header: 'ชื่อ-นามสกุล', key: 'name', width: 20 },
                     { header: 'ชื่อเล่น', key: 'nickname', width: 10 },
                     { header: 'บริษัท / หน่วยงาน', key: 'company', width: 24 },
                     { header: 'เบอร์โทรศัพท์', key: 'phone', width: 14 },
-                    { header: 'อีเมล', key: 'email', width: 20 },
+                    { header: 'อีเมล', key: 'email', width: 28 },
                     { header: 'สถานะ', key: 'attendance', width: 10 },
                     { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 22 },
                     { header: 'วันที่บันทึก', key: 'date', width: 16 }
