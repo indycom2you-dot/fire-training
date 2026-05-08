@@ -149,17 +149,17 @@
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน', { views: [{ showGridLines: false }] });
 
-                // กำหนดความกว้างคอลัมน์ให้บาลานซ์
+                // กำหนดความกว้างคอลัมน์ให้กระชับขึ้น (พอดีหน้าจอ)
                 sheet.columns = [
-                    { header: 'ลำดับ', key: 'index', width: 8 },
-                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 28 },
-                    { header: 'ชื่อเล่น', key: 'nickname', width: 15 },
-                    { header: 'บริษัท / หน่วยงาน', key: 'company', width: 30 },
-                    { header: 'เบอร์โทรศัพท์', key: 'phone', width: 18 },
-                    { header: 'อีเมล', key: 'email', width: 25 },
-                    { header: 'สถานะ', key: 'attendance', width: 15 },
-                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 35 },
-                    { header: 'วันที่บันทึก', key: 'date', width: 20 }
+                    { header: 'ลำดับ', key: 'index', width: 6 },
+                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 22 },
+                    { header: 'ชื่อเล่น', key: 'nickname', width: 12 },
+                    { header: 'บริษัท / หน่วยงาน', key: 'company', width: 25 },
+                    { header: 'เบอร์โทรศัพท์', key: 'phone', width: 15 },
+                    { header: 'อีเมล', key: 'email', width: 22 },
+                    { header: 'สถานะ', key: 'attendance', width: 10 },
+                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 25 },
+                    { header: 'วันที่บันทึก', key: 'date', width: 18 }
                 ];
 
                 // ตกแต่งหัวตาราง (Header)
