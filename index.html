@@ -27,6 +27,10 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- เพิ่มไลบรารีสร้างไฟล์ Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script type="text/babel">
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
@@ -136,18 +140,76 @@
                 }
             };
 
-            const exportToCSV = () => {
-                const headers = ["ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท", "อีเมล", "โทร", "สถานะ", "เมนู", "วันที่"];
-                const rows = registrations.map(r => [
-                    `"${r.name}"`, `"${r.nickname || '-'}"`, `"${r.company}"`, `"${r.email || '-'}"`, `"${r.phone}"`, `"${r.attendance}"`, `"${r.foodMenu || '-'}"`,
-                    `"${r.createdAt?.toDate().toLocaleString('th-TH') || ''}"`
-                ]);
-                const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `รายชื่อ_รถยนต์2พลัส.csv`;
-                link.click();
+            const exportExcel = async () => {
+                if (registrations.length === 0) {
+                    alert("ไม่มีข้อมูลให้ Export ครับ");
+                    return;
+                }
+                
+                const workbook = new ExcelJS.Workbook();
+                const sheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน', { views: [{ showGridLines: false }] });
+
+                // กำหนดความกว้างคอลัมน์ให้บาลานซ์
+                sheet.columns = [
+                    { header: 'ลำดับ', key: 'index', width: 8 },
+                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 28 },
+                    { header: 'ชื่อเล่น', key: 'nickname', width: 15 },
+                    { header: 'บริษัท / หน่วยงาน', key: 'company', width: 30 },
+                    { header: 'เบอร์โทรศัพท์', key: 'phone', width: 18 },
+                    { header: 'อีเมล', key: 'email', width: 25 },
+                    { header: 'สถานะ', key: 'attendance', width: 15 },
+                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 35 },
+                    { header: 'วันที่บันทึก', key: 'date', width: 20 }
+                ];
+
+                // ตกแต่งหัวตาราง (Header)
+                const headerRow = sheet.getRow(1);
+                headerRow.eachCell((cell) => {
+                    cell.font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; // พื้นหลังสีแดง
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+                headerRow.height = 30;
+
+                // ใส่ข้อมูลลงในแถว
+                registrations.forEach((r, idx) => {
+                    const row = sheet.addRow({
+                        index: idx + 1,
+                        name: r.name,
+                        nickname: r.nickname || '-',
+                        company: r.company,
+                        phone: r.phone,
+                        email: r.email || '-',
+                        attendance: r.attendance,
+                        foodMenu: r.foodMenu || '-',
+                        date: r.createdAt?.toDate().toLocaleString('th-TH') || '-'
+                    });
+
+                    // ตกแต่งแถวข้อมูล (Data)
+                    row.eachCell((cell, colNumber) => {
+                        cell.font = { name: 'Sarabun', size: 11 };
+                        cell.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                        
+                        // จัดกึ่งกลางให้เฉพาะคอลัมน์ ลำดับ, ชื่อเล่น, โทร, สถานะ, วันที่
+                        if ([1, 3, 5, 7, 9].includes(colNumber)) {
+                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        } else {
+                            cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+                        }
+                        
+                        // สลับสีแถวพื้นหลัง
+                        if (idx % 2 === 1) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                        }
+                    });
+                    row.height = 25;
+                });
+
+                // สร้างไฟล์และดาวน์โหลด
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, `รายชื่อลงทะเบียน_รถยนต์2พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
             // --- ส่วนที่ 1: หน้าแรก (Landing) ---
@@ -328,7 +390,7 @@
                                     <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
                                     <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "ประกันรถยนต์ 2+"</p>
                                 </div>
-                                <button onClick={exportToCSV} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1 w-full md:w-auto">
+                                <button onClick={exportExcel} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1 w-full md:w-auto">
                                     <span className="text-lg">📥</span> โหลด Excel
                                 </button>
                             </div>
