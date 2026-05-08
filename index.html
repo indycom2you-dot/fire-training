@@ -9,20 +9,15 @@
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* ซ่อน scrollbar สำหรับเมนูแนวนอนแต่ยังเลื่อนได้ */
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -33,7 +28,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
-        // รหัสเชื่อมต่อ FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -50,11 +44,9 @@
             const [registrations, setRegistrations] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState('');
-            
             const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
-            // ฟอร์มเก็บข้อมูล
             const [formData, setFormData] = React.useState({
                 name: '',
                 nickname: '',
@@ -62,7 +54,7 @@
                 email: '',
                 phone: '',
                 attendance: 'เข้าร่วม',
-                foodMenu: '', // ยกเลิก beverage/snack เปลี่ยนเป็นช่องเดียวให้ลูกค้าพิมพ์เอง
+                foodMenu: '',
                 acceptedTerms: false
             });
 
@@ -79,7 +71,6 @@
                 initAuth();
 
                 let unsubscribeData = null;
-
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
                     setUser(u);
                     if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
@@ -90,72 +81,42 @@
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setRegistrations(items);
-                            }, (error) => console.error("Firestore Error:", error));
-                    } else {
-                        setRegistrations([]);
+                            });
                     }
                 });
-
                 return () => { unsubscribeAuth(); if (unsubscribeData) unsubscribeData(); };
             }, []);
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
-                
                 if (formData.attendance === 'เข้าร่วม') {
-                    if (!formData.acceptedTerms) {
-                        setErrorMsg('กรุณากดยอมรับเงื่อนไขการเข้าร่วมอบรมครับ');
-                        return;
-                    }
-                    if (!formData.foodMenu || formData.foodMenu.trim() === '') {
-                        setErrorMsg('กรุณาระบุเมนูอาหารว่างหรือเครื่องดื่มที่ต้องการครับ');
-                        return;
-                    }
+                    if (!formData.acceptedTerms) { setErrorMsg('กรุณากดยอมรับเงื่อนไขครับ'); return; }
+                    if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาระบุเมนู ขนม และ เครื่องดื่ม ครับ'); return; }
                 }
-
                 setLoading(true);
-                setErrorMsg('');
                 try {
-                    const db = firebase.firestore();
-                    await db.collection('registrations').add({
+                    await firebase.firestore().collection('registrations').add({
                         ...formData,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     setView('success');
                     setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false });
-                } catch (err) {
-                    setErrorMsg("เกิดข้อผิดพลาด: " + err.message);
-                }
+                } catch (err) { setErrorMsg("เกิดข้อผิดพลาด: " + err.message); }
                 setLoading(false);
             };
 
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
-                setLoading(true); setErrorMsg('');
+                setLoading(true);
                 try {
                     const loginEmail = username.includes('@') ? username : `${username}@ppp.com`;
                     await firebase.auth().signInWithEmailAndPassword(loginEmail, password);
-                } catch (err) { setErrorMsg("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้องครับ"); }
+                } catch (err) { setErrorMsg("ข้อมูลไม่ถูกต้อง"); }
                 setLoading(false);
             };
 
-            const handleLogout = async () => {
-                try {
-                    await firebase.auth().signOut();
-                    setView('landing'); setUsername(''); setPassword('');
-                } catch (err) { console.error("Logout Error:", err); }
-            };
-
-            const handleDelete = async (id) => {
-                if (window.confirm("ต้องการลบรายชื่อนี้ใช่หรือไม่?")) {
-                    try { await firebase.firestore().collection('registrations').doc(id).delete(); } 
-                    catch (err) { alert("ลบไม่สำเร็จ: " + err.message); }
-                }
-            };
-
             const exportToCSV = () => {
-                // อัปเดตส่วนของคอลัมน์ Excel ให้เป็นเมนูที่ระบุเอง
-                const headers = ["ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท/หน่วยงาน", "อีเมล", "เบอร์โทรศัพท์", "สถานะ", "เมนูอาหาร/เครื่องดื่ม", "วันที่ลงทะเบียน"];
+                const headers = ["ชื่อ-นามสกุล", "ชื่อเล่น", "บริษัท", "อีเมล", "โทร", "สถานะ", "เมนู", "วันที่"];
                 const rows = registrations.map(r => [
                     `"${r.name}"`, `"${r.nickname || '-'}"`, `"${r.company}"`, `"${r.email || '-'}"`, `"${r.phone}"`, `"${r.attendance}"`, `"${r.foodMenu || '-'}"`,
                     `"${r.createdAt?.toDate().toLocaleString('th-TH') || ''}"`
@@ -164,30 +125,21 @@
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob);
-                link.download = `รายชื่อลงทะเบียน_รถยนต์2พลัส_${new Date().toISOString().slice(0,10)}.csv`;
+                link.download = `รายชื่อ_รถยนต์2พลัส.csv`;
                 link.click();
             };
 
-            // --- หน้า 1: Landing Page (หน้าปก) ---
             if (view === 'landing') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4">
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative">
                             <div className="h-56 w-full relative bg-slate-800">
-                                <img 
-                                    src="./cover.png" 
-                                    alt="รถยนต์ลุยน้ำท่วม" 
-                                    className="w-full h-full object-cover"
-                                />
+                                <img src="./cover.png" alt="Cover" className="w-full h-full object-cover" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent"></div>
                             </div>
-
                             <div className="p-6 md:p-8 relative z-10 -mt-6 bg-white rounded-t-[32px]">
-                                <h1 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2">
-                                    ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม
-                                </h1>
+                                <h1 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2">ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม</h1>
                                 <p className="text-red-600 font-bold text-lg mb-6">เน้นความคุ้มครองน้ำท่วม ในราคาสุดคุ้ม</p>
-
                                 <div className="space-y-4 mb-8">
                                     <div className="flex items-start gap-3">
                                         <div className="text-xl shrink-0 mt-0.5">🗓️</div>
@@ -196,52 +148,48 @@
                                             <div className="font-medium text-slate-600">12 พฤษภาคม 2569</div>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-3 text-sm">
                                         <div className="text-xl shrink-0 mt-0.5">⏰</div>
-                                        <div className="text-sm flex w-full">
+                                        <div className="flex w-full">
                                             <div className="font-bold text-slate-800 w-[80px] shrink-0">เวลา:</div>
                                             <div className="flex flex-col">
                                                 <span className="font-medium text-slate-600">ลงทะเบียน 10.00 น.</span>
-                                                <span className="font-bold text-red-600 mt-0.5">เริ่มประชุม 10.30 น.</span>
+                                                <span className="font-bold text-red-600">เริ่มประชุม 10.30 น.</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-3 text-sm">
                                         <div className="text-xl shrink-0 mt-0.5">📍</div>
-                                        <div className="text-sm flex w-full">
+                                        <div className="flex w-full">
                                             <div className="font-bold text-slate-800 w-[80px] shrink-0">สถานที่:</div>
                                             <div className="font-medium text-slate-600">ร้าน ณ คุณ</div>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-3 text-sm">
                                         <div className="text-xl shrink-0 mt-0.5">🎤</div>
-                                        <div className="text-sm flex w-full">
+                                        <div className="flex w-full">
                                             <div className="font-bold text-slate-800 w-[80px] shrink-0">วิทยากร:</div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-800">คุณณัฐพัตร์ เพ็ชรสุวรรณ (คุณวี)</span>
-                                                <span className="text-xs font-bold text-slate-500 mt-0.5">บริษัท CHUBB</span>
+                                            <div className="flex flex-col text-slate-800">
+                                                <span className="font-bold">คุณณัฐพัตร์ เพ็ชรสุวรรณ (คุณวี)</span>
+                                                <span className="text-[11.5px] font-bold text-slate-500 mt-0.5 leading-snug">
+                                                    Hatyai Independent Distribution Partners Manager <br/> 
+                                                    บริษัท CHUBB
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-3 text-sm pt-2">
                                         <div className="text-xl shrink-0 mt-0.5">💡</div>
-                                        <div className="text-sm flex w-full">
+                                        <div className="flex w-full flex-col">
                                             <div className="font-bold text-slate-800 w-[80px] shrink-0">รายละเอียด:</div>
-                                            <div className="font-medium text-slate-600 leading-relaxed text-justify">
+                                            <div className="font-medium text-slate-600 leading-relaxed text-justify mt-1">
                                                 เจาะลึกแผนประกันรถยนต์ 2+ ที่ตอบโจทย์ความเสี่ยงในปัจจุบัน โดยเฉพาะ <span className="text-blue-600 font-bold italic">ความคุ้มครองน้ำท่วม</span> ที่กำลังเป็นปัญหาหลัก พร้อมเทคนิคการเลือกซื้อในราคาสุดคุ้ม
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <button 
-                                    onClick={() => setView('form')}
-                                    className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold text-lg shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] hover:bg-red-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
-                                >
-                                    ลงทะเบียนเข้าร่วมอบรม 👉
-                                </button>
+                                <button onClick={() => setView('form')} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-red-700 hover:-translate-y-1 transition-all">ลงทะเบียนเข้าร่วมอบรม 👉</button>
                             </div>
-
                             <div className="py-4 text-center border-t border-slate-100 bg-slate-50">
                                 <button onClick={() => setView('login')} className="text-[10px] font-bold tracking-widest text-slate-300 hover:text-slate-500 uppercase">Secure Admin Access</button>
                             </div>
@@ -250,231 +198,108 @@
                 );
             }
 
-            // --- หน้า 2: Form (หน้ากรอกข้อมูลละเอียด) ---
             if (view === 'form') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 py-10">
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden p-6 md:p-8 animate-in slide-in-from-right-4 duration-300">
-                            
-                            <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1 mb-6">
-                                ← ย้อนกลับ
-                            </button>
-
+                            <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1">← ย้อนกลับ</button>
                             <div className="text-center mb-8">
                                 <h2 className="text-2xl font-black text-slate-800 mb-1">ลงทะเบียนอบรม</h2>
                                 <p className="text-red-600 font-bold text-sm">"ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม"</p>
-                                <p className="text-xs text-slate-400 mt-3 font-bold">จัดโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                             </div>
-
                             {errorMsg && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100">{errorMsg}</div>}
-
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                {/* ข้อมูลส่วนตัว */}
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">ชื่อ - นามสกุล *</label>
-                                    <input type="text" required placeholder="พิมพ์ชื่อและนามสกุล" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">ชื่อเล่น (ถ้ามี)</label>
-                                    <input type="text" placeholder="ระบุชื่อเล่น" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">บริษัท / หน่วยงาน *</label>
-                                    <input type="text" required placeholder="ระบุชื่อหน่วยงาน" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">อีเมล (ถ้ามี)</label>
-                                    <input type="email" placeholder="example@email.com" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">เบอร์โทรศัพท์ *</label>
-                                    <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <input type="text" required placeholder="ชื่อ - นามสกุล *" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <input type="text" placeholder="ชื่อเล่น (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
+                                <input type="text" required placeholder="บริษัท / หน่วยงาน *" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                <input type="email" placeholder="อีเมล (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                <input type="tel" required placeholder="เบอร์โทรศัพท์ *" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                
+                                <div className="bg-slate-50 p-1.5 rounded-2xl flex border border-slate-100 mt-4">
+                                    <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm border border-slate-200' : 'text-slate-500'}`}>เข้าร่วม</button>
+                                    <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม', foodMenu: '', acceptedTerms: false})} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-white text-slate-700 shadow-sm border border-slate-200' : 'text-slate-500'}`}>ไม่เข้าร่วม</button>
                                 </div>
 
-                                {/* สถานะเข้าร่วม */}
-                                <div className="pt-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-3 text-center">สะดวกเข้าอบรมหรือไม่</label>
-                                    <div className="bg-slate-50 p-1.5 rounded-2xl flex border border-slate-100">
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} 
-                                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            เข้าร่วม
-                                        </button>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => {
-                                                setFormData({...formData, attendance: 'ไม่เข้าร่วม', acceptedTerms: false, foodMenu: ''});
-                                                setErrorMsg('');
-                                            }} 
-                                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-white text-slate-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            ไม่เข้าร่วม
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* ช่องใส่เมนูอาหารและเงื่อนไข (แสดงเมื่อเข้าร่วม) */}
                                 {formData.attendance === 'เข้าร่วม' && (
-                                    <div className="space-y-6 animate-in fade-in duration-300 mt-6 border-t border-slate-100 pt-6">
-                                        
-                                        {/* ช่องให้ลูกค้าระบุเมนูเอง */}
+                                    <div className="space-y-4 animate-in fade-in pt-4 border-t border-slate-100 mt-4">
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">🍽️ ระบุเมนู ขนม และ เครื่องดื่ม ที่ต้องการ <span className="text-red-500">*</span></label>
-                                            <input 
-                                                type="text" 
-                                                required 
-                                                placeholder="เช่น ชาไทยเย็น ไม่หวาน, อเมริกาโน่ + แซนด์วิช" 
-                                                className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                                value={formData.foodMenu} 
-                                                onChange={e => setFormData({...formData, foodMenu: e.target.value})} 
-                                            />
-                                            <p className="text-xs text-slate-400 mt-2 font-medium">*เพื่อความสะดวกในการเตรียมรับรอง โปรดระบุเมนูที่ท่านต้องการ</p>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">🍽️ ระบุเมนู ขนม และ เครื่องดื่ม ที่ต้องการ *</label>
+                                            <input type="text" required placeholder="เช่น ชาไทยเย็น, กาแฟ + แซนด์วิช" className="w-full px-5 py-3.5 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all" value={formData.foodMenu} onChange={e => setFormData({...formData, foodMenu: e.target.value})} />
                                         </div>
-
-                                        {/* เงื่อนไขมัดจำ */}
-                                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-4 -mt-4 z-0"></div>
-                                            <p className="text-sm text-slate-700 leading-relaxed mb-4 relative z-10">
-                                                <strong className="text-red-600">📌 หมายเหตุ</strong> <br/>
-                                                หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา <span className="font-bold text-red-600">ขอสงวนสิทธิ์เก็บเงิน 300 บาท</span> <br/>
-                                                <span className="text-xs text-slate-500">(ค่าสั่งอาหารและเครื่องดื่มล่วงหน้า)</span>
-                                            </p>
-                                            
-                                            <label className="flex items-start gap-3 cursor-pointer group relative z-10">
-                                                <div className="relative flex items-center justify-center mt-0.5">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-red-600 checked:border-red-600 transition-colors cursor-pointer"
-                                                        checked={formData.acceptedTerms}
-                                                        onChange={(e) => setFormData({...formData, acceptedTerms: e.target.checked})}
-                                                    />
-                                                    {formData.acceptedTerms && <span className="absolute text-white pointer-events-none text-xs">✓</span>}
-                                                </div>
+                                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100">
+                                            <p className="text-sm text-slate-700 mb-4"><strong className="text-red-600">📌 หมายเหตุ:</strong> หากลงทะเบียนยืนยันแล้วไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท</p>
+                                            <label className="flex items-center gap-3 cursor-pointer group">
+                                                <input type="checkbox" className="w-5 h-5 rounded accent-red-600 cursor-pointer" checked={formData.acceptedTerms} onChange={e => setFormData({...formData, acceptedTerms: e.target.checked})} />
                                                 <span className="text-sm font-bold text-slate-800 group-hover:text-red-600 transition-colors">รับทราบและยอมรับเงื่อนไข</span>
                                             </label>
                                         </div>
                                     </div>
                                 )}
-
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-[#dc2626] text-white rounded-2xl font-bold text-lg mt-6 shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] hover:bg-red-700 hover:-translate-y-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-                                    {loading ? "กำลังบันทึก..." : "ยืนยันการลงทะเบียน"}
-                                </button>
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold text-lg mt-6 shadow-lg hover:bg-red-700 transition-all disabled:opacity-70">{loading ? "กำลังบันทึก..." : "ยืนยันการลงทะเบียน"}</button>
                             </form>
                         </div>
                     </div>
                 );
             }
 
-            // --- หน้า 3: Success ---
-            if (view === 'success') {
-                return (
-                    <div className="min-h-screen flex items-center justify-center p-4">
-                        <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-2xl text-center border border-slate-100 animate-in zoom-in duration-300">
-                            <div className="text-6xl mb-6">✅</div>
-                            <h2 className="text-2xl font-black mb-2 text-slate-800">บันทึกข้อมูลเรียบร้อย</h2>
-                            <p className="text-slate-500 mb-8 font-medium">ระบบได้รับข้อมูลการลงทะเบียนและเมนูอาหารของคุณแล้ว ขอบคุณครับ</p>
-                            <button onClick={() => setView('landing')} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">กลับหน้าแรก</button>
+            if (view === 'success') return (
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-2xl text-center">
+                        <div className="text-6xl mb-6">✅</div>
+                        <h2 className="text-2xl font-black mb-2 text-slate-800">บันทึกข้อมูลเรียบร้อย</h2>
+                        <button onClick={() => setView('landing')} className="w-full py-4 bg-slate-100 rounded-xl font-bold mt-8">กลับหน้าแรก</button>
+                    </div>
+                </div>
+            );
+
+            if (view === 'login') return (
+                <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+                    <div className="w-full max-w-sm bg-white p-8 rounded-[32px] shadow-2xl text-center">
+                        <h2 className="text-2xl font-bold mb-6">Admin Login</h2>
+                        <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
+                            <input type="text" placeholder="Username" className="w-full px-5 py-4 rounded-xl border bg-slate-50 outline-none focus:border-red-500" value={username} onChange={e => setUsername(e.target.value)} />
+                            <input type="password" placeholder="Password" className="w-full px-5 py-4 rounded-xl border bg-slate-50 outline-none focus:border-red-500" value={password} onChange={e => setPassword(e.target.value)} />
+                            <button type="submit" className="w-full py-4 bg-red-600 text-white rounded-xl font-bold">เข้าสู่ระบบ</button>
+                            <button type="button" onClick={() => setView('landing')} className="w-full text-slate-400 text-sm mt-4">กลับหน้าหลัก</button>
+                        </form>
+                    </div>
+                </div>
+            );
+
+            if (view === 'admin') return (
+                <div className="min-h-screen bg-slate-50">
+                    <nav className="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+                        <div className="font-black text-red-600">PPP Admin</div>
+                        <button onClick={() => firebase.auth().signOut()} className="text-sm font-bold text-slate-500">ออกจากระบบ</button>
+                    </nav>
+                    <div className="max-w-7xl mx-auto px-4 py-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-xl font-black">รายชื่อผู้ลงทะเบียน ({registrations.length})</h1>
+                            <button onClick={exportToCSV} className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold">📥 โหลด Excel</button>
+                        </div>
+                        <div className="bg-white rounded-2xl shadow overflow-hidden overflow-x-auto border border-slate-200">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase">
+                                    <tr>
+                                        <th className="px-4 py-4">ชื่อ</th><th className="px-4 py-4">บริษัท</th><th className="px-4 py-4">โทร</th><th className="px-4 py-4 text-center">สถานะ</th><th className="px-4 py-4">เมนู</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y text-sm">
+                                    {registrations.map(r => (
+                                        <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-4 py-4 font-bold">{r.name} <span className="text-xs font-normal">({r.nickname || '-'})</span></td>
+                                            <td className="px-4 py-4 text-slate-600">{r.company}</td>
+                                            <td className="px-4 py-4">{r.phone}</td>
+                                            <td className="px-4 py-4 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-400'}`}>{r.attendance}</span></td>
+                                            <td className="px-4 py-4 text-indigo-700 font-bold">{r.foodMenu || '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                );
-            }
-
-            // --- หน้า 4: Login ---
-            if (view === 'login') {
-                return (
-                    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-                        <div className="w-full max-w-sm bg-white p-8 rounded-[32px] shadow-2xl">
-                            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🔐</div>
-                            <h2 className="text-2xl font-bold mb-6 text-center text-slate-800">Admin Login</h2>
-                            {errorMsg && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold text-center">{errorMsg}</div>}
-                            <form onSubmit={handleAdminLogin} className="space-y-4">
-                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:border-red-500 bg-slate-50" value={username} onChange={e => setUsername(e.target.value)} />
-                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:border-red-500 bg-slate-50" value={password} onChange={e => setPassword(e.target.value)} />
-                                <button type="submit" className="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg hover:bg-red-700 transition-all">เข้าสู่ระบบ</button>
-                                <button type="button" onClick={() => setView('landing')} className="w-full text-slate-400 hover:text-slate-600 text-sm mt-2">← กลับหน้าหลัก</button>
-                            </form>
-                        </div>
-                    </div>
-                );
-            }
-
-            // --- หน้า 5: Admin Dashboard ---
-            if (view === 'admin' && user) {
-                return (
-                    <div className="min-h-screen bg-slate-50 pb-12">
-                        <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
-                            <div className="font-black text-red-600 text-lg">PPP Admin Dashboard</div>
-                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-500">ออกจากระบบ</button>
-                        </nav>
-
-                        <div className="max-w-7xl mx-auto px-4 py-8">
-                            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                                <div>
-                                    <h1 className="text-2xl font-black text-slate-800">รายชื่อผู้ลงทะเบียน (รถยนต์ 2+)</h1>
-                                    <p className="text-slate-500 text-sm mt-1">ทั้งหมด {registrations.length} ท่าน</p>
-                                </div>
-                                <button onClick={exportToCSV} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
-                                    📥 โหลดข้อมูลเป็น Excel
-                                </button>
-                            </div>
-
-                            <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left whitespace-nowrap">
-                                        <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                            <tr>
-                                                <th className="px-6 py-4">ลำดับ</th>
-                                                <th className="px-6 py-4">ชื่อ-นามสกุล / ชื่อเล่น</th>
-                                                <th className="px-6 py-4">บริษัท</th>
-                                                <th className="px-6 py-4">เบอร์โทร / อีเมล</th>
-                                                <th className="px-6 py-4 text-center">สถานะ</th>
-                                                <th className="px-6 py-4">เมนูที่ต้องการ</th>
-                                                <th className="px-6 py-4 text-right">ลบ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {registrations.map((r, i) => (
-                                                <tr key={r.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4 text-slate-400 font-bold">{i + 1}</td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-800">{r.name}</div>
-                                                        <div className="text-xs text-slate-500">{r.nickname ? `(${r.nickname})` : '-'}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-slate-600 font-medium">{r.company}</td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-700">{r.phone}</div>
-                                                        <div className="text-xs text-slate-500">{r.email || '-'}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>{r.attendance}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {r.attendance === 'เข้าร่วม' ? (
-                                                            <div className="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 whitespace-normal min-w-[150px]">
-                                                                {r.foodMenu || 'ไม่ระบุ'}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-xs text-slate-400">-</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button onClick={() => handleDelete(r.id)} className="text-slate-300 hover:text-red-500 font-bold text-lg p-2 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {registrations.length === 0 && (
-                                                <tr><td colSpan="7" className="py-12 text-center text-slate-400 font-bold">ยังไม่มีข้อมูลผู้ลงทะเบียน</td></tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
+                </div>
+            );
             return null;
         };
 
