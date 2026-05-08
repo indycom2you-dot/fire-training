@@ -98,6 +98,7 @@
                     if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาระบุเมนู ขนม และ เครื่องดื่ม ครับ'); return; }
                 }
                 setLoading(true);
+                setErrorMsg('');
                 try {
                     const db = firebase.firestore();
                     
@@ -116,18 +117,31 @@
                     });
                     setView('success');
                     setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false });
-                } catch (err) { setErrorMsg("เกิดข้อผิดพลาด: " + err.message); }
+                } catch (err) { setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง"); }
                 setLoading(false);
             };
 
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true);
+                setErrorMsg('');
                 try {
                     const loginEmail = username.includes('@') ? username : `${username}@ppp.com`;
                     await firebase.auth().signInWithEmailAndPassword(loginEmail, password);
                 } catch (err) { setErrorMsg("ข้อมูลไม่ถูกต้อง"); }
                 setLoading(false);
+            };
+
+            const handleLogout = async () => {
+                try {
+                    await firebase.auth().signOut();
+                    setView('landing'); 
+                    setUsername('');
+                    setPassword('');
+                    await firebase.auth().signInAnonymously(); 
+                } catch (err) {
+                    console.error("Logout Error:", err);
+                }
             };
 
             const handleDelete = async (id) => {
@@ -148,53 +162,52 @@
                 
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน', { 
-                    // แช่แข็ง 3 แถวบนสุด (Freeze Panes) ให้หัวตารางตามไปทุกหน้า
                     views: [{ showGridLines: false, state: 'frozen', xSplit: 0, ySplit: 3 }] 
                 });
 
-                // 1. ตั้งค่าความกว้างคอลัมน์ (ขยายช่องอีเมลให้กว้างขึ้นป้องกันตัวอักษรซ้อนกัน)
+                // 1. ตั้งค่าความกว้างคอลัมน์ (ขยายช่องอีเมลเป็น 28 ป้องกันตัวหนังสือซ้อนกัน)
                 sheet.columns = [
                     { header: 'ลำดับ', key: 'index', width: 6 },
-                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 20 },
+                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 22 },
                     { header: 'ชื่อเล่น', key: 'nickname', width: 10 },
                     { header: 'บริษัท / หน่วยงาน', key: 'company', width: 24 },
-                    { header: 'เบอร์โทรศัพท์', key: 'phone', width: 14 },
+                    { header: 'เบอร์โทรศัพท์', key: 'phone', width: 15 },
                     { header: 'อีเมล', key: 'email', width: 28 },
                     { header: 'สถานะ', key: 'attendance', width: 10 },
-                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 22 },
-                    { header: 'วันที่บันทึก', key: 'date', width: 16 }
+                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 25 },
+                    { header: 'วันที่บันทึก', key: 'date', width: 18 }
                 ];
 
-                // 2. ดันแถวหัวตารางลงไปอยู่บรรทัดที่ 3 เพื่อเพิ่มที่ว่างให้หัวกระดาษ
+                // 2. ดันแถวหัวตารางลงไปอยู่บรรทัดที่ 3
                 sheet.spliceRows(1, 0, [], []);
 
-                // 3. ตกแต่งหัวกระดาษ (บรรทัดที่ 1-2) ให้ดูพรีเมียม
+                // 3. ตกแต่งหัวกระดาษ
                 sheet.mergeCells('A1:I1');
                 const titleCell = sheet.getCell('A1');
                 titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม';
-                titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; // ลดฟอนต์หัวข้อ
-                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; // สีแดงเข้ม
+                titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; 
+                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
                 titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-                sheet.getRow(1).height = 35; // ลดความสูงหัวข้อ
+                sheet.getRow(1).height = 35; 
 
                 sheet.mergeCells('A2:I2');
                 const metaCell = sheet.getCell('A2');
                 metaCell.value = `ข้อมูลอัปเดตล่าสุด ณ วันที่: ${new Date().toLocaleString('th-TH')} | จัดทำโดย: บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด`;
-                metaCell.font = { name: 'Sarabun', size: 9, italic: true, color: { argb: 'FF475569' } }; // ลดฟอนต์คำอธิบาย
+                metaCell.font = { name: 'Sarabun', size: 9, italic: true, color: { argb: 'FF475569' } }; 
                 metaCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
                 metaCell.alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
                 sheet.getRow(2).height = 18;
 
-                // 4. ตกแต่งหัวตาราง (บรรทัดที่ 3) และเปิดระบบ Filter
+                // 4. ตกแต่งหัวตาราง และเปิดระบบ Filter
                 const headerRow = sheet.getRow(3);
                 headerRow.eachCell((cell) => {
-                    cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }; // ลดฟอนต์หัวตารางเป็น 10
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; // สีแดง
+                    cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }; 
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; 
                     cell.alignment = { vertical: 'middle', horizontal: 'center' };
                     cell.border = { top: {style:'thin', color:{argb:'FFB91C1C'}}, left: {style:'thin', color:{argb:'FFB91C1C'}}, bottom: {style:'thin', color:{argb:'FFB91C1C'}}, right: {style:'thin', color:{argb:'FFB91C1C'}} };
                 });
-                headerRow.height = 25; // ลดความสูงหัวตาราง
-                sheet.autoFilter = 'A3:I3'; // เปิดปุ่มลูกศรกรองข้อมูล (Auto-Filter)
+                headerRow.height = 25; 
+                sheet.autoFilter = 'A3:I3'; 
 
                 // 5. ใส่ข้อมูลลูกค้า
                 registrations.forEach((r, idx) => {
@@ -210,42 +223,36 @@
                         date: r.createdAt?.toDate().toLocaleString('th-TH') || '-'
                     });
 
-                    // ตกแต่งแต่ละเซลล์ในแถว
                     row.eachCell((cell, colNumber) => {
-                        cell.font = { name: 'Sarabun', size: 10, color: { argb: 'FF1E293B' } }; // ลดฟอนต์ข้อมูลทั่วไปเป็น 10
+                        cell.font = { name: 'Sarabun', size: 10, color: { argb: 'FF1E293B' } }; 
                         cell.border = { top: {style:'thin', color:{argb:'FFE2E8F0'}}, left: {style:'thin', color:{argb:'FFE2E8F0'}}, bottom: {style:'thin', color:{argb:'FFE2E8F0'}}, right: {style:'thin', color:{argb:'FFE2E8F0'}} };
                         
-                        // จัดกึ่งกลางให้คอลัมน์ ลำดับ, ชื่อเล่น, โทร, สถานะ, วันที่
                         if ([1, 3, 5, 7, 9].includes(colNumber)) {
                             cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
                         } else {
                             cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
                         }
                         
-                        // สลับสีแถว (Zebra striping)
                         if (idx % 2 === 1) {
                             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
                         }
                         
-                        // ไฮไลต์สีให้สถานะ "เข้าร่วม" ดูเด่นขึ้น
                         if (colNumber === 7) {
                             if (r.attendance === 'เข้าร่วม') {
-                                cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF15803D' } }; // ฟอนต์สถานะไซส์ 10 สีเขียวเข้ม
+                                cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF15803D' } }; 
                             } else {
-                                cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF94A3B8' } }; // ฟอนต์สถานะไซส์ 10 สีเทา
+                                cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF94A3B8' } }; 
                             }
                         }
                     });
-                    row.height = 22; // ลดความสูงบรรทัดข้อมูลลงนิดนึงให้อ่านพอดี
+                    row.height = 22; 
                 });
 
-                // 6. สร้างไฟล์และดาวน์โหลด
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 saveAs(blob, `รายงานลงทะเบียน_รถยนต์2พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
-            // --- ส่วนที่ 1: หน้าแรก (Landing) ---
             if (view === 'landing') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100">
@@ -316,7 +323,6 @@
                 );
             }
 
-            // --- ส่วนที่ 2: หน้าฟอร์ม ---
             if (view === 'form') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 py-10 bg-slate-100">
@@ -392,16 +398,13 @@
                 </div>
             );
 
-            // --- ส่วนที่ 3: ระบบหลังบ้าน (Admin Dashboard) ---
             if (view === 'admin') {
-                // คำนวณ KPI Dashboard
                 const totalReg = registrations.length;
                 const attending = registrations.filter(r => r.attendance === 'เข้าร่วม').length;
                 const notAttending = totalReg - attending;
 
                 return (
                     <div className="min-h-screen bg-slate-50 font-sans pb-12">
-                        {/* Navbar */}
                         <nav className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-0 z-50 flex justify-between items-center shadow-sm">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
@@ -410,14 +413,12 @@
                                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Management System</div>
                                 </div>
                             </div>
-                            <button onClick={() => firebase.auth().signOut()} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
+                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
                                 ออกจากระบบ
                             </button>
                         </nav>
 
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            
-                            {/* Dashboard Header & Action */}
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
                                     <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
@@ -428,7 +429,6 @@
                                 </button>
                             </div>
 
-                            {/* KPI Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                                 <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
                                     <div>
@@ -453,7 +453,6 @@
                                 </div>
                             </div>
 
-                            {/* Data Table */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                                 <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
                                     <span className="text-lg">📋</span>
@@ -517,7 +516,6 @@
                                     </table>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 );
