@@ -95,7 +95,18 @@
                 }
                 setLoading(true);
                 try {
-                    await firebase.firestore().collection('registrations').add({
+                    const db = firebase.firestore();
+                    
+                    // --- เพิ่มระบบเช็คเบอร์โทรศัพท์ซ้ำ ---
+                    const phoneCheck = await db.collection('registrations').where('phone', '==', formData.phone).get();
+                    if (!phoneCheck.empty) {
+                        setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
+                        setLoading(false);
+                        return;
+                    }
+                    // -----------------------------
+
+                    await db.collection('registrations').add({
                         ...formData,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
