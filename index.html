@@ -9,7 +9,7 @@
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -52,6 +52,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script type="text/babel">
+        // รหัสเชื่อมต่อ FIREBASE 
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -62,18 +63,16 @@
             measurementId: "G-Z0XFPK8CJ7"
         };
 
-        // 🟢 ข้อมูลเมนูแบบ Text ล้วนๆ
         const menuData = {
-            desserts: ["บานอฟฟี่", "พานาคอตต้า", "เค้กส้ม", "คัสตาร์ด", "เค้กฝอยทอง", "เค้กนมสด"],
+            desserts: ["บานอฟฟี่", "พานาคอตต้า", "เค้กส้ม", "คัสตาร์ด", "เค้กฝอยทอง", "เค้กนมสด", "ไม่รับเบเกอรี่"],
             drinks: {
                 "☕ หมวดกาแฟ (Coffee)": ["อเมริกาโน", "ลาเต้", "เอสเพรสโซ่", "มอคคา", "คาปูชิโน่", "อเมริกาโน่น้ำผึ้งมะนาว", "อเมริกาโน่น้ำส้ม", "อเมริกาโน่น้ำมะพร้าว"],
                 "🍵 หมวดชาและนม": ["ชาไทย", "ชาเขียว", "ชามิกซ์", "โกโก้", "โกโก้พิงค์", "นมชมพู", "นมสดสตรอเบอรี่", "นมสดสตรอเบอรี่ชาไทย", "นมสดสตรอเบอรี่ชาเขียว", "นมสดสตรอเบอรี่โกโก้", "สตรอเบอรี่ลาเต้", "สตรอเบอรี่ช็อคมิ้นท์"],
                 "🍓 หมวดสมูทตี้ปั่น": ["สตอเบอรี่สมูทตี้โยเกิร์ต", "สตอเบอรี่สมูทตี้", "มิกซ์เบอรี่สมูทตี้", "อาโวคาโดนมสดน้ำผึ้ง", "แตงโมปั่นไร้น้ำแข็ง", "ลิ้นจี่ปั่น", "เสาวรสสดปั่น"],
-                "🍹 หมวดอิตาเลี่ยนโซดา": ["มะนาวน้ำผึ้งโซดา", "บลูเบอรี่โซดา", "ลิ้นจี่โซดา", "เขียวโซดา", "บลูฮาวายโซดา", "แดงโซดา", "สตรอเบอรี่โซดา"]
+                "🍹 หมวดอิตาเลี่ยนโซดา": ["มะนาวน้ำผึ้งโซดา", "บลูเบอรี่โซดา", "ลิ้นจี่โซดา", "เขียวโซดา", "บลูฮาวายโซดา", "แดงโซดา", "สตรอเบอรี่โซดา", "ไม่รับเครื่องดื่ม"]
             }
         };
 
-        // 🟢 อัลบั้มรูปเมนูร้าน ณ คุณ
         const overviewImages = [
             "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png",
             "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246828831.jpg",
@@ -98,6 +97,8 @@
             const [tempDessert, setTempDessert] = React.useState('');
             const [tempDrink, setTempDrink] = React.useState('');
             const scrollRef = React.useRef(null);
+            const [searchTerm, setSearchTerm] = React.useState('');
+            const [selectedIds, setSelectedIds] = React.useState([]);
 
             const [formData, setFormData] = React.useState({
                 name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false
@@ -127,8 +128,12 @@
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setRegistrations(items);
                             });
+                    } else {
+                        setRegistrations([]);
+                        setSelectedIds([]);
                     }
                 });
+
                 return () => { unsubscribeAuth(); if (unsubscribeData) unsubscribeData(); };
             }, []);
 
@@ -146,23 +151,40 @@
 
                 setLoading(true);
                 setErrorMsg('');
+                
+                // ตรวจสอบเบอร์โทรซ้ำ
+                const normalizedPhone = formData.phone.replace(/[\s-]/g, '');
+                if (!/^\d{9,10}$/.test(normalizedPhone)) {
+                    setErrorMsg('กรุณาระบุเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 9-10 หลัก)');
+                    setLoading(false);
+                    return;
+                }
+
                 try {
                     const db = firebase.firestore();
+                    const docCheck = await db.collection('registrations').doc(normalizedPhone).get();
                     
-                    const phoneCheck = await db.collection('registrations').where('phone', '==', formData.phone.trim()).get();
-                    if (!phoneCheck.empty) {
+                    if (docCheck.exists) {
                         setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
                         setLoading(false);
                         return;
                     }
 
-                    await db.collection('registrations').add({
+                    await db.collection('registrations').doc(normalizedPhone).set({
                         ...formData,
+                        name: formData.name.trim(),
+                        company: formData.company.trim(),
+                        phone: formData.phone.trim(),
+                        email: formData.email.trim(),
+                        normalizedPhone: normalizedPhone,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    
                     setView('success');
                     setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false });
-                } catch (err) { setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง"); }
+                } catch (err) { 
+                    setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง: " + err.message); 
+                }
                 setLoading(false);
             };
 
@@ -179,7 +201,12 @@
             const handleLogout = async () => {
                 try {
                     await firebase.auth().signOut();
-                    setView('landing'); setUsername(''); setPassword('');
+                    setView('landing'); 
+                    setUsername(''); 
+                    setPassword('');
+                    setErrorMsg('');
+                    setSelectedIds([]);
+                    setSearchTerm('');
                     await firebase.auth().signInAnonymously(); 
                 } catch (err) { console.error("Logout Error:", err); }
             };
@@ -190,20 +217,47 @@
                     catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
                 }
             };
+            
+            const handleSelectAll = (e) => {
+                const filtered = registrations.filter(r => r.name?.toLowerCase().includes(searchTerm.toLowerCase()) || r.phone?.includes(searchTerm));
+                if (e.target.checked) setSelectedIds(filtered.map(r => r.id));
+                else setSelectedIds([]);
+            };
+
+            const handleSelectRow = (id) => {
+                setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+            };
+
+            const handleDeleteSelected = async () => {
+                if (selectedIds.length === 0) return;
+                if (window.confirm(`ยืนยันการลบรายชื่อที่เลือกจำนวน ${selectedIds.length} รายการ?`)) {
+                    setLoading(true);
+                    try {
+                        const db = firebase.firestore();
+                        const batch = db.batch();
+                        selectedIds.forEach(id => batch.delete(db.collection('registrations').doc(id)));
+                        await batch.commit();
+                        setSelectedIds([]);
+                    } catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
+                    setLoading(false);
+                }
+            };
 
             const slideLeft = () => scrollRef.current && scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
             const slideRight = () => scrollRef.current && scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
 
+            // 🟢 ฟังก์ชันยืนยันเมนู (บังคับเลือก 2 อย่าง)
             const confirmMenuSelection = () => {
-                if (!tempDessert && !tempDrink) {
-                    setErrorMsg('กรุณาเลือกเมนูอย่างน้อย 1 อย่างครับ');
+                if (!tempDessert) {
+                    setErrorMsg('กรุณาเลือก "หมวดเบเกอรี่" 1 อย่างครับ');
                     return;
                 }
-                let combinedMenu = '';
-                if (tempDessert && tempDrink) combinedMenu = `${tempDessert} + ${tempDrink}`;
-                else if (tempDessert) combinedMenu = tempDessert;
-                else if (tempDrink) combinedMenu = tempDrink;
-
+                if (!tempDrink) {
+                    setErrorMsg('กรุณาเลือก "หมวดเครื่องดื่ม" 1 อย่างครับ');
+                    return;
+                }
+                
+                const combinedMenu = `${tempDessert} + ${tempDrink}`;
                 setFormData({...formData, foodMenu: combinedMenu});
                 setIsMenuSelectorOpen(false);
                 setErrorMsg('');
@@ -296,12 +350,10 @@
             if (view === 'landing') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 overflow-hidden relative">
-                        {/* แสงออร่าพื้นหลัง */}
                         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-red-400/20 rounded-full blur-3xl animate-pulse"></div>
                         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
 
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-700">
-                            
                             <div className="h-48 sm:h-56 w-full relative bg-slate-800 overflow-hidden group cursor-default">
                                 <img src="./cover.png" alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
@@ -379,7 +431,7 @@
                 return (
                     <div className={`min-h-screen flex items-center justify-center p-4 py-10 relative bg-slate-100 ${(isMenuSelectorOpen || enlargedImage || errorMsg) ? 'overflow-hidden' : ''}`}>
                         
-                        {/* 🟢 หน้าต่าง Modal สำหรับขยายรูปภาพ */}
+                        {/* 🟢 Modal ขยายรูปภาพ */}
                         {enlargedImage && (
                             <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out" onClick={() => setEnlargedImage(null)}>
                                 <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" />
@@ -388,7 +440,7 @@
                             </div>
                         )}
 
-                        {/* 🟢 หน้าต่าง Modal แจ้งเตือน Error กลางจอ */}
+                        {/* 🟢 Modal แจ้งเตือน (Smart Alert) */}
                         {errorMsg && (
                             <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                                 <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
@@ -400,14 +452,14 @@
                             </div>
                         )}
 
-                        {/* 🟢 หน้าต่าง Modal เลือกระบบเมนู */}
+                        {/* 🟢 Modal เลือกระบบเมนู (Interactive Menu Selector) */}
                         {isMenuSelectorOpen && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
                                 <div className="bg-white w-full h-full md:h-auto md:max-h-[85vh] md:max-w-2xl md:rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
                                     <div className="p-4 md:p-5 border-b flex justify-between items-center bg-white z-10 shadow-sm md:rounded-t-3xl shrink-0">
                                         <div>
                                             <h3 className="font-black text-slate-800 text-lg">🍽️ เลือกเมนูเบเกอรี่และเครื่องดื่ม</h3>
-                                            <p className="text-xs text-orange-600 font-bold mt-0.5">คลิกที่รูปด้านล่างเพื่อขยายดูเมนูแบบเต็ม</p>
+                                            <p className="text-xs text-red-600 font-bold mt-0.5 animate-pulse">⚠️ บังคับเลือก: เบเกอรี่ 1 อย่าง และ น้ำ 1 อย่าง</p>
                                         </div>
                                         <button onClick={() => setIsMenuSelectorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 transition-colors font-bold">✕</button>
                                     </div>
@@ -444,7 +496,7 @@
                                         {/* หมวดขนม */}
                                         <div>
                                             <div className="flex items-center gap-2 mb-3 mt-4">
-                                                <h4 className="font-black text-slate-800 text-base">🍰 เลือกเบเกอรี่ 1 อย่าง</h4>
+                                                <h4 className="font-black text-slate-800 text-base">🍰 เลือกเบเกอรี่ (เลือก 1 อย่าง)</h4>
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                                 {menuData.desserts.map((item, idx) => {
@@ -456,6 +508,13 @@
                                                         </button>
                                                     )
                                                 })}
+                                            </div>
+                                            
+                                            {/* 🟢 ป้ายเตือนให้เลื่อนลง (สำหรับมือถือ) */}
+                                            <div className="md:hidden flex items-center justify-center pt-6 pb-2">
+                                                <div className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold animate-bounce shadow-sm border border-red-200">
+                                                    👇 เลื่อนหน้าจอลงด้านล่าง เพื่อเลือกเมนูเครื่องดื่ม 👇
+                                                </div>
                                             </div>
                                         </div>
 
@@ -481,6 +540,7 @@
                                         ))}
                                     </div>
                                     
+                                    {/* แถบสรุปผลและยืนยัน */}
                                     <div className="p-4 bg-white border-t shadow-[0_-10px_20px_rgba(0,0,0,0.05)] md:rounded-b-3xl shrink-0 z-20">
                                         <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-1.5">
                                             <div className="flex justify-between items-center text-sm">
@@ -491,8 +551,18 @@
                                                 <span className="font-bold text-slate-500">เครื่องดื่มที่เลือก:</span>
                                                 <span className="font-black text-emerald-600 truncate max-w-[150px] text-right">{tempDrink || '- ยังไม่เลือก -'}</span>
                                             </div>
+                                            {/* โชว์สเตตัสให้ลูกค้าดูว่าเลือกครบหรือยัง */}
+                                            {(!tempDessert || !tempDrink) ? (
+                                                <div className="text-[10px] text-red-500 font-bold text-center mt-1 animate-pulse">⚠️ กรุณาเลือกให้ครบทั้ง 2 อย่างครับ</div>
+                                            ) : (
+                                                <div className="text-[10px] text-emerald-500 font-bold text-center mt-1">✅ เลือกครบเรียบร้อย สามารถกดยืนยันได้เลยครับ</div>
+                                            )}
                                         </div>
-                                        <button type="button" onClick={confirmMenuSelection} className={`w-full py-4 rounded-xl font-bold transition-colors shadow-lg active:scale-95 text-white ${(tempDessert || tempDrink) ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-300'}`}>
+                                        <button 
+                                            type="button" 
+                                            onClick={confirmMenuSelection} 
+                                            className={`w-full py-4 rounded-xl font-bold transition-colors shadow-lg active:scale-95 text-white ${(tempDessert && tempDrink) ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-300'}`}
+                                        >
                                             ยืนยันเมนูอาหาร
                                         </button>
                                     </div>
@@ -590,6 +660,12 @@
                 const attending = registrations.filter(r => r.attendance === 'เข้าร่วม').length;
                 const notAttending = totalReg - attending;
 
+                const filteredRecords = registrations.filter(r => 
+                    r.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    r.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    r.phone?.includes(searchTerm)
+                );
+
                 return (
                     <div className="min-h-screen bg-slate-50 font-sans pb-12">
                         <nav className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-0 z-50 flex justify-between items-center shadow-sm">
@@ -611,12 +687,16 @@
                                     <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
                                     <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "ประกันรถยนต์ 2+"</p>
                                 </div>
-                                <button onClick={exportExcel} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1 w-full md:w-auto">
-                                    <span className="text-lg">📥</span> โหลด Excel
-                                </button>
+                                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                                    <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-rose-50 transition-all shadow-sm">
+                                        <span>🗑️</span> ลบที่เลือก ({selectedIds.length})
+                                    </button>
+                                    <button onClick={exportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1">
+                                        <span className="text-lg">📥</span> โหลด Excel
+                                    </button>
+                                </div>
                             </div>
 
-                            {/* 🟢 หน้า Dashboard สรุป 3 กล่อง */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                                 <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
                                     <div>
@@ -641,68 +721,92 @@
                                 </div>
                             </div>
 
-                            {/* 🟢 ตารางรายชื่อ */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                                    <span className="text-lg">📋</span>
-                                    <h3 className="font-bold text-slate-700">รายชื่อผู้ลงทะเบียนรายละเอียด</h3>
+                            <div className="bg-white rounded-[24px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-200 overflow-hidden">
+                                <div className="p-5 border-b border-slate-100 bg-slate-50/80 flex flex-col md:flex-row justify-between items-center gap-4">
+                                    <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                        <span className="text-lg">📋</span> รายชื่อผู้ลงทะเบียนรายละเอียด
+                                    </h3>
+                                    <div className="relative w-full md:w-[350px]">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                        <input 
+                                            type="text" 
+                                            placeholder="ค้นหาชื่อ, บริษัท, เบอร์โทร..." 
+                                            className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                                            value={searchTerm}
+                                            onChange={e => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left whitespace-nowrap">
                                         <thead className="bg-white border-b border-slate-200">
                                             <tr>
-                                                <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ชื่อ-นามสกุล / บริษัท</th>
-                                                <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ข้อมูลการติดต่อ</th>
-                                                <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">สถานะ</th>
-                                                <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">เมนูอาหาร/เครื่องดื่ม</th>
-                                                <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-right">จัดการ</th>
+                                                <th className="py-4 pl-6 pr-3 w-12"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer" checked={filteredRecords.length > 0 && selectedIds.length === filteredRecords.length} onChange={handleSelectAll} /></th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลผู้ลงทะเบียน</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลการติดต่อ</th>
+                                                <th className="py-4 px-4 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">สถานะ</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">เมนูที่เลือก</th>
+                                                <th className="py-4 pr-6 pl-4 text-right text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">จัดการ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {registrations.map(r => (
-                                                <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-800 text-sm">{r.name} <span className="text-slate-400 font-medium text-xs ml-1">{r.nickname ? `(${r.nickname})` : ''}</span></div>
-                                                        <div className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-1"><span className="text-[10px]">🏢</span> {r.company}</div>
+                                            {filteredRecords.length > 0 ? filteredRecords.map(r => (
+                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-red-50/40' : 'hover:bg-slate-50/60'} transition-colors group`}>
+                                                    <td className="py-4 pl-6 pr-3 align-top pt-5"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
+                                                    <td className="py-4 px-4">
+                                                        <div className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                                                            {r.name} 
+                                                            {r.nickname && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded-md font-bold">"{r.nickname}"</span>}
+                                                        </div>
+                                                        <div className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
+                                                            <span className="text-[10px]">🏢</span> {r.company}
+                                                        </div>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-700 text-sm flex items-center gap-1">📞 {r.phone}</div>
-                                                        {r.email && <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">✉️ {r.email}</div>}
+                                                    <td className="py-4 px-4">
+                                                        <div className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                                            <span className="text-xs opacity-50">📞</span> {r.phone}
+                                                        </div>
+                                                        <div className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1.5">
+                                                            <span className="text-xs opacity-50">✉️</span> {r.email || '-'}
+                                                        </div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                    <td className="py-4 px-4 text-center align-top pt-5">
+                                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold border ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
                                                             {r.attendance === 'เข้าร่วม' ? '✅ เข้าร่วม' : '❌ ไม่ร่วม'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="py-4 px-4 align-top pt-5">
                                                         {r.attendance === 'เข้าร่วม' ? (
-                                                            <div className="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 inline-block max-w-[250px] truncate" title={r.foodMenu}>
+                                                            <div className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 inline-block max-w-[200px] truncate" title={r.foodMenu}>
                                                                 🍽️ {r.foodMenu || '-'}
                                                             </div>
                                                         ) : (
                                                             <span className="text-slate-300 font-bold">-</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button 
-                                                            onClick={() => handleDelete(r.id)} 
-                                                            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100"
-                                                        >
-                                                            🗑️ ลบ
+                                                    <td className="py-4 pr-6 pl-4 text-right align-top pt-4">
+                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="ลบรายชื่อนี้">
+                                                            🗑️
                                                         </button>
                                                     </td>
                                                 </tr>
-                                            ))}
-                                            {registrations.length === 0 && (
+                                            )) : (
                                                 <tr>
-                                                    <td colSpan="5" className="px-6 py-16 text-center text-slate-400 font-bold bg-slate-50/50">
-                                                        <div className="text-4xl mb-2">📭</div>
-                                                        ยังไม่มีข้อมูลผู้ลงทะเบียน
+                                                    <td colSpan="6" className="py-16 text-center text-slate-400">
+                                                        <div className="text-4xl mb-3 opacity-20">🔍</div>
+                                                        <p className="font-bold text-slate-500">ไม่พบข้อมูลที่ค้นหา</p>
                                                     </td>
                                                 </tr>
                                             )}
                                         </tbody>
                                     </table>
+                                </div>
+                                <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 text-[11px] font-bold text-slate-500 flex justify-between items-center">
+                                    <span>แสดงข้อมูลทั้งหมด {filteredRecords.length} รายการ</span>
+                                    <span className="uppercase tracking-widest flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Real-time Sync
+                                    </span>
                                 </div>
                             </div>
                         </div>
