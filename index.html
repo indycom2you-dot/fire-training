@@ -45,16 +45,9 @@
             measurementId: "G-Z0XFPK8CJ7"
         };
 
-        // 🟢 ข้อมูลเมนูขนม (ใช้รูปรวมโปรโมชั่นของร้าน)
+        // 🟢 เปลี่ยนจาก Object รูปภาพ เป็นชื่อเมนูล้วนๆ เพื่อความสะอาดตา
         const menuData = {
-            desserts: [
-                { name: "บานอฟฟี่", img: "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" },
-                { name: "พานาคอตต้า", img: "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" },
-                { name: "เค้กส้ม", img: "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" },
-                { name: "คัสตาร์ด", img: "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" },
-                { name: "เค้กฝอยทอง", img: "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" },
-                { name: "เค้กนมสด", img: "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" }
-            ],
+            desserts: ["บานอฟฟี่", "พานาคอตต้า", "เค้กส้ม", "คัสตาร์ด", "เค้กฝอยทอง", "เค้กนมสด"],
             drinks: {
                 "☕ หมวดกาแฟ (Coffee)": ["อเมริกาโน", "ลาเต้", "เอสเพรสโซ่", "มอคคา", "คาปูชิโน่", "อเมริกาโน่น้ำผึ้งมะนาว", "อเมริกาโน่น้ำส้ม", "อเมริกาโน่น้ำมะพร้าว"],
                 "🍵 หมวดชาและนม": ["ชาไทย", "ชาเขียว", "ชามิกซ์", "โกโก้", "โกโก้พิงค์", "นมชมพู", "นมสดสตรอเบอรี่", "นมสดสตรอเบอรี่ชาไทย", "นมสดสตรอเบอรี่ชาเขียว", "นมสดสตรอเบอรี่โกโก้", "สตรอเบอรี่ลาเต้", "สตรอเบอรี่ช็อคมิ้นท์"],
@@ -62,6 +55,16 @@
                 "🍹 หมวดอิตาเลี่ยนโซดา": ["มะนาวน้ำผึ้งโซดา", "บลูเบอรี่โซดา", "ลิ้นจี่โซดา", "เขียวโซดา", "บลูฮาวายโซดา", "แดงโซดา", "สตรอเบอรี่โซดา"]
             }
         };
+
+        // 🟢 รายการรูปภาพสำหรับสไลด์โชว์ด้านบน
+        const overviewImages = [
+            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png",
+            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246828831.jpg",
+            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246840708.jpg",
+            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246833650.jpg",
+            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246831082.jpg",
+            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246825179.jpg"
+        ];
 
         const App = () => {
             const [view, setView] = React.useState('landing'); 
@@ -76,16 +79,13 @@
             const [isMenuSelectorOpen, setIsMenuSelectorOpen] = React.useState(false);
             const [tempDessert, setTempDessert] = React.useState('');
             const [tempDrink, setTempDrink] = React.useState('');
+            
+            // 🟢 State สำหรับเก็บรูปภาพที่ถูกกดขยาย
+            const [enlargedImage, setEnlargedImage] = React.useState(null);
 
             const [formData, setFormData] = React.useState({
-                name: '',
-                nickname: '',
-                company: '',
-                email: '',
-                phone: '',
-                attendance: 'เข้าร่วม',
-                foodMenu: '',
-                acceptedTerms: false
+                name: '', nickname: '', company: '', email: '', phone: '',
+                attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false
             });
 
             React.useEffect(() => {
@@ -147,8 +147,7 @@
 
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
-                setLoading(true);
-                setErrorMsg('');
+                setLoading(true); setErrorMsg('');
                 try {
                     const loginEmail = username.includes('@') ? username : `${username}@ppp.com`;
                     await firebase.auth().signInWithEmailAndPassword(loginEmail, password);
@@ -159,9 +158,7 @@
             const handleLogout = async () => {
                 try {
                     await firebase.auth().signOut();
-                    setView('landing'); 
-                    setUsername('');
-                    setPassword('');
+                    setView('landing'); setUsername(''); setPassword('');
                     await firebase.auth().signInAnonymously(); 
                 } catch (err) { console.error("Logout Error:", err); }
             };
@@ -173,7 +170,6 @@
                 }
             };
 
-            // ฟังก์ชันยืนยันการเลือกเมนู
             const confirmMenuSelection = () => {
                 if (!tempDessert && !tempDrink) {
                     alert('กรุณาเลือกเมนูอย่างน้อย 1 อย่างครับ');
@@ -194,10 +190,7 @@
             };
 
             const exportExcel = async () => {
-                if (registrations.length === 0) {
-                    alert("ไม่มีข้อมูลให้ Export ครับ");
-                    return;
-                }
+                if (registrations.length === 0) { alert("ไม่มีข้อมูลให้ Export ครับ"); return; }
                 
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน', { 
@@ -246,14 +239,8 @@
 
                 registrations.forEach((r, idx) => {
                     const row = sheet.addRow({
-                        index: idx + 1,
-                        name: r.name,
-                        nickname: r.nickname || '-',
-                        company: r.company,
-                        phone: r.phone,
-                        email: r.email || '-',
-                        attendance: r.attendance,
-                        foodMenu: r.foodMenu || '-',
+                        index: idx + 1, name: r.name, nickname: r.nickname || '-', company: r.company,
+                        phone: r.phone, email: r.email || '-', attendance: r.attendance, foodMenu: r.foodMenu || '-',
                         date: r.createdAt?.toDate().toLocaleString('th-TH') || '-'
                     });
 
@@ -267,16 +254,11 @@
                             cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
                         }
                         
-                        if (idx % 2 === 1) {
-                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-                        }
+                        if (idx % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
                         
                         if (colNumber === 7) {
-                            if (r.attendance === 'เข้าร่วม') {
-                                cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF15803D' } }; 
-                            } else {
-                                cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF94A3B8' } }; 
-                            }
+                            if (r.attendance === 'เข้าร่วม') cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF15803D' } }; 
+                            else cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF94A3B8' } }; 
                         }
                     });
                     row.height = 22; 
@@ -287,25 +269,9 @@
                 saveAs(blob, `รายงานลงทะเบียน_รถยนต์2พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
-            // 🟢 ฟังก์ชันช่วยดึงรูปภาพตัวอย่างร้าน ณ คุณ ตามหมวดหมู่
-            const getDrinkImage = (categoryName, itemName) => {
-                if (categoryName.includes("กาแฟ")) return "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246840708.jpg";
-                if (categoryName.includes("สมูทตี้")) return "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246831082.jpg";
-                if (categoryName.includes("โซดา")) return "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246833650.jpg";
-                if (categoryName.includes("ชาและนม")) {
-                    // แยกเมนูสตรอเบอรี่ ออกจากกลุ่มชา/นมปกติ
-                    if (itemName && (itemName.includes("นมสดสตรอเบอรี่") || itemName.includes("สตรอเบอรี่ลาเต้") || itemName.includes("ช็อคมิ้นท์"))) {
-                        return "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246828831.jpg";
-                    }
-                    return "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246825179.jpg";
-                }
-                return "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246840708.jpg";
-            };
-
             if (view === 'landing') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 overflow-hidden relative">
-                        {/* แสงออร่าพื้นหลัง */}
                         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-red-400/20 rounded-full blur-3xl animate-pulse"></div>
                         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
 
@@ -327,7 +293,7 @@
                                         <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">🗓️</div>
                                         <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วันที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">13 พฤษภาคม 2569</div>
+                                            <div className="font-medium text-slate-600 flex-1">12 พฤษภาคม 2569</div>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
@@ -353,19 +319,7 @@
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วิทยากร:</div>
                                             <div className="flex flex-col flex-1 text-slate-800">
                                                 <span className="font-bold">คุณณัฐพัตร์ เพ็ชรสุวรรณ (คุณวี)</span>
-                                                <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 mt-1 leading-snug">
-                                                    Hatyai Independent Distribution Partners Manager <br/> 
-                                                    บริษัท CHUBB
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">💡</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">รายละเอียด:</div>
-                                            <div className="font-medium text-slate-600 leading-relaxed flex-1">
-                                                เจาะลึกแผนประกันรถยนต์ 2+ ที่ตอบโจทย์ความเสี่ยงในปัจจุบัน โดยเฉพาะ <span className="text-blue-600 font-bold italic relative inline-block">ความคุ้มครองน้ำท่วม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> ที่กำลังเป็นปัญหาหลัก พร้อมเทคนิคการเลือกซื้อในราคาสุดคุ้ม
+                                                <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 mt-1 leading-snug">บริษัท CHUBB</span>
                                             </div>
                                         </div>
                                     </div>
@@ -388,92 +342,108 @@
                 return (
                     <div className={`min-h-screen flex items-center justify-center p-4 py-10 relative bg-slate-100 ${isMenuSelectorOpen ? 'overflow-hidden' : ''}`}>
                         
+                        {/* 🟢 หน้าต่าง Modal สำหรับขยายรูปภาพ (Image Overlay) */}
+                        {enlargedImage && (
+                            <div 
+                                className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out"
+                                onClick={() => setEnlargedImage(null)}
+                            >
+                                <img 
+                                    src={enlargedImage} 
+                                    alt="Enlarged Menu" 
+                                    className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" 
+                                />
+                                <button 
+                                    onClick={() => setEnlargedImage(null)}
+                                    className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center font-bold transition-colors"
+                                >✕</button>
+                                <div className="absolute bottom-6 text-white/70 text-sm animate-pulse">แตะพื้นที่ว่างเพื่อปิด</div>
+                            </div>
+                        )}
+
                         {/* 🟢 หน้าต่าง Modal สำหรับระบบเลือกเมนู (Interactive Menu Selector) */}
                         {isMenuSelectorOpen && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
                                 <div className="bg-white w-full h-full md:h-auto md:max-h-[85vh] md:max-w-2xl md:rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
                                     
-                                    {/* Header Modal */}
                                     <div className="p-4 md:p-5 border-b flex justify-between items-center bg-white z-10 shadow-sm md:rounded-t-3xl shrink-0">
                                         <div>
                                             <h3 className="font-black text-slate-800 text-lg">🍽️ เลือกเมนูเบเกอรี่และเครื่องดื่ม</h3>
-                                            <p className="text-xs text-orange-600 font-bold mt-0.5">จำกัดโควตา: ขนม 1 สิทธิ์ และ เครื่องดื่ม 1 สิทธิ์</p>
+                                            <p className="text-xs text-orange-600 font-bold mt-0.5">คลิกที่รูปด้านล่างเพื่อขยายดูเมนูแบบเต็ม</p>
                                         </div>
                                         <button onClick={() => setIsMenuSelectorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 transition-colors font-bold">✕</button>
                                     </div>
                                     
-                                    {/* พื้นที่รายการเมนู (Scrollable) */}
                                     <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 space-y-8 pb-32 md:pb-6 relative">
                                         
-                                        {/* 📸 เมนูภาพรวมร้าน ณ คุณ */}
+                                        {/* 📸 เมนูภาพรวมร้าน ณ คุณ (คลิกเพื่อขยายได้) */}
                                         <div className="mb-6 relative">
                                             <div className="flex items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-2">
-                                                <h4 className="font-black text-slate-800 text-base">📸 เลื่อนดูภาพเมนูร้าน ณ คุณ</h4>
+                                                <h4 className="font-black text-slate-800 text-base">📸 อัลบั้มเมนูของร้าน</h4>
                                                 <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold shadow-sm animate-pulse">👈 เลื่อนซ้าย-ขวา 👉</span>
                                             </div>
                                             <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scroll">
-                                                <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png" className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md snap-center border border-slate-200 shrink-0" alt="เมนูขนม" />
-                                                <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246828831.jpg" className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md snap-center border border-slate-200 shrink-0" alt="เมนูกาแฟ" />
-                                                <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246840708.jpg" className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md snap-center border border-slate-200 shrink-0" alt="สมูทตี้" />
-                                                <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246833650.jpg" className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md snap-center border border-slate-200 shrink-0" alt="โซดา" />
-                                                <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246831082.jpg" className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md snap-center border border-slate-200 shrink-0" alt="ชา" />
-                                                <img src="https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246825179.jpg" className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md snap-center border border-slate-200 shrink-0" alt="นม" />
+                                                {overviewImages.map((src, idx) => (
+                                                    <div 
+                                                        key={idx} 
+                                                        className="relative shrink-0 snap-center cursor-zoom-in group" 
+                                                        onClick={() => setEnlargedImage(src)}
+                                                    >
+                                                        <img src={src} className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md border border-slate-200 group-hover:opacity-90 transition-opacity" alt={`เมนู ${idx+1}`} />
+                                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
+                                                            <span className="bg-white/95 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
+                                                                <span className="text-sm">🔍</span> แตะเพื่อขยาย
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
 
                                         <hr className="border-slate-200" />
 
-                                        {/* หมวดขนม (ดึงรูปโปรโมชั่นร้านมาแสดง) */}
+                                        {/* หมวดขนม (ใช้แค่ชื่อเมนู) */}
                                         <div>
                                             <div className="flex items-center gap-2 mb-3 mt-4">
-                                                <h4 className="font-black text-slate-800 text-base">🍰 หมวดเบเกอรี่ (เลือก 1 อย่าง)</h4>
+                                                <h4 className="font-black text-slate-800 text-base">🍰 เลือกเบเกอรี่ 1 อย่าง</h4>
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                                 {menuData.desserts.map((item, idx) => {
-                                                    const isSelected = tempDessert === item.name;
+                                                    const isSelected = tempDessert === item;
                                                     return (
                                                         <button 
                                                             key={idx}
                                                             type="button"
-                                                            onClick={() => setTempDessert(isSelected ? '' : item.name)}
-                                                            className={`p-2 pb-3 text-sm font-bold text-center rounded-2xl border-2 transition-all relative overflow-hidden flex flex-col items-center gap-2 ${isSelected ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-md scale-[1.02]' : 'bg-white border-slate-100 text-slate-600 hover:border-orange-300 hover:bg-orange-50/50'}`}
+                                                            onClick={() => setTempDessert(isSelected ? '' : item)}
+                                                            className={`p-3 text-[13.5px] font-bold text-center rounded-xl border-2 transition-all relative flex items-center justify-center min-h-[50px] ${isSelected ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-md scale-[1.02]' : 'bg-white border-slate-200 text-slate-600 hover:border-orange-300 hover:bg-orange-50/30'}`}
                                                         >
-                                                            {isSelected && <span className="absolute top-2 right-2 bg-orange-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm">✓</span>}
-                                                            <div className="w-full h-24 bg-slate-100 rounded-xl overflow-hidden relative">
-                                                                <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
-                                                                {isSelected && <div className="absolute inset-0 bg-orange-500/20"></div>}
-                                                            </div>
-                                                            <span className="leading-tight mt-1">{item.name}</span>
+                                                            {isSelected && <span className="absolute -top-2 -right-2 bg-orange-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm border-2 border-white">✓</span>}
+                                                            <span className="leading-tight">{item}</span>
                                                         </button>
                                                     )
                                                 })}
                                             </div>
                                         </div>
 
-                                        {/* หมวดเครื่องดื่ม (ดึงรูปตามหมวดหมู่ของร้านมาแสดง) */}
+                                        {/* หมวดเครื่องดื่ม (ใช้แค่ชื่อเมนู แบ่งตามหมวด) */}
                                         {Object.entries(menuData.drinks).map(([categoryName, items], catIdx) => (
                                             <div key={catIdx}>
-                                                <div className="flex items-center gap-2 mb-3 mt-4">
+                                                <div className="flex items-center gap-2 mb-3 mt-4 border-t border-slate-100 pt-4">
                                                     <h4 className="font-black text-slate-800 text-base">{categoryName}</h4>
                                                     {catIdx === 0 && <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">เลือก 1 อย่าง</span>}
                                                 </div>
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                                     {items.map((item, idx) => {
                                                         const isSelected = tempDrink === item;
-                                                        const imgSrc = getDrinkImage(categoryName, item); 
                                                         return (
                                                             <button 
                                                                 key={idx}
                                                                 type="button"
                                                                 onClick={() => setTempDrink(isSelected ? '' : item)}
-                                                                className={`p-2 pb-3 text-sm font-bold text-center rounded-2xl border-2 transition-all relative overflow-hidden flex flex-col items-center gap-2 ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-md scale-[1.02]' : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50'}`}
+                                                                className={`p-3 text-[13.5px] font-bold text-center rounded-xl border-2 transition-all relative flex items-center justify-center min-h-[50px] ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-md scale-[1.02]' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/30'}`}
                                                             >
-                                                                {isSelected && <span className="absolute top-2 right-2 bg-emerald-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm">✓</span>}
-                                                                <div className="w-full h-24 bg-slate-100 rounded-xl overflow-hidden relative">
-                                                                    <img src={imgSrc} alt={item} className="w-full h-full object-cover" />
-                                                                    {isSelected && <div className="absolute inset-0 bg-emerald-500/20"></div>}
-                                                                </div>
-                                                                <span className="leading-tight mt-1">{item}</span>
+                                                                {isSelected && <span className="absolute -top-2 -right-2 bg-emerald-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm border-2 border-white">✓</span>}
+                                                                <span className="leading-tight">{item}</span>
                                                             </button>
                                                         )
                                                     })}
@@ -482,7 +452,6 @@
                                         ))}
                                     </div>
                                     
-                                    {/* แถบสรุปผลและยืนยัน (Floating Bottom Bar) */}
                                     <div className="p-4 bg-white border-t shadow-[0_-10px_20px_rgba(0,0,0,0.05)] md:rounded-b-3xl shrink-0 z-20">
                                         <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-1.5">
                                             <div className="flex justify-between items-center text-sm">
@@ -507,7 +476,6 @@
                             </div>
                         )}
 
-                        {/* ฟอร์มลงทะเบียนหลัก */}
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden p-6 md:p-8 animate-in slide-in-from-right-4 duration-300 relative z-10">
                             <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 transition-colors">← ย้อนกลับ</button>
                             <div className="text-center mb-8">
@@ -530,11 +498,8 @@
 
                                 {formData.attendance === 'เข้าร่วม' && (
                                     <div className="space-y-4 animate-in fade-in pt-4 border-t border-slate-100 mt-4">
-                                        
-                                        {/* 🟢 ปุ่มเข้าสู่ระบบจิ้มเลือกเมนู */}
                                         <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
                                             <label className="block text-sm font-bold text-slate-800 mb-3">🍽️ ระบุเมนู ขนม และ เครื่องดื่ม ที่ต้องการ <span className="text-red-500">*</span></label>
-                                            
                                             <button 
                                                 type="button"
                                                 onClick={() => {
@@ -546,9 +511,8 @@
                                                 }}
                                                 className="w-full py-4 mb-3 bg-gradient-to-r from-orange-400 to-amber-500 text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-orange-500 hover:to-amber-600 transition-all flex items-center justify-center gap-2"
                                             >
-                                                <span className="text-lg">👆</span> คลิกเพื่อจิ้มเลือกเมนูจากร้าน
+                                                <span className="text-lg">👆</span> คลิกเพื่อเลือกเมนูจากร้าน
                                             </button>
-
                                             <input 
                                                 type="text" 
                                                 required 
@@ -561,7 +525,6 @@
                                                 <p className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center gap-1">✅ รับทราบเมนูที่เลือกแล้ว</p>
                                             )}
                                         </div>
-
                                         <div className="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-4 -mt-4 z-0"></div>
                                             <p className="text-sm text-slate-700 mb-4 relative z-10"><strong className="text-red-600">📌 หมายเหตุ:</strong> หากลงทะเบียนยืนยันแล้วไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท</p>
