@@ -122,10 +122,17 @@
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
+                
+                // --- ระบบตรวจสอบข้อมูล (Validation) แบบกำหนดเอง (จะเด้งป๊อปอัป) ---
+                if (!formData.name.trim()) { setErrorMsg('กรุณากรอก "ชื่อ - นามสกุล" ด้วยครับ'); return; }
+                if (!formData.company.trim()) { setErrorMsg('กรุณากรอก "บริษัท / หน่วยงาน" ด้วยครับ'); return; }
+                if (!formData.phone.trim()) { setErrorMsg('กรุณากรอก "เบอร์โทรศัพท์" ด้วยครับ'); return; }
+
                 if (formData.attendance === 'เข้าร่วม') {
-                    if (!formData.acceptedTerms) { setErrorMsg('กรุณากดยอมรับเงื่อนไขครับ'); return; }
-                    if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาระบุเมนู ขนม และ เครื่องดื่ม ครับ'); return; }
+                    if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาเลือกเมนู ขนม และ เครื่องดื่ม ด้วยครับ\n(สามารถกดปุ่มสีส้มด้านบนเพื่อจิ้มเลือกจากรูปได้เลยครับ)'); return; }
+                    if (!formData.acceptedTerms) { setErrorMsg('กรุณาติ๊กเครื่องหมายถูกที่ช่อง "รับทราบและยอมรับเงื่อนไข" ก่อนกดยืนยันครับ'); return; }
                 }
+
                 setLoading(true);
                 setErrorMsg('');
                 try {
@@ -368,6 +375,26 @@
                             </div>
                         )}
 
+                        {/* 🟢 หน้าต่าง Modal สำหรับแจ้งเตือน Error กลางจอ (Smart Alert) */}
+                        {errorMsg && (
+                            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+                                <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-red-100">
+                                        ⚠️
+                                    </div>
+                                    <h3 className="text-xl font-black text-slate-800 mb-2">แจ้งเตือน</h3>
+                                    <p className="text-sm text-slate-600 mb-8 whitespace-pre-line leading-relaxed">{errorMsg}</p>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setErrorMsg('')}
+                                        className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 transition-all active:scale-95"
+                                    >
+                                        รับทราบ
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* 🟢 หน้าต่าง Modal สำหรับระบบเลือกเมนู (Interactive Menu Selector) */}
                         {isMenuSelectorOpen && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -385,17 +412,17 @@
                                         
                                         {/* 📸 เมนูภาพรวมร้าน ณ คุณ (คลิกเพื่อขยายได้) */}
                                         <div className="mb-6 relative">
-                                            <div className="flex items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-2">
-                                                <h4 className="font-black text-slate-800 text-base">📸 อัลบั้มเมนูของร้าน</h4>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-3 border-b border-slate-200/60">
+                                                <div>
+                                                    <h4 className="font-black text-slate-800 text-base">📸 อัลบั้มเมนูของร้าน</h4>
+                                                    <p className="text-[12px] text-slate-500 font-medium mt-1">สามารถใช้นิ้วปัด หรือคลิกลูกศร ซ้าย-ขวา เพื่อดูภาพเพิ่มเติมได้ครับ</p>
+                                                </div>
                                                 
                                                 {/* 🟢 ปุ่มกดซ้าย-ขวา สำหรับคอมพิวเตอร์ (PC) */}
-                                                <div className="hidden md:flex items-center gap-2">
-                                                    <button onClick={slideLeft} className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">←</button>
-                                                    <button onClick={slideRight} className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">→</button>
+                                                <div className="hidden md:flex items-center gap-2 mt-2 sm:mt-0">
+                                                    <button onClick={slideLeft} className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">←</button>
+                                                    <button onClick={slideRight} className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">→</button>
                                                 </div>
-
-                                                {/* คำแนะนำสำหรับมือถือ */}
-                                                <span className="md:hidden text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold shadow-sm animate-pulse">👈 ปัดเลื่อนซ้ายขวา 👉</span>
                                             </div>
                                             <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scroll scroll-smooth">
                                                 {overviewImages.map((src, idx) => (
@@ -498,13 +525,13 @@
                                 <p className="text-red-600 font-bold text-[15px]">"ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม"</p>
                                 <p className="text-[11px] text-slate-400 mt-4 font-bold tracking-widest border-t pt-4 border-slate-50 uppercase">จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                             </div>
-                            {errorMsg && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100 shadow-sm">{errorMsg}</div>}
+                            
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                <input type="text" required placeholder="ชื่อ - นามสกุล *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <input type="text" placeholder="ชื่อ - นามสกุล *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                 <input type="text" placeholder="ชื่อเล่น (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
-                                <input type="text" required placeholder="บริษัท / หน่วยงาน *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                <input type="text" placeholder="บริษัท / หน่วยงาน *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
                                 <input type="email" placeholder="อีเมล (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                <input type="tel" required placeholder="เบอร์โทรศัพท์ *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                <input type="tel" placeholder="เบอร์โทรศัพท์ *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                                 
                                 <div className="bg-slate-50 p-1.5 rounded-2xl flex border border-slate-200 mt-4">
                                     <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>เข้าร่วม</button>
@@ -530,7 +557,6 @@
                                             </button>
                                             <input 
                                                 type="text" 
-                                                required 
                                                 placeholder="หรือพิมพ์เมนูเองที่นี่..." 
                                                 className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-orange-400 outline-none transition-all font-bold text-slate-800 text-sm" 
                                                 value={formData.foodMenu} 
