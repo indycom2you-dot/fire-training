@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบประเมินความพึงพอใจ - งานอบรมประกันอัคคีภัย</title>
+    <title>แบบประเมินสัมมนา - ประกันรถยนต์ 2+ PPP Insurance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
-        .admin-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-        .chart-container { position: relative; width: 100%; height: 280px; background-color: white;} /* เพิ่มพื้นหลังขาวให้แคปกราฟสวย */
-        /* Custom Scrollbar */
+        .admin-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .chart-container { position: relative; width: 100%; height: 280px; background-color: white; border-radius: 16px; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .premium-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .premium-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
     </style>
 </head>
 <body>
@@ -38,6 +35,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script type="text/babel">
+        // รหัสเชื่อมต่อ FIREBASE ของคุณอภิชิต
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -48,10 +46,11 @@
             measurementId: "G-Z0XFPK8CJ7"
         };
 
+        // Component สำหรับแถบให้คะแนน 1-5
         const RatingRow = ({ label, value, onChange }) => (
-            <div className="mb-6 bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-emerald-100 transition-colors">
+            <div className="mb-5 bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-red-200 transition-colors">
                 <label className="block text-[14px] font-bold text-slate-800 mb-4">{label}</label>
-                <div className="flex justify-between max-w-[300px] mx-auto gap-2">
+                <div className="flex justify-between max-w-[320px] mx-auto gap-2">
                     {[1, 2, 3, 4, 5].map(num => (
                         <button
                             type="button"
@@ -59,15 +58,15 @@
                             onClick={() => onChange(num)}
                             className={`w-12 h-12 rounded-full font-black text-lg transition-all flex items-center justify-center ${
                                 value === num 
-                                ? 'bg-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/40 ring-4 ring-emerald-100' 
-                                : 'bg-white text-slate-400 border-2 border-slate-200 hover:border-emerald-300 hover:text-emerald-500'
+                                ? 'bg-red-600 text-white scale-110 shadow-lg shadow-red-600/40 ring-4 ring-red-100' 
+                                : 'bg-white text-slate-400 border-2 border-slate-200 hover:border-red-300 hover:text-red-600'
                             }`}
                         >
                             {num}
                         </button>
                     ))}
                 </div>
-                <div className="flex justify-between text-[11px] font-bold text-slate-400 mt-3 max-w-[300px] mx-auto px-2 uppercase tracking-widest">
+                <div className="flex justify-between text-[11px] font-bold text-slate-400 mt-3 max-w-[320px] mx-auto px-2 uppercase tracking-widest">
                     <span>1 = ปรับปรุง</span>
                     <span>5 = ดีเยี่ยม</span>
                 </div>
@@ -86,6 +85,7 @@
             const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
+            // ฟอร์มเก็บข้อมูลแบบประเมิน
             const [formData, setFormData] = React.useState({ 
                 name: '', scoreContent: 0, scoreSpeaker: 0, scoreVenue: 0, scoreOverall: 0, suggestion: '' 
             });
@@ -112,6 +112,7 @@
                     if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
                     if (u && !u.isAnonymous) {
                         setView('admin');
+                        // ใช้ Collection 'evaluations' เพื่อแยกข้อมูลออกจากรายชื่อลงทะเบียน
                         unsubscribeData = db.collection('evaluations')
                             .onSnapshot((snapshot) => {
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -127,6 +128,7 @@
                 return () => { unsubscribeAuth(); if (unsubscribeData) unsubscribeData(); };
             }, []);
 
+            // วาดกราฟสรุปคะแนนเฉลี่ย
             React.useEffect(() => {
                 if (view === 'admin' && chartRef.current && evaluations.length > 0) {
                     if (chartInstance.current) chartInstance.current.destroy();
@@ -158,13 +160,12 @@
                                 ],
                                 borderRadius: 12,
                                 borderSkipped: false,
-                                barPercentage: 0.6 // ปรับให้แท่งใหญ่ขึ้นนิดนึงตอนไปอยู่บน Excel จะได้ชัดเจน
+                                barPercentage: 0.6 
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            // เซ็ตสีพื้นหลังกราฟให้เป็นสีขาว (เวลา Export เป็นรูปจะได้ไม่โปร่งใส)
                             animation: {
                                 onComplete: function() {
                                     const ctx = this.ctx;
@@ -216,7 +217,8 @@
             const handleSubmitEvaluation = async (e) => {
                 e.preventDefault();
                 if (!formData.scoreContent || !formData.scoreSpeaker || !formData.scoreVenue || !formData.scoreOverall) {
-                    setErrorMsg('กรุณาให้คะแนนให้ครบทุกหัวข้อครับ'); return;
+                    setErrorMsg('กรุณาให้คะแนนให้ครบทุกหัวข้อ (ข้อ 1-4) ครับ'); 
+                    return;
                 }
                 setLoading(true); setErrorMsg('');
                 try {
@@ -244,11 +246,7 @@
 
                 const calcAvg = (key) => (evaluations.reduce((sum, ev) => sum + ev[key], 0) / totalEvals).toFixed(2);
                 const avgOverall = calcAvg('scoreOverall');
-                const avgContent = calcAvg('scoreContent');
-                const avgSpeaker = calcAvg('scoreSpeaker');
-                const avgVenue = calcAvg('scoreVenue');
 
-                // ฟังก์ชันช่วยแปลความหมายคะแนน
                 const getMeaning = (val) => {
                     if(val >= 4.5) return 'ดีเยี่ยม';
                     if(val >= 3.5) return 'ดีมาก';
@@ -256,147 +254,97 @@
                     return 'ควรปรับปรุง';
                 };
 
-                // ฟังก์ชันสร้างดาว
                 const getStars = (val) => {
                     const count = Math.round(val);
                     return '⭐'.repeat(count) + '⚪'.repeat(5 - count);
                 };
 
-                // วิเคราะห์จุดแข็งและจุดควรพัฒนา
-                const scores = [
-                    { name: 'เนื้อหาการอบรม', val: parseFloat(avgContent) },
-                    { name: 'ความรู้/วิทยากร', val: parseFloat(avgSpeaker) },
-                    { name: 'สถานที่/อาหาร', val: parseFloat(avgVenue) }
-                ];
-                scores.sort((a, b) => b.val - a.val);
-                const topTopic = scores[0];
-                const bottomTopic = scores[2];
-
-                const insightText = `📌 บทสรุปผู้บริหาร (Executive Insight):\n\nภาพรวมความพึงพอใจจากการประเมินทั้งหมด ${totalEvals} ท่าน อยู่ในเกณฑ์ "${getMeaning(parseFloat(avgOverall))}" (${avgOverall}/5.0) \n\nจุดแข็ง (Strength): ผู้เข้าร่วมมีความพึงพอใจสูงสุดในด้าน "${topTopic.name}" เฉลี่ย ${topTopic.val.toFixed(2)}/5.0 \n\nจุดที่ควรพัฒนา (Area for Improvement): ส่วนที่ได้คะแนนน้อยที่สุดคือ "${bottomTopic.name}" เฉลี่ย ${bottomTopic.val.toFixed(2)}/5.0`;
-
                 // ==========================================
-                // SHEET 1: EXECUTIVE DASHBOARD (TEXT & ANALYSIS)
+                // SHEET 1: EXECUTIVE DASHBOARD
                 // ==========================================
                 const dashSheet = workbook.addWorksheet('📊 Executive Dashboard', { views: [{ showGridLines: false }] });
-                
                 dashSheet.properties.defaultRowHeight = 25;
-
-                // กำหนดความกว้างคอลัมน์ให้กว้างพอดีกับการอ่านข้อความ
                 dashSheet.columns = [
-                    { width: 3 },   // A: Margin
-                    { width: 35 },  // B: Analysis Label
-                    { width: 30 },  // C: Analysis Score
-                    { width: 25 },  // D: Feedback Name
-                    { width: 60 },  // E: Feedback Text
-                    { width: 3 }    // F: Margin
+                    { width: 3 }, { width: 38 }, { width: 40 }, { width: 25 }, { width: 60 }, { width: 3 }
                 ];
 
-                // 1. หัวกระดาษ (Header)
                 dashSheet.mergeCells('B2:E3');
                 const dashTitle = dashSheet.getCell('B2');
-                dashTitle.value = 'รายงานสรุปผลประเมินความพึงพอใจ (EXECUTIVE DASHBOARD)';
-                dashTitle.font = { name: 'Sarabun', size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
-                dashTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+                dashTitle.value = 'รายงานสรุปผลประเมินสัมมนา: ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม';
+                dashTitle.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+                dashTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; // สีแดงเข้มเข้ากับธีม
                 dashTitle.alignment = { vertical: 'middle', horizontal: 'center' };
 
                 dashSheet.mergeCells('B4:E4');
                 const printDate = dashSheet.getCell('B4');
-                printDate.value = `ข้อมูล ณ วันที่: ${new Date().toLocaleString('th-TH')} | จัดทำโดย: บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด`;
+                printDate.value = `ข้อมูลอัปเดตล่าสุด ณ วันที่: ${new Date().toLocaleString('th-TH')} | จัดทำโดย: บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด`;
                 printDate.font = { name: 'Sarabun', size: 10, italic: true, color: { argb: 'FF64748B' } };
-                printDate.alignment = { vertical: 'middle', horizontal: 'right' };
+                printDate.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                printDate.alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
 
-                // 2. KPI Boxes (กล่องสรุปข้อมูลหลัก)
+                // KPI Boxes
                 dashSheet.mergeCells('B6:C8');
                 const kpi1 = dashSheet.getCell('B6');
-                kpi1.value = `👥 จำนวนผู้ประเมินทั้งหมด\n${totalEvals} ท่าน`;
+                kpi1.value = `👥 จำนวนผู้ให้คะแนนประเมิน\n\n${totalEvals} ท่าน`;
                 kpi1.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FF1E293B' } };
                 kpi1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
                 kpi1.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                kpi1.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thick', color:{argb:'FF3B82F6'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                kpi1.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thick', color:{argb:'FFDC2626'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
 
                 dashSheet.mergeCells('D6:E8');
                 const kpi2 = dashSheet.getCell('D6');
-                kpi2.value = `⭐ คะแนนความพึงพอใจโดยรวม\n${avgOverall} / 5.0`;
-                kpi2.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FF065F46' } };
-                kpi2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } };
+                kpi2.value = `⭐ คะแนนความพึงพอใจโดยรวม\n\n${avgOverall} / 5.0 (${getMeaning(avgOverall)})`;
+                kpi2.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FF15803D' } };
+                kpi2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
                 kpi2.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                kpi2.border = { top: {style:'thin', color:{argb:'FFA7F3D0'}}, left: {style:'thin', color:{argb:'FFA7F3D0'}}, bottom: {style:'thick', color:{argb:'FF10B981'}}, right: {style:'thin', color:{argb:'FFA7F3D0'}} };
+                kpi2.border = { top: {style:'thin', color:{argb:'FF86EFAC'}}, left: {style:'thin', color:{argb:'FF86EFAC'}}, bottom: {style:'thick', color:{argb:'FF16A34A'}}, right: {style:'thin', color:{argb:'FF86EFAC'}} };
 
-                // 3. หัวข้อแยกฝั่ง
                 dashSheet.mergeCells('B10:C10');
-                dashSheet.getCell('B10').value = '📈 วิเคราะห์ผลประเมินรายหัวข้อแบบเจาะลึก';
+                dashSheet.getCell('B10').value = '📈 กราฟวิเคราะห์ภาพรวมและแยกหัวข้อ';
                 dashSheet.getCell('B10').font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
                 dashSheet.getCell('B10').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
                 dashSheet.getCell('B10').alignment = { vertical: 'middle', horizontal: 'center' };
 
                 dashSheet.mergeCells('D10:E10');
-                dashSheet.getCell('D10').value = '📝 5 ข้อเสนอแนะล่าสุดเพื่อการพัฒนา';
+                dashSheet.getCell('D10').value = '📝 5 ข้อเสนอแนะล่าสุด';
                 dashSheet.getCell('D10').font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
                 dashSheet.getCell('D10').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
                 dashSheet.getCell('D10').alignment = { vertical: 'middle', horizontal: 'center' };
 
-                // 4. สร้างข้อมูลวิเคราะห์ด้านซ้าย (แทนที่กราฟ)
-                const createDetailRow = (row, label, scoreVal) => {
-                    dashSheet.getCell(`B${row}`).value = `▶ ${label}`;
-                    dashSheet.getCell(`B${row}`).font = { name: 'Sarabun', size: 13, bold: true, color: { argb: 'FF334155' } };
-                    dashSheet.getCell(`B${row}`).alignment = { vertical: 'middle', horizontal: 'left' };
-                    dashSheet.getCell(`B${row}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFF1F5F9'}} };
+                // นำกราฟจากหน้าเว็บมาแปะ
+                if (chartRef.current) {
+                    const canvas = chartRef.current;
+                    const base64Image = canvas.toDataURL('image/png', 1.0);
+                    const imageId = workbook.addImage({ base64: base64Image, extension: 'png' });
+                    dashSheet.addImage(imageId, { tl: { col: 1.05, row: 10.1 }, br: { col: 2.95, row: 14.9 } });
+                }
 
-                    dashSheet.getCell(`C${row}`).value = `${scoreVal} / 5.0 (${getMeaning(parseFloat(scoreVal))}) \n${getStars(parseFloat(scoreVal))}`;
-                    dashSheet.getCell(`C${row}`).font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FF0F172A' } };
-                    dashSheet.getCell(`C${row}`).alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
-                    dashSheet.getCell(`C${row}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFF1F5F9'}} };
-                    dashSheet.getRow(row).height = 40; 
-                };
-
-                createDetailRow(12, 'ความมีประโยชน์ของเนื้อหา', avgContent);
-                createDetailRow(13, 'ความรู้/การถ่ายทอดของวิทยากร', avgSpeaker);
-                createDetailRow(14, 'ความเหมาะสมสถานที่และอาหาร', avgVenue);
-
-                // 5. กล่องข้อความบทสรุปผู้บริหาร (AI-like Summary)
-                dashSheet.mergeCells('B16:C20');
-                const insightCell = dashSheet.getCell('B16');
-                insightCell.value = insightText;
-                insightCell.font = { name: 'Sarabun', size: 12, color: { argb: 'FF1E293B' } };
-                insightCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-                insightCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 };
-                insightCell.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
-
-                // 6. ข้อเสนอแนะ 5 อันดับด้านขวา (คู่ขนานกับข้อมูลวิเคราะห์)
+                // ดึง Feedback ล่าสุด 5 อันดับ
                 const feedbacks = evaluations.filter(e => e.suggestion && e.suggestion.trim() !== '').slice(0, 5);
-                let startRow = 12;
-                
+                let startRow = 11;
                 for (let i = 0; i < 5; i++) {
+                    dashSheet.getRow(startRow).height = 65; 
                     const fb = feedbacks[i];
                     if (fb) {
                         dashSheet.getCell(`D${startRow}`).value = fb.name || 'ไม่ระบุชื่อ';
-                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FF334155' } };
+                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 11, bold: true, color: { argb: 'FF334155' } };
                         dashSheet.getCell(`D${startRow}`).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
                         dashSheet.getCell(`D${startRow}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
 
                         dashSheet.getCell(`E${startRow}`).value = fb.suggestion;
-                        dashSheet.getCell(`E${startRow}`).font = { name: 'Sarabun', size: 12, color: { argb: 'FF475569' } };
+                        dashSheet.getCell(`E${startRow}`).font = { name: 'Sarabun', size: 11, color: { argb: 'FF475569' } };
                         dashSheet.getCell(`E${startRow}`).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
                         dashSheet.getCell(`E${startRow}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
-                        
-                        // ปรับความสูงสำหรับข้อเสนอแนะ 2 บรรทัด (12,13), (14,15) ฯลฯ เพื่อให้พื้นที่เท่ากัน
-                        dashSheet.mergeCells(`D${startRow}:D${startRow+1}`);
-                        dashSheet.mergeCells(`E${startRow}:E${startRow+1}`);
                     } else {
-                        dashSheet.mergeCells(`D${startRow}:D${startRow+1}`);
-                        dashSheet.mergeCells(`E${startRow}:E${startRow+1}`);
-                        
                         dashSheet.getCell(`D${startRow}`).value = i === 0 ? '- ยังไม่มีข้อเสนอแนะ -' : '-';
                         dashSheet.getCell(`D${startRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
-                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 12, color: { argb: 'FF94A3B8' } };
+                        dashSheet.getCell(`D${startRow}`).font = { name: 'Sarabun', size: 11, color: { argb: 'FF94A3B8' } };
                         dashSheet.getCell(`D${startRow}`).border = { left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
-
                         dashSheet.getCell(`E${startRow}`).value = '';
                         dashSheet.getCell(`E${startRow}`).border = { right: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thin', color:{argb:'FFCBD5E1'}} };
                     }
-                    startRow += 2; // ข้ามทีละ 2 บรรทัดเพราะเรา Merge
+                    startRow++;
                 }
-
 
                 // ==========================================
                 // SHEET 2: ข้อมูลดิบ (RAW DATA)
@@ -405,9 +353,9 @@
 
                 rawSheet.mergeCells('A1:G1');
                 const rawTitleCell = rawSheet.getCell('A1');
-                rawTitleCell.value = 'ฐานข้อมูลผลแบบประเมินความพึงพอใจ: งานอบรมประกันอัคคีภัย';
+                rawTitleCell.value = 'ฐานข้อมูลผลแบบประเมินความพึงพอใจ: งานสัมมนาประกันรถยนต์ 2+';
                 rawTitleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-                rawTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
+                rawTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; 
                 rawTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
                 rawSheet.getRow(1).height = 35;
 
@@ -417,7 +365,7 @@
                 const headerRow = rawSheet.addRow(headers);
                 headerRow.eachCell((cell) => {
                     cell.font = { name: 'Sarabun', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0284C7' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
                     cell.alignment = { vertical: 'middle', horizontal: 'center' };
                     cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
                 });
@@ -443,7 +391,7 @@
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `รายงานบทสรุปผู้บริหาร_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                saveAs(blob, `รายงานผลประเมินสัมมนา_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
             const filteredRecords = evaluations.filter(r => 
@@ -454,64 +402,64 @@
             // --- หน้าฟอร์มแบบประเมินสำหรับลูกค้า ---
             if (view === 'form') {
                 return (
-                    <div className="min-h-screen bg-[#f8fafc] py-10 px-4">
-                        <div className="max-w-xl mx-auto">
+                    <div className="min-h-screen flex items-center justify-center p-4 py-10">
+                        <div className="w-full max-w-lg">
                             {submitted ? (
-                                <div className="bg-white p-12 rounded-[32px] shadow-2xl text-center border border-slate-100 animate-in zoom-in duration-500 premium-card">
+                                <div className="bg-white p-12 rounded-[32px] shadow-2xl text-center border border-slate-100 animate-in zoom-in duration-500">
                                     <div className="text-7xl mb-6 drop-shadow-md">🙏</div>
-                                    <h2 className="text-2xl font-extrabold mb-2 text-slate-800">ขอบคุณสำหรับคำติชมครับ</h2>
-                                    <p className="text-slate-500 mb-8 font-medium">ทุกความคิดเห็นของคุณอภิชิตและทีมงานจะนำไปพัฒนาให้ดียิ่งขึ้นครับ</p>
-                                    <button onClick={() => setSubmitted(false)} className="px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">ประเมินอีกครั้ง</button>
+                                    <h2 className="text-2xl font-black mb-2 text-slate-800">ขอบคุณสำหรับคำติชมครับ</h2>
+                                    <p className="text-slate-500 mb-10 font-medium leading-relaxed">ทุกความคิดเห็นจะถูกนำไปพัฒนา<br/>เพื่อการจัดงานที่ดียิ่งขึ้นในครั้งต่อไปครับ</p>
+                                    <button onClick={() => setSubmitted(false)} className="px-10 py-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl transition-colors border border-red-200">ทำแบบประเมินอีกครั้ง</button>
                                 </div>
                             ) : (
-                                <div className="bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden premium-card">
-                                    <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-8 opacity-10 text-6xl">📝</div>
-                                        <h1 className="text-2xl font-extrabold text-white mb-2 relative z-10">แบบประเมินความพึงพอใจ</h1>
-                                        <p className="text-sm text-slate-300 relative z-10">งานอบรม: ความเสี่ยงรอบด้าน คุ้มครองรอบตัว</p>
+                                <div className="bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative">
+                                    <div className="p-8 md:p-10 border-b border-slate-100 text-center">
+                                        <div className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-xs font-bold uppercase tracking-widest mb-4">Feedback Form</div>
+                                        <h1 className="text-2xl font-black text-slate-800 mb-2">แบบประเมินความพึงพอใจ</h1>
+                                        <p className="text-sm text-slate-500">"ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม (เน้นคุ้มครองน้ำท่วม)"</p>
                                     </div>
                                     
-                                    <div className="p-8 md:p-10">
-                                        {errorMsg && <div className="mb-6 p-4 bg-rose-50 text-rose-700 rounded-2xl text-[13px] font-bold border border-rose-100">⚠️ {errorMsg}</div>}
+                                    <div className="p-8 md:p-10 bg-slate-50/50">
+                                        {errorMsg && <div className="mb-6 p-4 bg-rose-50 text-rose-700 rounded-2xl text-[13px] font-bold border border-rose-100 flex gap-2"><span className="text-lg leading-none">⚠️</span> <span>{errorMsg}</span></div>}
                                         
                                         <form onSubmit={handleSubmitEvaluation}>
-                                            <div className="mb-8">
-                                                <label className="text-[13px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2 block">ชื่อ - นามสกุล (ไม่ระบุได้)</label>
+                                            <div className="mb-10">
+                                                <label className="text-[13px] font-bold text-slate-600 uppercase tracking-widest ml-1 mb-2 block">ชื่อ - นามสกุล <span className="text-slate-400 font-medium normal-case">(ไม่ระบุได้)</span></label>
                                                 <input 
                                                     type="text" 
                                                     placeholder="กรอกชื่อของคุณ (Optional)" 
-                                                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-semibold"
+                                                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700"
                                                     value={formData.name}
                                                     onChange={e => setFormData({...formData, name: e.target.value})}
                                                 />
                                             </div>
 
-                                            <div className="space-y-4 mb-8">
-                                                <h3 className="text-lg font-black text-slate-800 border-b pb-2 mb-6">ส่วนที่ 1: ให้คะแนนความพึงพอใจ</h3>
+                                            <div className="space-y-4 mb-10">
+                                                <h3 className="text-[15px] font-black text-slate-800 border-b-2 border-red-500 pb-2 mb-6 inline-block">ส่วนที่ 1: ให้คะแนนความพึงพอใจ</h3>
                                                 <RatingRow label="📚 1. ความมีประโยชน์ของเนื้อหาการอบรม" value={formData.scoreContent} onChange={v => setFormData({...formData, scoreContent: v})} />
                                                 <RatingRow label="🎤 2. ความรู้และการถ่ายทอดของวิทยากร" value={formData.scoreSpeaker} onChange={v => setFormData({...formData, scoreSpeaker: v})} />
                                                 <RatingRow label="🏢 3. ความเหมาะสมของสถานที่และอาหาร" value={formData.scoreVenue} onChange={v => setFormData({...formData, scoreVenue: v})} />
                                                 <RatingRow label="⭐ 4. ความพึงพอใจโดยรวมต่องานนี้" value={formData.scoreOverall} onChange={v => setFormData({...formData, scoreOverall: v})} />
                                             </div>
 
-                                            <div className="mb-8">
-                                                <h3 className="text-lg font-black text-slate-800 border-b pb-2 mb-4">ส่วนที่ 2: ข้อเสนอแนะ</h3>
+                                            <div className="mb-10">
+                                                <h3 className="text-[15px] font-black text-slate-800 border-b-2 border-red-500 pb-2 mb-4 inline-block">ส่วนที่ 2: ข้อเสนอแนะ</h3>
                                                 <textarea 
                                                     rows="4" 
                                                     placeholder="พิมพ์คำแนะนำ หรือสิ่งที่อยากให้จัดในครั้งต่อไป..." 
-                                                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-sm font-medium resize-none"
+                                                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all text-sm font-medium resize-none text-slate-700"
                                                     value={formData.suggestion}
                                                     onChange={e => setFormData({...formData, suggestion: e.target.value})}
                                                 ></textarea>
                                             </div>
 
-                                            <button type="submit" disabled={loading} className="w-full py-5 bg-slate-900 text-white rounded-[20px] font-black text-[18px] shadow-xl hover:bg-slate-800 hover:-translate-y-1 transition-all">
-                                                {loading ? "กำลังส่งข้อมูล..." : "ส่งแบบประเมิน"}
+                                            <button type="submit" disabled={loading} className="w-full py-5 bg-[#dc2626] text-white rounded-2xl font-black text-[18px] shadow-xl shadow-red-600/30 hover:bg-red-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                                                {loading ? <span className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></span> : "ส่งแบบประเมิน"}
                                             </button>
                                         </form>
 
-                                        <div className="mt-8 text-center">
-                                            <button onClick={() => setView('login')} className="text-slate-300 hover:text-slate-500 text-[10px] tracking-widest uppercase font-bold transition-colors">Admin Area</button>
+                                        <div className="mt-10 text-center">
+                                            <button onClick={() => setView('login')} className="text-slate-300 hover:text-red-500 text-[10px] tracking-widest uppercase font-bold transition-colors">Secure Admin Access</button>
                                         </div>
                                     </div>
                                 </div>
@@ -524,16 +472,16 @@
             // --- หน้าจอล็อกอินแอดมิน ---
             if (view === 'login') {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4 admin-gradient text-white">
-                        <div className="w-full max-w-sm bg-white/10 backdrop-blur-xl p-8 rounded-[32px] border border-white/20 shadow-2xl premium-card">
-                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🔐</div>
-                            <h2 className="text-2xl font-bold mb-8 text-center tracking-tight">Executive Login</h2>
-                            {errorMsg && <div className="mb-6 p-4 bg-red-500/20 text-red-100 border border-red-500/30 rounded-xl text-sm font-bold text-center">{errorMsg}</div>}
+                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-white">
+                        <div className="w-full max-w-sm bg-white/10 backdrop-blur-xl p-8 rounded-[32px] border border-white/10 shadow-2xl">
+                            <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🔐</div>
+                            <h2 className="text-2xl font-black mb-8 text-center tracking-tight">Admin Login</h2>
+                            {errorMsg && <div className="mb-6 p-4 bg-red-500/20 text-red-200 border border-red-500/30 rounded-xl text-sm font-bold text-center">{errorMsg}</div>}
                             <form onSubmit={handleAdminLogin} className="space-y-4">
-                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40 focus:bg-white/10 transition-all text-white placeholder-white/40" value={username} onChange={e => setUsername(e.target.value)} />
-                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-white/40 focus:bg-white/10 transition-all text-white placeholder-white/40" value={password} onChange={e => setPassword(e.target.value)} />
-                                <button type="submit" className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-bold transition-all shadow-lg mt-2">Access Dashboard</button>
-                                <button type="button" onClick={() => setView('form')} className="w-full text-white/40 hover:text-white text-xs mt-4 transition-colors">← Back to form</button>
+                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl bg-slate-800/50 border border-slate-700 outline-none focus:border-red-500 focus:bg-slate-800 transition-all text-white placeholder-slate-500 font-medium" value={username} onChange={e => setUsername(e.target.value)} />
+                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl bg-slate-800/50 border border-slate-700 outline-none focus:border-red-500 focus:bg-slate-800 transition-all text-white placeholder-slate-500 font-medium" value={password} onChange={e => setPassword(e.target.value)} />
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg mt-2">{loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}</button>
+                                <button type="button" onClick={() => setView('form')} className="w-full text-slate-400 hover:text-white text-sm mt-4 transition-colors font-medium">← กลับหน้าฟอร์ม</button>
                             </form>
                         </div>
                     </div>
@@ -546,57 +494,56 @@
                 const calcAvg = (key) => totalEvals > 0 ? (evaluations.reduce((sum, ev) => sum + ev[key], 0) / totalEvals).toFixed(2) : "0.00";
                 
                 return (
-                    <div className="min-h-screen bg-[#f1f5f9] font-sans pb-12">
+                    <div className="min-h-screen bg-slate-50 font-sans pb-12">
                         {/* Top Navbar */}
                         <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-30 flex justify-between items-center shadow-sm">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-slate-900/20">P</div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
                                 <div>
-                                    <h1 className="text-xl font-extrabold text-slate-800 leading-tight tracking-tight">บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</h1>
-                                    <p className="text-[11px] text-emerald-600 font-bold uppercase tracking-widest mt-0.5">Executive Dashboard • Live Data</p>
+                                    <h1 className="text-lg font-black text-slate-800 leading-tight">Evaluation Dashboard</h1>
+                                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">PPP Insurance Broker</p>
                                 </div>
                             </div>
-                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors px-4 py-2 rounded-xl hover:bg-red-50 flex items-center gap-2">
-                                <span>🚪</span> ออกจากระบบ
+                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
+                                ออกจากระบบ
                             </button>
                         </nav>
 
-                        <div className="max-w-7xl mx-auto px-4 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
-                                    <h2 className="text-3xl font-black text-slate-800 tracking-tight">ภาพรวมผลประเมิน</h2>
-                                    <p className="text-sm text-slate-500 mt-2 font-medium">ข้อมูลถูกซิงค์แบบเรียลไทม์จากระบบฐานข้อมูล</p>
+                                    <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">ภาพรวมผลประเมิน</h2>
+                                    <p className="text-sm text-slate-500 mt-1 font-medium">งานอบรม: ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม</p>
                                 </div>
-                                <button onClick={exportExcel} className="flex items-center justify-center gap-3 bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-sm font-bold shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition-all hover:-translate-y-1">
-                                    <span className="text-lg">📊</span> โหลดรายงานผู้บริหาร (Excel)
+                                <button onClick={exportExcel} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl text-sm font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1 w-full md:w-auto">
+                                    <span className="text-lg">📥</span> โหลดรายงาน Excel
                                 </button>
                             </div>
 
-                            {/* KPI Cards (4 Cards for Pro Look) */}
+                            {/* KPI Cards */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col justify-between premium-card">
-                                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mb-4">👥</div>
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">👥</div>
                                     <div>
                                         <p className="text-[10px] md:text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">ผู้ประเมินทั้งหมด</p>
                                         <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-slate-800">{totalEvals}</span><span className="text-xs text-slate-400 font-bold">ท่าน</span></div>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-emerald-100 flex flex-col justify-between premium-card relative overflow-hidden">
-                                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full blur-2xl"></div>
-                                    <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-4 relative z-10">⭐</div>
-                                    <div className="relative z-10">
-                                        <p className="text-[10px] md:text-xs font-extrabold text-emerald-600 uppercase tracking-widest mb-1">ความพึงพอใจรวม</p>
-                                        <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-emerald-700">{calcAvg('scoreOverall')}</span><span className="text-xs text-emerald-500 font-bold">/ 5</span></div>
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-emerald-50 flex flex-col justify-between">
+                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-4">⭐</div>
+                                    <div>
+                                        <p className="text-[10px] md:text-xs font-extrabold text-emerald-500 uppercase tracking-widest mb-1">ความพึงพอใจรวม</p>
+                                        <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-emerald-600">{calcAvg('scoreOverall')}</span><span className="text-xs text-emerald-400 font-bold">/ 5</span></div>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-blue-50 flex flex-col justify-between premium-card">
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-blue-50 flex flex-col justify-between">
                                     <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📚</div>
                                     <div>
                                         <p className="text-[10px] md:text-xs font-extrabold text-blue-500 uppercase tracking-widest mb-1">เนื้อหาการอบรม</p>
                                         <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-slate-800">{calcAvg('scoreContent')}</span><span className="text-xs text-slate-400 font-bold">/ 5</span></div>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-amber-50 flex flex-col justify-between premium-card">
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-amber-50 flex flex-col justify-between">
                                     <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mb-4">🎤</div>
                                     <div>
                                         <p className="text-[10px] md:text-xs font-extrabold text-amber-500 uppercase tracking-widest mb-1">วิทยากร/สถานที่</p>
@@ -606,11 +553,10 @@
                             </div>
 
                             {/* Chart Card */}
-                            <div className="bg-white rounded-[28px] p-6 md:p-8 shadow-sm border border-slate-100 mb-8 premium-card">
+                            <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-sm border border-slate-100 mb-8">
                                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                    <span className="w-2 h-6 bg-emerald-500 rounded-full"></span> กราฟวิเคราะห์คะแนนเฉลี่ยรายหัวข้อ
+                                    <span className="text-lg">📊</span> กราฟวิเคราะห์คะแนนเฉลี่ยรายหัวข้อ
                                 </h3>
-                                {errorMsg && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{errorMsg}</div>}
                                 {evaluations.length > 0 ? (
                                     <div className="chart-container"><canvas ref={chartRef}></canvas></div>
                                 ) : (
@@ -619,8 +565,8 @@
                             </div>
 
                             {/* Search & Feedback Table */}
-                            <div className="bg-white rounded-[28px] shadow-sm border border-slate-200 overflow-hidden premium-card mb-12">
-                                <div className="p-5 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50">
+                            <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden mb-12">
+                                <div className="p-5 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50">
                                     <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2 w-full md:w-auto">
                                         <span className="text-lg">💬</span> ข้อเสนอแนะจากผู้เข้าอบรม
                                     </h3>
@@ -629,36 +575,36 @@
                                         <input 
                                             type="text" 
                                             placeholder="ค้นหาชื่อ หรือ ข้อเสนอแนะ..." 
-                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm"
+                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm"
                                             value={searchTerm}
                                             onChange={e => setSearchTerm(e.target.value)}
                                         />
                                     </div>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
+                                    <table className="w-full text-left border-collapse whitespace-nowrap md:whitespace-normal">
                                         <thead className="bg-white border-b border-slate-200">
                                             <tr>
-                                                <th className="py-5 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ผู้ให้คะแนน</th>
-                                                <th className="py-5 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">เนื้อหา</th>
-                                                <th className="py-5 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">วิทยากร</th>
-                                                <th className="py-5 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">สถานที่</th>
-                                                <th className="py-5 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">ภาพรวม</th>
-                                                <th className="py-5 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ข้อเสนอแนะ</th>
-                                                <th className="py-5 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-right">จัดการ</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ผู้ให้คะแนน</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">เนื้อหา</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">วิทยากร</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">สถานที่</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">ภาพรวม</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ข้อเสนอแนะ</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-right">จัดการ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredRecords.map(r => (
                                                 <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
-                                                    <td className="py-4 px-6 font-bold text-sm text-slate-800">{r.name || <span className="text-slate-400 italic font-medium">ไม่ระบุชื่อ</span>}</td>
+                                                    <td className="py-4 px-6 font-bold text-sm text-slate-800">{r.name || <span className="text-slate-400 italic font-medium">ไม่ประสงค์ออกนาม</span>}</td>
                                                     <td className="py-4 px-4 text-center font-black text-blue-500">{r.scoreContent}</td>
                                                     <td className="py-4 px-4 text-center font-black text-amber-500">{r.scoreSpeaker}</td>
                                                     <td className="py-4 px-4 text-center font-black text-pink-500">{r.scoreVenue}</td>
                                                     <td className="py-4 px-4 text-center"><span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg font-black">{r.scoreOverall}</span></td>
-                                                    <td className="py-4 px-6 text-sm text-slate-600 font-medium">{r.suggestion || <span className="text-slate-300">-</span>}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-600 font-medium min-w-[200px]">{r.suggestion || <span className="text-slate-300">-</span>}</td>
                                                     <td className="py-4 px-6 text-right">
-                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-100 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100">
+                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:bg-red-100 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100">
                                                             🗑️
                                                         </button>
                                                     </td>
