@@ -9,7 +9,7 @@
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         /* ซ่อน scrollbar สำหรับเมนูรูปภาพแนวนอน แต่ยังเอานิ้วปัดเลื่อนได้ */
@@ -82,6 +82,9 @@
             
             // 🟢 State สำหรับเก็บรูปภาพที่ถูกกดขยาย
             const [enlargedImage, setEnlargedImage] = React.useState(null);
+
+            // 🟢 Ref สำหรับปุ่มเลื่อนเมนูภาพซ้าย-ขวาบน PC
+            const scrollRef = React.useRef(null);
 
             const [formData, setFormData] = React.useState({
                 name: '', nickname: '', company: '', email: '', phone: '',
@@ -169,6 +172,10 @@
                     catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
                 }
             };
+
+            // 🟢 ฟังก์ชันเลื่อนภาพซ้าย-ขวา
+            const slideLeft = () => scrollRef.current && scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+            const slideRight = () => scrollRef.current && scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
 
             const confirmMenuSelection = () => {
                 if (!tempDessert && !tempDrink) {
@@ -380,9 +387,17 @@
                                         <div className="mb-6 relative">
                                             <div className="flex items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-2">
                                                 <h4 className="font-black text-slate-800 text-base">📸 อัลบั้มเมนูของร้าน</h4>
-                                                <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold shadow-sm animate-pulse">👈 เลื่อนซ้าย-ขวา 👉</span>
+                                                
+                                                {/* 🟢 ปุ่มกดซ้าย-ขวา สำหรับคอมพิวเตอร์ (PC) */}
+                                                <div className="hidden md:flex items-center gap-2">
+                                                    <button onClick={slideLeft} className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">←</button>
+                                                    <button onClick={slideRight} className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">→</button>
+                                                </div>
+
+                                                {/* คำแนะนำสำหรับมือถือ */}
+                                                <span className="md:hidden text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold shadow-sm animate-pulse">👈 ปัดเลื่อนซ้ายขวา 👉</span>
                                             </div>
-                                            <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scroll">
+                                            <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scroll scroll-smooth">
                                                 {overviewImages.map((src, idx) => (
                                                     <div 
                                                         key={idx} 
