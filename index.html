@@ -287,7 +287,7 @@
 
                 sheet.mergeCells('A1:I1');
                 const titleCell = sheet.getCell('A1');
-                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม';
+                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ประกันรถยนต์ 2+ 3+ มีรถให้ใช้ระหว่างซ่อม';
                 titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; 
                 titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
                 titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -340,7 +340,7 @@
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `รายงานลงทะเบียน_รถยนต์2พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                saveAs(blob, `รายงานลงทะเบียน_รถยนต์2พลัส3พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
             // ----------------------------------------------------
@@ -350,10 +350,12 @@
             if (view === 'landing') {
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 overflow-hidden relative">
+                        {/* แสงออร่าพื้นหลัง */}
                         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-red-400/20 rounded-full blur-3xl animate-pulse"></div>
                         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
 
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-700">
+                            
                             <div className="h-48 sm:h-56 w-full relative bg-slate-800 overflow-hidden group cursor-default">
                                 <img src="./cover.png" alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
@@ -361,9 +363,9 @@
 
                             <div className="p-6 sm:p-8 relative z-10 -mt-6 bg-white rounded-t-[32px]">
                                 <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                                    ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม
+                                    ประกันรถยนต์ 2+ 3+
                                 </h1>
-                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">เน้นความคุ้มครองน้ำท่วม ในราคาสุดคุ้ม</p>
+                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">หมดกังวลใจ มีรถให้ใช้ระหว่างซ่อม</p>
                                 
                                 <div className="space-y-3 mb-8">
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
@@ -415,13 +417,13 @@
                                         <div className="text-[14px] sm:text-[15px] flex w-full pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">รายละเอียด:</div>
                                             <div className="font-medium text-slate-600 leading-relaxed flex-1">
-                                                เจาะลึกแผนประกันรถยนต์ 2+ ที่ตอบโจทย์ความเสี่ยงในปัจจุบัน โดยเฉพาะ <span className="text-blue-600 font-bold italic relative inline-block">ความคุ้มครองน้ำท่วม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> ที่กำลังเป็นปัญหาหลัก พร้อมเทคนิคการเลือกซื้อในราคาสุดคุ้ม
+                                                เจาะลึกจุดเด่นประกันรถยนต์ 2+ และ 3+ หมดกังวลเรื่องการเดินทางกับสิทธิพิเศษ <span className="text-blue-600 font-bold italic relative inline-block">บริการรถใช้ระหว่างซ่อม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> เพิ่มความสะดวกสบายให้ลูกค้าของคุณ
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <button onClick={() => setView('form')} className="btn-shine relative overflow-hidden w-full py-4 bg-[#dc2626] text-white rounded-[20px] font-black text-[16px] sm:text-lg shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] hover:shadow-[0_12px_25px_-6px_rgba(220,38,38,0.6)] hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 group">
+                                <button onClick={() => setView('form')} className="btn-shine relative overflow-hidden w-full py-4 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-2xl font-black text-[16px] sm:text-lg shadow-[0_10px_25px_-5px_rgba(225,29,72,0.4)] hover:shadow-[0_15px_35px_-5px_rgba(225,29,72,0.6)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 group">
                                     <span className="relative z-10">ลงทะเบียนเข้าร่วมอบรม</span>
                                     <span className="relative z-10 group-hover:translate-x-1 transition-transform">👉</span>
                                 </button>
@@ -692,7 +694,7 @@
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
                                     <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
-                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "ประกันรถยนต์ 2+"</p>
+                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "ประกันรถยนต์ 2+ 3+ มีรถให้ใช้ระหว่างซ่อม"</p>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                     <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-rose-50 transition-all shadow-sm">
