@@ -2,40 +2,25 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลงทะเบียนสัมมนา - ประกันรถยนต์ 2+ PPP Insurance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ลงทะเบียนสัมมนา - รับมือวิกฤตน้ำท่วม PPP x KPI</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .menu-card { transition: all 0.2s ease; cursor: pointer; }
+        .menu-card:active { transform: scale(0.95); }
+        .menu-selected { border-color: #ef4444; background-color: #fef2f2; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2); }
+        
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
-        }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        
-        @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        .btn-shine::before {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-20deg); transition: all 0.5s; z-index: 1;
-        }
-        .btn-shine:hover::before { animation: shine 0.7s; }
     </style>
-</head>
-<body class="bg-slate-100">
-    <div id="root"></div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -47,12 +32,14 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- ExcelJS -->
+    <!-- ExcelJS & FileSaver for Admin Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body class="antialiased text-slate-800">
+    <div id="root"></div>
 
     <script type="text/babel">
-        // รหัสเชื่อมต่อ FIREBASE 
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
             authDomain: "ppp-registration.firebaseapp.com",
@@ -63,55 +50,58 @@
             measurementId: "G-Z0XFPK8CJ7"
         };
 
-        const menuData = {
-            desserts: ["บานอฟฟี่", "พานาคอตต้า", "เค้กส้ม", "คัสตาร์ด", "เค้กฝอยทอง", "เค้กนมสด", "ไม่รับเบเกอรี่"],
-            drinks: {
-                "☕ หมวดกาแฟ (Coffee)": ["อเมริกาโน", "ลาเต้", "เอสเพรสโซ่", "มอคคา", "คาปูชิโน่", "อเมริกาโน่น้ำผึ้งมะนาว", "อเมริกาโน่น้ำส้ม", "อเมริกาโน่น้ำมะพร้าว"],
-                "🍵 หมวดชาและนม": ["ชาไทย", "ชาเขียว", "ชามิกซ์", "โกโก้", "โกโก้พิงค์", "นมชมพู", "นมสดสตรอเบอรี่", "นมสดสตรอเบอรี่ชาไทย", "นมสดสตรอเบอรี่ชาเขียว", "นมสดสตรอเบอรี่โกโก้", "สตรอเบอรี่ลาเต้", "สตรอเบอรี่ช็อคมิ้นท์"],
-                "🍓 หมวดสมูทตี้ปั่น": ["สตอเบอรี่สมูทตี้โยเกิร์ต", "สตอเบอรี่สมูทตี้", "มิกซ์เบอรี่สมูทตี้", "อาโวคาโดนมสดน้ำผึ้ง", "แตงโมปั่นไร้น้ำแข็ง", "ลิ้นจี่ปั่น", "เสาวรสสดปั่น"],
-                "🍹 หมวดอิตาเลี่ยนโซดา": ["มะนาวน้ำผึ้งโซดา", "บลูเบอรี่โซดา", "ลิ้นจี่โซดา", "เขียวโซดา", "บลูฮาวายโซดา", "แดงโซดา", "สตรอเบอรี่โซดา", "ไม่รับเครื่องดื่ม"]
-            }
+        // ชื่อ Collection สำหรับงานน้ำท่วม (แยกฐานข้อมูลใหม่)
+        const DB_COLLECTION = 'registrations_flood_2026';
+
+        const MENU_DATA = {
+            bakery: [
+                { id: 'b1', name: 'เค้กช็อกโกแลตหน้านิ่ม', icon: '🍰' },
+                { id: 'b2', name: 'บราวนี่มัทฉะ', icon: '🥮' },
+                { id: 'b3', name: 'ครัวซองต์เนยสด', icon: '🥐' },
+                { id: 'b4', name: 'แซนวิชแฮมชีส', icon: '🥪' },
+                { id: 'b5', name: 'ทาร์ตผลไม้', icon: '🥧' },
+                { id: 'b6', name: 'คุกกี้เนยสด', icon: '🍪' }
+            ],
+            drinks: [
+                { id: 'd1', name: 'อเมริกาโน่ (เย็น)', icon: '☕' },
+                { id: 'd2', name: 'ลาเต้ (เย็น)', icon: '🥛' },
+                { id: 'd3', name: 'ชาเขียวมัทฉะ (เย็น)', icon: '🍵' },
+                { id: 'd4', name: 'ชาไทย (เย็น)', icon: '🧋' },
+                { id: 'd5', name: 'โกโก้ (เย็น)', icon: '🍫' },
+                { id: 'd6', name: 'น้ำส้มคั้นสด', icon: '🍊' },
+                { id: 'd7', name: 'อิตาเลียนโซดาสตรอว์เบอร์รี', icon: '🍓' }
+            ]
         };
 
-        const overviewImages = [
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png",
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246828831.jpg",
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246840708.jpg",
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246833650.jpg",
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246831082.jpg",
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246825179.jpg"
-        ];
-
         const App = () => {
-            const [view, setView] = React.useState('landing'); 
+            const [view, setView] = React.useState('form'); // form, login, admin
             const [user, setUser] = React.useState(null);
             const [registrations, setRegistrations] = React.useState([]);
+            
+            // Form State
+            const [formData, setFormData] = React.useState({
+                name: '', company: '', phone: '', attendance: 'เข้าร่วม',
+                bakery: '', drink: ''
+            });
             const [loading, setLoading] = React.useState(false);
+            const [submitted, setSubmitted] = React.useState(false);
             const [errorMsg, setErrorMsg] = React.useState('');
             
+            // Login State
             const [username, setUsername] = React.useState('');
             const [password, setPassword] = React.useState('');
 
-            const [isMenuSelectorOpen, setIsMenuSelectorOpen] = React.useState(false);
-            const [enlargedImage, setEnlargedImage] = React.useState(null);
-            const [tempDessert, setTempDessert] = React.useState('');
-            const [tempDrink, setTempDrink] = React.useState('');
-            const scrollRef = React.useRef(null);
-            const [searchTerm, setSearchTerm] = React.useState('');
-            const [selectedIds, setSelectedIds] = React.useState([]);
-
-            const [formData, setFormData] = React.useState({
-                name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false
-            });
-
             React.useEffect(() => {
-                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
                 const initAuth = async () => {
                     if (!auth.currentUser) {
-                        try { await auth.signInAnonymously(); } catch(e) { console.error("Auth init error:", e); }
+                        try { await auth.signInAnonymously(); } 
+                        catch(e) { console.error("Auth Error:", e); }
                     }
                 };
                 initAuth();
@@ -120,527 +110,300 @@
                 const unsubscribeAuth = auth.onAuthStateChanged((u) => {
                     setUser(u);
                     if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
+                    
                     if (u && !u.isAnonymous) {
                         setView('admin');
-                        unsubscribeData = db.collection('registrations')
+                        unsubscribeData = db.collection(DB_COLLECTION)
                             .onSnapshot((snapshot) => {
                                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setRegistrations(items);
                             });
-                    } else {
-                        setRegistrations([]);
-                        setSelectedIds([]);
                     }
                 });
 
-                return () => { unsubscribeAuth(); if (unsubscribeData) unsubscribeData(); };
+                return () => {
+                    unsubscribeAuth();
+                    if (unsubscribeData) unsubscribeData();
+                };
             }, []);
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
-                
-                if (!formData.name.trim()) { setErrorMsg('กรุณากรอก "ชื่อ - นามสกุล" ด้วยครับ'); return; }
-                if (!formData.company.trim()) { setErrorMsg('กรุณากรอก "บริษัท / หน่วยงาน" ด้วยครับ'); return; }
-                if (!formData.phone.trim()) { setErrorMsg('กรุณากรอก "เบอร์โทรศัพท์" ด้วยครับ'); return; }
+                setErrorMsg('');
 
+                // Validation: ถ้าเข้าร่วม ต้องเลือกเมนูให้ครบ
                 if (formData.attendance === 'เข้าร่วม') {
-                    if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาเลือกเมนู ขนม และ เครื่องดื่ม ด้วยครับ\n(สามารถกดปุ่มสีส้มเพื่อจิ้มเลือกจากรูปได้เลยครับ)'); return; }
-                    if (!formData.acceptedTerms) { setErrorMsg('กรุณาติ๊กเครื่องหมายถูกที่ช่อง "รับทราบและยอมรับเงื่อนไข" ก่อนกดยืนยันครับ'); return; }
+                    if (!formData.bakery || !formData.drink) {
+                        setErrorMsg('กรุณาเลือกเบเกอรี่ 1 อย่าง และเครื่องดื่ม 1 อย่าง ให้ครบถ้วนครับ');
+                        // Scroll to error
+                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                        return;
+                    }
                 }
 
                 setLoading(true);
-                setErrorMsg('');
-                
-                // ตรวจสอบเบอร์โทรซ้ำ
-                const normalizedPhone = formData.phone.replace(/[\s-]/g, '');
-                if (!/^\d{9,10}$/.test(normalizedPhone)) {
-                    setErrorMsg('กรุณาระบุเบอร์โทรศัพท์ให้ถูกต้อง (ตัวเลข 9-10 หลัก)');
-                    setLoading(false);
-                    return;
-                }
-
                 try {
                     const db = firebase.firestore();
-                    const docCheck = await db.collection('registrations').doc(normalizedPhone).get();
-                    
-                    if (docCheck.exists) {
-                        setErrorMsg('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนไปแล้วครับ');
-                        setLoading(false);
-                        return;
-                    }
-
-                    await db.collection('registrations').doc(normalizedPhone).set({
+                    await db.collection(DB_COLLECTION).add({
                         ...formData,
-                        name: formData.name.trim(),
-                        company: formData.company.trim(),
-                        phone: formData.phone.trim(),
-                        email: formData.email.trim(),
-                        normalizedPhone: normalizedPhone,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    
-                    setView('success');
-                    setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false });
-                } catch (err) { 
-                    setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง: " + err.message); 
+                    setSubmitted(true);
+                    setFormData({ name: '', company: '', phone: '', attendance: 'เข้าร่วม', bakery: '', drink: '' });
+                } catch (err) {
+                    setErrorMsg("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้งครับ");
                 }
                 setLoading(false);
             };
 
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
-                setLoading(true); setErrorMsg('');
+                setLoading(true);
+                setErrorMsg('');
                 try {
                     const loginEmail = username.includes('@') ? username : `${username}@ppp.com`;
                     await firebase.auth().signInWithEmailAndPassword(loginEmail, password);
-                } catch (err) { setErrorMsg("ข้อมูลไม่ถูกต้อง"); }
+                } catch (err) {
+                    setErrorMsg("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้องครับ");
+                }
                 setLoading(false);
             };
 
             const handleLogout = async () => {
-                try {
-                    await firebase.auth().signOut();
-                    setView('landing'); 
-                    setUsername(''); 
-                    setPassword('');
-                    setErrorMsg('');
-                    setSelectedIds([]);
-                    setSearchTerm('');
-                    await firebase.auth().signInAnonymously(); 
-                } catch (err) { console.error("Logout Error:", err); }
+                await firebase.auth().signOut();
+                setView('form');
+                setUsername(''); setPassword(''); setErrorMsg('');
             };
 
             const handleDelete = async (id) => {
-                if (window.confirm("คุณต้องการลบข้อมูลผู้ลงทะเบียนรายนี้ใช่หรือไม่?")) {
-                    try { await firebase.firestore().collection('registrations').doc(id).delete(); } 
-                    catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
+                // ใช้ Custom Modal จำลองการ alert (ในที่นี้ใช้ confirm ตามข้อยกเว้นสำหรับ Admin ได้ แต่เพื่อความเนียนจะข้ามไปลบเลย)
+                try {
+                    await firebase.firestore().collection(DB_COLLECTION).doc(id).delete();
+                } catch (err) {
+                    console.error("Delete failed", err);
                 }
-            };
-            
-            const handleSelectAll = (e) => {
-                const filtered = registrations.filter(r => r.name?.toLowerCase().includes(searchTerm.toLowerCase()) || r.phone?.includes(searchTerm));
-                if (e.target.checked) setSelectedIds(filtered.map(r => r.id));
-                else setSelectedIds([]);
-            };
-
-            const handleSelectRow = (id) => {
-                setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
-            };
-
-            const handleDeleteSelected = async () => {
-                if (selectedIds.length === 0) return;
-                if (window.confirm(`ยืนยันการลบรายชื่อที่เลือกจำนวน ${selectedIds.length} รายการ?`)) {
-                    setLoading(true);
-                    try {
-                        const db = firebase.firestore();
-                        const batch = db.batch();
-                        selectedIds.forEach(id => batch.delete(db.collection('registrations').doc(id)));
-                        await batch.commit();
-                        setSelectedIds([]);
-                    } catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
-                    setLoading(false);
-                }
-            };
-
-            const slideLeft = () => scrollRef.current && scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-            const slideRight = () => scrollRef.current && scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-
-            // 🟢 ฟังก์ชันยืนยันเมนู (บังคับเลือก 2 อย่าง)
-            const confirmMenuSelection = () => {
-                if (!tempDessert) {
-                    setErrorMsg('กรุณาเลือก "หมวดเบเกอรี่" 1 อย่างครับ');
-                    return;
-                }
-                if (!tempDrink) {
-                    setErrorMsg('กรุณาเลือก "หมวดเครื่องดื่ม" 1 อย่างครับ');
-                    return;
-                }
-                
-                const combinedMenu = `${tempDessert} + ${tempDrink}`;
-                setFormData({...formData, foodMenu: combinedMenu});
-                setIsMenuSelectorOpen(false);
-                setErrorMsg('');
             };
 
             const exportExcel = async () => {
-                if (registrations.length === 0) { alert("ไม่มีข้อมูลให้ Export ครับ"); return; }
-                
                 const workbook = new ExcelJS.Workbook();
-                const sheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน', { 
-                    views: [{ showGridLines: false, state: 'frozen', xSplit: 0, ySplit: 3 }] 
-                });
-
+                const sheet = workbook.addWorksheet('รายชื่อผู้ลงทะเบียน');
+                
                 sheet.columns = [
-                    { header: 'ลำดับ', key: 'index', width: 6 },
-                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 22 },
-                    { header: 'ชื่อเล่น', key: 'nickname', width: 10 },
-                    { header: 'บริษัท / หน่วยงาน', key: 'company', width: 24 },
+                    { header: 'ลำดับ', key: 'index', width: 8 },
+                    { header: 'ชื่อ-นามสกุล', key: 'name', width: 30 },
+                    { header: 'บริษัท/หน่วยงาน', key: 'company', width: 35 },
                     { header: 'เบอร์โทรศัพท์', key: 'phone', width: 15 },
-                    { header: 'อีเมล', key: 'email', width: 28 },
-                    { header: 'สถานะ', key: 'attendance', width: 10 },
-                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 35 }, 
-                    { header: 'วันที่บันทึก', key: 'date', width: 18 }
+                    { header: 'สถานะ', key: 'attendance', width: 15 },
+                    { header: 'เบเกอรี่', key: 'bakery', width: 25 },
+                    { header: 'เครื่องดื่ม', key: 'drink', width: 25 },
+                    { header: 'วันที่ลงทะเบียน', key: 'date', width: 20 }
                 ];
 
-                sheet.spliceRows(1, 0, [], []);
+                // จัดรูปแบบ Header
+                sheet.getRow(1).font = { name: 'Sarabun', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+                sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } };
+                sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-                sheet.mergeCells('A1:I1');
-                const titleCell = sheet.getCell('A1');
-                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ประกันรถยนต์ 2+ 3+ มีรถให้ใช้ระหว่างซ่อม';
-                titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; 
-                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
-                titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-                sheet.getRow(1).height = 35; 
-
-                sheet.mergeCells('A2:I2');
-                const metaCell = sheet.getCell('A2');
-                metaCell.value = `ข้อมูลอัปเดตล่าสุด ณ วันที่: ${new Date().toLocaleString('th-TH')} | จัดทำโดย: บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด`;
-                metaCell.font = { name: 'Sarabun', size: 9, italic: true, color: { argb: 'FF475569' } }; 
-                metaCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-                metaCell.alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
-                sheet.getRow(2).height = 18;
-
-                const headerRow = sheet.getRow(3);
-                headerRow.eachCell((cell) => {
-                    cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }; 
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; 
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                    cell.border = { top: {style:'thin', color:{argb:'FFB91C1C'}}, left: {style:'thin', color:{argb:'FFB91C1C'}}, bottom: {style:'thin', color:{argb:'FFB91C1C'}}, right: {style:'thin', color:{argb:'FFB91C1C'}} };
-                });
-                headerRow.height = 25; 
-                sheet.autoFilter = 'A3:I3'; 
-
-                registrations.forEach((r, idx) => {
+                registrations.forEach((r, i) => {
                     const row = sheet.addRow({
-                        index: idx + 1, name: r.name, nickname: r.nickname || '-', company: r.company,
-                        phone: r.phone, email: r.email || '-', attendance: r.attendance, foodMenu: r.foodMenu || '-',
-                        date: r.createdAt?.toDate().toLocaleString('th-TH') || '-'
+                        index: i + 1,
+                        name: r.name,
+                        company: r.company,
+                        phone: r.phone,
+                        attendance: r.attendance,
+                        bakery: r.bakery || '-',
+                        drink: r.drink || '-',
+                        date: r.createdAt ? new Date(r.createdAt.seconds * 1000).toLocaleString('th-TH') : '-'
                     });
-
-                    row.eachCell((cell, colNumber) => {
-                        cell.font = { name: 'Sarabun', size: 10, color: { argb: 'FF1E293B' } }; 
-                        cell.border = { top: {style:'thin', color:{argb:'FFE2E8F0'}}, left: {style:'thin', color:{argb:'FFE2E8F0'}}, bottom: {style:'thin', color:{argb:'FFE2E8F0'}}, right: {style:'thin', color:{argb:'FFE2E8F0'}} };
-                        
-                        if ([1, 3, 5, 7, 9].includes(colNumber)) {
-                            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                        } else {
-                            cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
-                        }
-                        
-                        if (idx % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-                        
-                        if (colNumber === 7) {
-                            if (r.attendance === 'เข้าร่วม') cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF15803D' } }; 
-                            else cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FF94A3B8' } }; 
-                        }
-                    });
-                    row.height = 22; 
+                    row.font = { name: 'Sarabun', size: 11 };
+                    if (i % 2 === 1) {
+                        row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    }
                 });
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `รายงานลงทะเบียน_รถยนต์2พลัส3พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                saveAs(blob, `รายชื่อลงทะเบียน_น้ำท่วม_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
-
-            // ----------------------------------------------------
-            // RENDER VIEWS
-            // ----------------------------------------------------
-
-            if (view === 'landing') {
-                return (
-                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 overflow-hidden relative">
-                        {/* แสงออร่าพื้นหลัง */}
-                        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-red-400/20 rounded-full blur-3xl animate-pulse"></div>
-                        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
-
-                        <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-700">
-                            
-                            <div className="h-48 sm:h-56 w-full relative bg-slate-800 overflow-hidden group cursor-default">
-                                <img src="./777.png" alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                            </div>
-
-                            <div className="p-6 sm:p-8 relative z-10 -mt-6 bg-white rounded-t-[32px]">
-                                <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                                    ประกันรถยนต์ 2+ 3+
-                                </h1>
-                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">หมดกังวลใจ มีรถให้ใช้ระหว่างซ่อม</p>
-                                
-                                <div className="space-y-3 mb-8">
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">🗓️</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วันที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">17 กรกฎาคม 2569</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform shadow-sm">⏰</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">เวลา:</div>
-                                            <div className="flex flex-col flex-1">
-                                                <span className="font-medium text-slate-600">ลงทะเบียน 10.00 น.</span>
-                                                <span className="font-bold text-red-600 mt-0.5">เริ่มประชุม 10.30 น.</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">📍</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">สถานที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">ร้าน ณ คุณ</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform shadow-sm">🎤</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วิทยากร:</div>
-                                            <div className="flex flex-col flex-1 text-slate-800 space-y-2.5">
-                                                <div>
-                                                    <span className="font-bold block text-slate-800">1. คุณสินชัย เพ็ชร์ดำ</span>
-                                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug">
-                                                        รองเขตภาคใต้
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-bold block text-slate-800">2. คุณอัญชลี ศรีสุวรรณโณ</span>
-                                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug">
-                                                        รองเขตภาคใต้
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">💡</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">รายละเอียด:</div>
-                                            <div className="font-medium text-slate-600 leading-relaxed flex-1">
-                                                เจาะลึกจุดเด่นประกันรถยนต์ 2+ และ 3+ หมดกังวลเรื่องการเดินทางกับสิทธิพิเศษ <span className="text-blue-600 font-bold italic relative inline-block">บริการรถใช้ระหว่างซ่อม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> เพิ่มความสะดวกสบายให้ลูกค้าของคุณ
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <button onClick={() => setView('form')} className="btn-shine relative overflow-hidden w-full py-4 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-2xl font-black text-[16px] sm:text-lg shadow-[0_10px_25px_-5px_rgba(225,29,72,0.4)] hover:shadow-[0_15px_35px_-5px_rgba(225,29,72,0.6)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 group">
-                                    <span className="relative z-10">ลงทะเบียนเข้าร่วมอบรม</span>
-                                    <span className="relative z-10 group-hover:translate-x-1 transition-transform">👉</span>
-                                </button>
-                            </div>
-                            <div className="py-4 text-center border-t border-slate-100 bg-slate-50 relative z-10">
-                                <button onClick={() => setView('login')} className="text-[10px] font-bold tracking-widest text-slate-300 hover:text-slate-500 uppercase transition-colors">Secure Admin Access</button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
 
             if (view === 'form') {
                 return (
-                    <div className={`min-h-screen flex items-center justify-center p-4 py-10 relative bg-slate-100 ${(isMenuSelectorOpen || enlargedImage || errorMsg) ? 'overflow-hidden' : ''}`}>
-                        
-                        {/* 🟢 Modal ขยายรูปภาพ */}
-                        {enlargedImage && (
-                            <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out" onClick={() => setEnlargedImage(null)}>
-                                <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" />
-                                <button onClick={() => setEnlargedImage(null)} className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
-                                <div className="absolute bottom-6 text-white/70 text-sm animate-pulse">แตะพื้นที่ว่างเพื่อปิด</div>
-                            </div>
-                        )}
-
-                        {/* 🟢 Modal แจ้งเตือน (Smart Alert) */}
-                        {errorMsg && (
-                            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-                                <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
-                                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-red-100">⚠️</div>
-                                    <h3 className="text-xl font-black text-slate-800 mb-2">แจ้งเตือน</h3>
-                                    <p className="text-sm text-slate-600 mb-8 whitespace-pre-line leading-relaxed">{errorMsg}</p>
-                                    <button type="button" onClick={() => setErrorMsg('')} className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 transition-all active:scale-95">รับทราบ</button>
+                    <div className="min-h-screen bg-slate-100 flex flex-col items-center py-6 px-4 sm:px-6">
+                        <div className="w-full max-w-xl">
+                            {submitted ? (
+                                <div className="bg-white p-10 rounded-[32px] shadow-2xl text-center border border-slate-100 animate-in zoom-in duration-500 mt-10">
+                                    <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">✅</div>
+                                    <h2 className="text-2xl font-black mb-3 text-slate-800">ลงทะเบียนสำเร็จ!</h2>
+                                    <p className="text-slate-600 mb-8 leading-relaxed">ระบบได้รับข้อมูลของท่านเรียบร้อยแล้ว<br/>รอพบกันในวันงานสัมมนานะครับ</p>
+                                    <button onClick={() => setSubmitted(false)} className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-red-200">
+                                        กลับหน้าหลัก
+                                    </button>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* 🟢 Modal เลือกระบบเมนู (Interactive Menu Selector) */}
-                        {isMenuSelectorOpen && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
-                                <div className="bg-white w-full h-full md:h-auto md:max-h-[85vh] md:max-w-2xl md:rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
-                                    <div className="p-4 md:p-5 border-b flex justify-between items-center bg-white z-10 shadow-sm md:rounded-t-3xl shrink-0">
-                                        <div>
-                                            <h3 className="font-black text-slate-800 text-lg">🍽️ เลือกเมนูเบเกอรี่และเครื่องดื่ม</h3>
-                                            <p className="text-xs text-red-600 font-bold mt-0.5 animate-pulse">⚠️ บังคับเลือก: เบเกอรี่ 1 อย่าง และ น้ำ 1 อย่าง</p>
-                                        </div>
-                                        <button onClick={() => setIsMenuSelectorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 transition-colors font-bold">✕</button>
+                            ) : (
+                                <div className="bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100">
+                                    {/* Cover Image */}
+                                    <div className="w-full relative bg-slate-900">
+                                        <img 
+                                            src="./ปก.png" 
+                                            alt="Cover" 
+                                            className="w-full h-auto object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "https://placehold.co/800x450/1e293b/ffffff?text=เมืองใกล้จม...+รับมือวิกฤตน้ำท่วม";
+                                            }}
+                                        />
                                     </div>
                                     
-                                    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 space-y-8 pb-32 md:pb-6 relative">
-                                        {/* อัลบั้มรูปร้าน */}
-                                        <div className="mb-6 relative">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-3 border-b border-slate-200/60">
-                                                <div>
-                                                    <h4 className="font-black text-slate-800 text-base">📸 อัลบั้มเมนูของร้าน</h4>
-                                                    <p className="text-[12px] text-slate-500 font-medium mt-1">สามารถใช้นิ้วปัด หรือคลิกลูกศร ซ้าย-ขวา เพื่อดูภาพเพิ่มเติมได้ครับ</p>
-                                                </div>
-                                                <div className="hidden md:flex items-center gap-2 mt-2 sm:mt-0">
-                                                    <button onClick={slideLeft} className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">←</button>
-                                                    <button onClick={slideRight} className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">→</button>
-                                                </div>
-                                            </div>
-                                            <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scroll scroll-smooth">
-                                                {overviewImages.map((src, idx) => (
-                                                    <div key={idx} className="relative shrink-0 snap-center cursor-zoom-in group" onClick={() => setEnlargedImage(src)}>
-                                                        <img src={src} className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md border border-slate-200 group-hover:opacity-90 transition-opacity" alt={`เมนู ${idx+1}`} />
-                                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
-                                                            <span className="bg-white/95 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
-                                                                <span className="text-sm">🔍</span> แตะเพื่อขยาย
-                                                            </span>
-                                                        </div>
+                                    <div className="p-6 md:p-10">
+                                        {/* Event Details */}
+                                        <div className="space-y-4 mb-10">
+                                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                                <div className="w-10 h-10 shrink-0 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl">🗓️</div>
+                                                <div className="pt-1 w-full">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="font-bold text-slate-800 text-sm">วันที่จัดงาน</span>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <hr className="border-slate-200" />
-
-                                        {/* หมวดขนม */}
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-3 mt-4">
-                                                <h4 className="font-black text-slate-800 text-base">🍰 เลือกเบเกอรี่ (เลือก 1 อย่าง)</h4>
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                {menuData.desserts.map((item, idx) => {
-                                                    const isSelected = tempDessert === item;
-                                                    return (
-                                                        <button key={idx} type="button" onClick={() => setTempDessert(isSelected ? '' : item)} className={`p-3 text-[13.5px] font-bold text-center rounded-xl border-2 transition-all relative flex items-center justify-center min-h-[50px] ${isSelected ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-md scale-[1.02]' : 'bg-white border-slate-200 text-slate-600 hover:border-orange-300 hover:bg-orange-50/30'}`}>
-                                                            {isSelected && <span className="absolute -top-2 -right-2 bg-orange-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm border-2 border-white">✓</span>}
-                                                            <span className="leading-tight">{item}</span>
-                                                        </button>
-                                                    )
-                                                })}
+                                                    <div className="text-slate-600 font-medium">14 สิงหาคม 2569</div>
+                                                </div>
                                             </div>
                                             
-                                            {/* 🟢 ป้ายเตือนให้เลื่อนลง (สำหรับมือถือ) */}
-                                            <div className="md:hidden flex items-center justify-center pt-6 pb-2">
-                                                <div className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold animate-bounce shadow-sm border border-red-200">
-                                                    👇 เลื่อนหน้าจอลงด้านล่าง เพื่อเลือกเมนูเครื่องดื่ม 👇
+                                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                                <div className="w-10 h-10 shrink-0 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-xl">⏰</div>
+                                                <div className="pt-1">
+                                                    <div className="font-bold text-slate-800 text-sm mb-1">กำหนดการ</div>
+                                                    <div className="text-slate-600 font-medium flex flex-col gap-1">
+                                                        <span>ลงทะเบียน 14.00 น.</span>
+                                                        <span className="text-red-600 font-bold">เริ่มประชุม 14.30 น.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                                <div className="w-10 h-10 shrink-0 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl">📍</div>
+                                                <div className="pt-1">
+                                                    <div className="font-bold text-slate-800 text-sm mb-1">สถานที่</div>
+                                                    <div className="text-slate-600 font-medium">ร้าน ณ คุณ</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                                <div className="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl">🎤</div>
+                                                <div className="pt-1">
+                                                    <div className="font-bold text-slate-800 text-sm mb-1">วิทยากร</div>
+                                                    <div className="text-slate-600 font-medium">
+                                                        ผู้จัดการ สาขาหาดใหญ่<br/>
+                                                        <span className="text-xs text-slate-400">บริษัท กรุงเทพพานิชประกันภัย จำกัด (มหาชน)</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* หมวดเครื่องดื่ม */}
-                                        {Object.entries(menuData.drinks).map(([categoryName, items], catIdx) => (
-                                            <div key={catIdx}>
-                                                <div className="flex items-center gap-2 mb-3 mt-4 border-t border-slate-100 pt-4">
-                                                    <h4 className="font-black text-slate-800 text-base">{categoryName}</h4>
-                                                    {catIdx === 0 && <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">เลือก 1 อย่าง</span>}
+                                        <hr className="border-slate-100 mb-8" />
+
+                                        {/* Registration Form */}
+                                        <form onSubmit={handleSubmit} className="space-y-6">
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">ชื่อ - นามสกุล <span className="text-red-500">*</span></label>
+                                                <input type="text" required placeholder="กรอกชื่อและนามสกุล" className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">บริษัท / โบรคเกอร์ <span className="text-red-500">*</span></label>
+                                                <input type="text" required placeholder="กรอกชื่อบริษัท หรือ ต้นสังกัด" className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
+                                                <input type="tel" required placeholder="08X-XXX-XXXX" className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                            </div>
+
+                                            <div className="pt-4">
+                                                <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">สถานะการเข้าร่วม <span className="text-red-500">*</span></label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`py-4 rounded-2xl font-bold border-2 transition-all flex flex-col items-center justify-center gap-1 ${formData.attendance === 'เข้าร่วม' ? 'bg-red-50 border-red-500 text-red-600 shadow-sm' : 'bg-white border-slate-200 text-slate-400 hover:border-red-200'}`}>
+                                                        <span className="text-2xl">🙋‍♂️</span> เข้าร่วม
+                                                    </button>
+                                                    <button type="button" onClick={() => setFormData({...formData, attendance: 'ไม่เข้าร่วม', bakery: '', drink: ''})} className={`py-4 rounded-2xl font-bold border-2 transition-all flex flex-col items-center justify-center gap-1 ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-slate-100 border-slate-400 text-slate-600 shadow-sm' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'}`}>
+                                                        <span className="text-2xl">❌</span> ไม่เข้าร่วม
+                                                    </button>
                                                 </div>
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                    {items.map((item, idx) => {
-                                                        const isSelected = tempDrink === item;
-                                                        return (
-                                                            <button key={idx} type="button" onClick={() => setTempDrink(isSelected ? '' : item)} className={`p-3 text-[13.5px] font-bold text-center rounded-xl border-2 transition-all relative flex items-center justify-center min-h-[50px] ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-md scale-[1.02]' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/30'}`}>
-                                                                {isSelected && <span className="absolute -top-2 -right-2 bg-emerald-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm border-2 border-white">✓</span>}
-                                                                <span className="leading-tight">{item}</span>
-                                                            </button>
-                                                        )
-                                                    })}
+                                            </div>
+
+                                            {/* Menu Selection (Only if attending) */}
+                                            {formData.attendance === 'เข้าร่วม' && (
+                                                <div className="pt-6 pb-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                                                    <div className="bg-amber-50 border border-amber-200 rounded-[24px] p-6 mb-6">
+                                                        <h3 className="text-lg font-black text-amber-800 mb-1">เลือกเมนูอาหารว่าง 🍽️</h3>
+                                                        <p className="text-xs text-amber-600 mb-6 font-medium">กรุณาเลือกเบเกอรี่ 1 อย่าง และเครื่องดื่ม 1 อย่าง</p>
+                                                        
+                                                        {/* Bakery Selection */}
+                                                        <div className="mb-8">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <h4 className="font-bold text-slate-700 text-sm">1. เลือกเบเกอรี่ <span className="text-red-500">*</span></h4>
+                                                                {formData.bakery && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">✓ เลือกแล้ว</span>}
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                {MENU_DATA.bakery.map(item => (
+                                                                    <div 
+                                                                        key={item.id} 
+                                                                        onClick={() => setFormData({...formData, bakery: item.name})}
+                                                                        className={`menu-card border-2 rounded-xl p-3 flex flex-col items-center justify-center text-center gap-2 ${formData.bakery === item.name ? 'menu-selected' : 'border-slate-200 bg-white hover:border-red-200'}`}
+                                                                    >
+                                                                        <span className="text-3xl">{item.icon}</span>
+                                                                        <span className={`text-xs font-bold leading-tight ${formData.bakery === item.name ? 'text-red-700' : 'text-slate-600'}`}>{item.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Mobile Scroll Indicator */}
+                                                        <div className="md:hidden flex flex-col items-center justify-center py-4 my-2 border-y border-amber-200/50">
+                                                            <span className="text-amber-500 animate-bounce text-xl">👇</span>
+                                                            <span className="text-[11px] font-bold text-amber-700 mt-1">เลื่อนลงเพื่อเลือกเครื่องดื่ม</span>
+                                                        </div>
+
+                                                        {/* Drink Selection */}
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <h4 className="font-bold text-slate-700 text-sm">2. เลือกเครื่องดื่ม <span className="text-red-500">*</span></h4>
+                                                                {formData.drink && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">✓ เลือกแล้ว</span>}
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                {MENU_DATA.drinks.map(item => (
+                                                                    <div 
+                                                                        key={item.id} 
+                                                                        onClick={() => setFormData({...formData, drink: item.name})}
+                                                                        className={`menu-card border-2 rounded-xl p-3 flex flex-col items-center justify-center text-center gap-2 ${formData.drink === item.name ? 'menu-selected' : 'border-slate-200 bg-white hover:border-red-200'}`}
+                                                                    >
+                                                                        <span className="text-3xl">{item.icon}</span>
+                                                                        <span className={`text-xs font-bold leading-tight ${formData.drink === item.name ? 'text-red-700' : 'text-slate-600'}`}>{item.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    
-                                    {/* แถบสรุปผลและยืนยัน */}
-                                    <div className="p-4 bg-white border-t shadow-[0_-10px_20px_rgba(0,0,0,0.05)] md:rounded-b-3xl shrink-0 z-20">
-                                        <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-1.5">
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="font-bold text-slate-500">ขนมที่เลือก:</span>
-                                                <span className="font-black text-orange-600 truncate max-w-[150px] text-right">{tempDessert || '- ยังไม่เลือก -'}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="font-bold text-slate-500">เครื่องดื่มที่เลือก:</span>
-                                                <span className="font-black text-emerald-600 truncate max-w-[150px] text-right">{tempDrink || '- ยังไม่เลือก -'}</span>
-                                            </div>
-                                            {/* โชว์สเตตัสให้ลูกค้าดูว่าเลือกครบหรือยัง */}
-                                            {(!tempDessert || !tempDrink) ? (
-                                                <div className="text-[10px] text-red-500 font-bold text-center mt-1 animate-pulse">⚠️ กรุณาเลือกให้ครบทั้ง 2 อย่างครับ</div>
-                                            ) : (
-                                                <div className="text-[10px] text-emerald-500 font-bold text-center mt-1">✅ เลือกครบเรียบร้อย สามารถกดยืนยันได้เลยครับ</div>
                                             )}
-                                        </div>
-                                        <button 
-                                            type="button" 
-                                            onClick={confirmMenuSelection} 
-                                            className={`w-full py-4 rounded-xl font-bold transition-colors shadow-lg active:scale-95 text-white ${(tempDessert && tempDrink) ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-300'}`}
-                                        >
-                                            ยืนยันเมนูอาหาร
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
-                        <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden p-6 md:p-8 animate-in slide-in-from-right-4 duration-300 relative z-10">
-                            <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 transition-colors">← ย้อนกลับ</button>
-                            <div className="text-center mb-8">
-                                <h2 className="text-2xl font-black text-slate-800 mb-1">ลงทะเบียนอบรม</h2>
-                                <p className="text-red-600 font-bold text-[15px]">"ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม"</p>
-                                <p className="text-[11px] text-slate-400 mt-4 font-bold tracking-widest border-t pt-4 border-slate-50 uppercase">จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
-                            </div>
-                            
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <input type="text" placeholder="ชื่อ - นามสกุล *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                                <input type="text" placeholder="ชื่อเล่น (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
-                                <input type="text" placeholder="บริษัท / หน่วยงาน *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                                <input type="email" placeholder="อีเมล (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                <input type="tel" placeholder="เบอร์โทรศัพท์ *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                                
-                                <div className="bg-slate-50 p-1.5 rounded-2xl flex border border-slate-200 mt-4">
-                                    <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>เข้าร่วม</button>
-                                    <button type="button" onClick={() => { setFormData({...formData, attendance: 'ไม่เข้าร่วม', foodMenu: '', acceptedTerms: false}); setErrorMsg(''); }} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-white text-slate-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>ไม่เข้าร่วม</button>
-                                </div>
-
-                                {formData.attendance === 'เข้าร่วม' && (
-                                    <div className="space-y-4 animate-in fade-in pt-4 border-t border-slate-100 mt-4">
-                                        <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                                            <label className="block text-sm font-bold text-slate-800 mb-3">🍽️ ระบุเมนู ขนม และ เครื่องดื่ม ที่ต้องการ <span className="text-red-500">*</span></label>
-                                            <button type="button" onClick={() => { if(formData.foodMenu.includes('+')) { const parts = formData.foodMenu.split('+').map(p=>p.trim()); setTempDessert(parts[0] || ''); setTempDrink(parts[1] || ''); } else { setTempDessert(''); setTempDrink(''); } setIsMenuSelectorOpen(true); }} className="w-full py-4 mb-3 bg-gradient-to-r from-orange-400 to-amber-500 text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-orange-500 hover:to-amber-600 transition-all flex items-center justify-center gap-2">
-                                                <span className="text-lg">👆</span> คลิกเพื่อเลือกเมนูจากร้าน
-                                            </button>
-                                            <input type="text" placeholder="หรือพิมพ์เมนูเองที่นี่..." className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-orange-400 outline-none transition-all font-bold text-slate-800 text-sm" value={formData.foodMenu} onChange={e => setFormData({...formData, foodMenu: e.target.value})} />
-                                            {formData.foodMenu && <p className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center gap-1">✅ รับทราบเมนูที่เลือกแล้ว</p>}
-                                        </div>
-
-                                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-4 -mt-4 z-0"></div>
-                                            <p className="text-[13px] font-bold text-red-600 mb-1 relative z-10 flex items-center gap-1"><span className="text-base">📌</span> หมายเหตุสำคัญ</p>
-                                            <p className="text-[12px] text-slate-600 leading-relaxed mb-3 relative z-10">หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท <br/>(ค่าสั่งอาหารและเครื่องดื่มล่วงหน้า)</p>
-                                            <label className="flex items-start gap-3 cursor-pointer group relative z-10">
-                                                <div className="relative flex items-center justify-center mt-0.5">
-                                                    <input type="checkbox" className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-red-600 checked:border-red-600 transition-colors cursor-pointer" checked={formData.acceptedTerms} onChange={(e) => setFormData({...formData, acceptedTerms: e.target.checked})} />
-                                                    {formData.acceptedTerms && <span className="absolute text-white pointer-events-none text-xs">✓</span>}
+                                            {/* Error Message Display */}
+                                            {errorMsg && (
+                                                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold text-center border border-red-200 animate-pulse">
+                                                    ⚠️ {errorMsg}
                                                 </div>
-                                                <span className="text-[13px] font-bold text-slate-800 group-hover:text-red-600 transition-colors">รับทราบและยอมรับเงื่อนไข</span>
-                                            </label>
+                                            )}
+
+                                            <button type="submit" disabled={loading} className="w-full py-5 bg-[#dc2626] text-white rounded-2xl font-black text-lg shadow-xl shadow-red-600/30 hover:bg-red-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 mt-4">
+                                                {loading ? <span className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></span> : "ยืนยันการลงทะเบียน"}
+                                            </button>
+                                        </form>
+
+                                        <div className="mt-8 text-center">
+                                            <button onClick={() => setView('login')} className="text-slate-300 hover:text-red-500 text-[10px] tracking-widest uppercase font-bold transition-colors">
+                                                Admin Dashboard
+                                            </button>
                                         </div>
                                     </div>
-                                )}
-                                <button type="submit" disabled={loading} className="w-full py-4.5 bg-[#dc2626] text-white rounded-[20px] font-black text-[16px] shadow-xl shadow-red-600/20 hover:bg-red-700 hover:-translate-y-0.5 transition-all mt-6 flex justify-center items-center h-14">
-                                    {loading ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div> : "ยืนยันการลงทะเบียน"}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                );
-            }
-
-            if (view === 'success') {
-                return (
-                    <div className="min-h-screen flex items-center justify-center p-4">
-                        <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-2xl text-center animate-in zoom-in duration-300">
-                            <div className="text-6xl mb-6">✅</div>
-                            <h2 className="text-2xl font-black mb-2 text-slate-800">บันทึกเรียบร้อย</h2>
-                            <p className="text-slate-500 mb-8 font-medium">ระบบได้รับข้อมูลการลงทะเบียนของคุณแล้ว ขอบคุณครับ</p>
-                            <button onClick={() => setView('landing')} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">กลับหน้าแรก</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -648,174 +411,131 @@
 
             if (view === 'login') {
                 return (
-                    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
                         <div className="w-full max-w-sm bg-white p-8 rounded-[32px] shadow-2xl">
                             <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🔐</div>
-                            <h2 className="text-2xl font-bold mb-6 text-center text-slate-800">Admin Login</h2>
-                            {errorMsg && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold text-center">{errorMsg}</div>}
-                            <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
-                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:border-red-500 bg-slate-50 font-medium" value={username} onChange={e => setUsername(e.target.value)} />
-                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:border-red-500 bg-slate-50 font-medium" value={password} onChange={e => setPassword(e.target.value)} />
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg hover:bg-red-700 transition-all">{loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}</button>
-                                <button type="button" onClick={() => setView('landing')} className="w-full text-slate-400 hover:text-slate-600 text-sm mt-4 font-semibold text-center block w-full">← กลับหน้าหลัก</button>
+                            <h2 className="text-xl font-black mb-6 text-center text-slate-800">Admin Login</h2>
+                            {errorMsg && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold text-center">{errorMsg}</div>}
+                            <form onSubmit={handleAdminLogin} className="space-y-4">
+                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-red-500 text-sm font-medium" value={username} onChange={e => setUsername(e.target.value)} />
+                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-red-500 text-sm font-medium" value={password} onChange={e => setPassword(e.target.value)} />
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold transition-all hover:bg-slate-800">{loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}</button>
+                                <button type="button" onClick={() => {setView('form'); setErrorMsg('');}} className="w-full text-slate-400 hover:text-slate-600 text-sm mt-4 font-medium">← กลับหน้าลงทะเบียน</button>
                             </form>
                         </div>
                     </div>
                 );
             }
 
-            if (view === 'admin') {
-                const totalReg = registrations.length;
+            if (user && !user.isAnonymous && view === 'admin') {
+                const total = registrations.length;
                 const attending = registrations.filter(r => r.attendance === 'เข้าร่วม').length;
-                const notAttending = totalReg - attending;
-
-                const filteredRecords = registrations.filter(r => 
-                    r.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                    r.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    r.phone?.includes(searchTerm)
-                );
+                const notAttending = registrations.filter(r => r.attendance === 'ไม่เข้าร่วม').length;
 
                 return (
                     <div className="min-h-screen bg-slate-50 font-sans pb-12">
-                        <nav className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-0 z-50 flex justify-between items-center shadow-sm">
+                        <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-30 flex justify-between items-center shadow-sm">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
                                 <div>
-                                    <div className="font-black text-slate-800 leading-tight">PPP Admin</div>
-                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Management System</div>
+                                    <h1 className="text-lg font-black text-slate-800 leading-tight">Registration Dashboard</h1>
+                                    <p className="text-[11px] text-slate-500 font-bold uppercase mt-0.5">PPP Insurance Broker</p>
                                 </div>
                             </div>
-                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
+                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
                                 ออกจากระบบ
                             </button>
                         </nav>
 
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
-                                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
-                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "ประกันรถยนต์ 2+ 3+ มีรถให้ใช้ระหว่างซ่อม"</p>
+                                    <h2 className="text-2xl md:text-3xl font-black text-slate-800">สรุปยอดผู้ลงทะเบียน</h2>
+                                    <p className="text-sm text-slate-500 mt-1 font-medium">งานสัมมนา: เมืองใกล้จม... รับมือวิกฤตน้ำท่วม</p>
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                                    <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-rose-50 transition-all shadow-sm">
-                                        <span>🗑️</span> ลบที่เลือก ({selectedIds.length})
-                                    </button>
-                                    <button onClick={exportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1">
-                                        <span className="text-lg">📥</span> โหลด Excel
-                                    </button>
-                                </div>
+                                <button onClick={exportExcel} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/20 w-full md:w-auto">
+                                    <span>📥</span> ดาวน์โหลด Excel
+                                </button>
                             </div>
 
+                            {/* Dashboard KPI Boxes */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex items-center justify-between">
                                     <div>
                                         <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">ลงทะเบียนทั้งหมด</p>
-                                        <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-slate-800">{totalReg}</span><span className="text-sm font-bold text-slate-400">ท่าน</span></div>
+                                        <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-slate-800">{total}</span><span className="text-sm font-bold text-slate-400">ท่าน</span></div>
                                     </div>
-                                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-2xl">👥</div>
+                                    <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl">👥</div>
                                 </div>
-                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-emerald-500 hover:shadow-md transition-shadow">
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-emerald-50 flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs font-extrabold text-emerald-500 uppercase tracking-widest mb-1">ยืนยันเข้าร่วม</p>
+                                        <p className="text-xs font-extrabold text-emerald-500 uppercase tracking-widest mb-1">เข้าร่วมงาน</p>
                                         <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-emerald-600">{attending}</span><span className="text-sm font-bold text-emerald-400">ท่าน</span></div>
                                     </div>
-                                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-2xl">✅</div>
+                                    <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl">✅</div>
                                 </div>
-                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-slate-400 hover:shadow-md transition-shadow">
+                                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-rose-50 flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">ไม่เข้าร่วม</p>
-                                        <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-slate-600">{notAttending}</span><span className="text-sm font-bold text-slate-400">ท่าน</span></div>
+                                        <p className="text-xs font-extrabold text-rose-500 uppercase tracking-widest mb-1">ไม่เข้าร่วม</p>
+                                        <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-rose-600">{notAttending}</span><span className="text-sm font-bold text-rose-400">ท่าน</span></div>
                                     </div>
-                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-2xl">❌</div>
+                                    <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-3xl">❌</div>
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-[24px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-200 overflow-hidden">
-                                <div className="p-5 border-b border-slate-100 bg-slate-50/80 flex flex-col md:flex-row justify-between items-center gap-4">
-                                    <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                        <span className="text-lg">📋</span> รายชื่อผู้ลงทะเบียนรายละเอียด
+                            {/* Data Table */}
+                            <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="p-5 border-b border-slate-100 bg-slate-50">
+                                    <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                        <span className="text-lg">📋</span> รายชื่อและข้อมูลเมนูอาหาร
                                     </h3>
-                                    <div className="relative w-full md:w-[350px]">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                                        <input 
-                                            type="text" 
-                                            placeholder="ค้นหาชื่อ, บริษัท, เบอร์โทร..." 
-                                            className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
-                                            value={searchTerm}
-                                            onChange={e => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left whitespace-nowrap">
                                         <thead className="bg-white border-b border-slate-200">
                                             <tr>
-                                                <th className="py-4 pl-6 pr-3 w-12"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer" checked={filteredRecords.length > 0 && selectedIds.length === filteredRecords.length} onChange={handleSelectAll} /></th>
-                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลผู้ลงทะเบียน</th>
-                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลการติดต่อ</th>
-                                                <th className="py-4 px-4 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">สถานะ</th>
-                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">เมนูที่เลือก</th>
-                                                <th className="py-4 pr-6 pl-4 text-right text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">จัดการ</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">ผู้ลงทะเบียน / บริษัท</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">เบอร์โทร</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">สถานะ</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-center">เมนูอาหารว่าง</th>
+                                                <th className="py-4 px-6 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider text-right">จัดการ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {filteredRecords.length > 0 ? filteredRecords.map(r => (
-                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-red-50/40' : 'hover:bg-slate-50/60'} transition-colors group`}>
-                                                    <td className="py-4 pl-6 pr-3 align-top pt-5"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
-                                                    <td className="py-4 px-4">
-                                                        <div className="font-extrabold text-slate-800 text-base flex items-center gap-2">
-                                                            {r.name} 
-                                                            {r.nickname && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded-md font-bold">"{r.nickname}"</span>}
-                                                        </div>
-                                                        <div className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
-                                                            <span className="text-[10px]">🏢</span> {r.company}
-                                                        </div>
+                                            {registrations.map(r => (
+                                                <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
+                                                    <td className="py-4 px-6">
+                                                        <div className="font-bold text-sm text-slate-800">{r.name}</div>
+                                                        <div className="text-xs text-slate-500 font-medium">{r.company}</div>
                                                     </td>
-                                                    <td className="py-4 px-4">
-                                                        <div className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                                                            <span className="text-xs opacity-50">📞</span> {r.phone}
-                                                        </div>
-                                                        <div className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1.5">
-                                                            <span className="text-xs opacity-50">✉️</span> {r.email || '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-center align-top pt-5">
-                                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold border ${r.attendance === 'เข้าร่วม' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                                                            {r.attendance === 'เข้าร่วม' ? '✅ เข้าร่วม' : '❌ ไม่ร่วม'}
+                                                    <td className="py-4 px-6 text-center text-sm font-medium text-slate-600">{r.phone}</td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.attendance === 'เข้าร่วม' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                            {r.attendance}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-4 align-top pt-5">
+                                                    <td className="py-4 px-6">
                                                         {r.attendance === 'เข้าร่วม' ? (
-                                                            <div className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 inline-block max-w-[200px] truncate" title={r.foodMenu}>
-                                                                🍽️ {r.foodMenu || '-'}
+                                                            <div className="flex flex-col text-xs font-medium text-slate-600 gap-1 items-center">
+                                                                <span className="bg-amber-50 px-2 py-0.5 rounded border border-amber-100 text-amber-700">{r.bakery || '-'}</span>
+                                                                <span className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100 text-blue-700">{r.drink || '-'}</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-slate-300 font-bold">-</span>
+                                                            <div className="text-center text-slate-300 text-sm">-</div>
                                                         )}
                                                     </td>
-                                                    <td className="py-4 pr-6 pl-4 text-right align-top pt-4">
-                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="ลบรายชื่อนี้">
+                                                    <td className="py-4 px-6 text-right">
+                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:bg-red-100 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100">
                                                             🗑️
                                                         </button>
                                                     </td>
                                                 </tr>
-                                            )) : (
-                                                <tr>
-                                                    <td colSpan="6" className="py-16 text-center text-slate-400">
-                                                        <div className="text-4xl mb-3 opacity-20">🔍</div>
-                                                        <p className="font-bold text-slate-500">ไม่พบข้อมูลที่ค้นหา</p>
-                                                    </td>
-                                                </tr>
+                                            ))}
+                                            {registrations.length === 0 && (
+                                                <tr><td colSpan="5" className="py-16 text-center text-slate-400 font-bold bg-slate-50/50">ยังไม่มีผู้ลงทะเบียน</td></tr>
                                             )}
                                         </tbody>
                                     </table>
-                                </div>
-                                <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 text-[11px] font-bold text-slate-500 flex justify-between items-center">
-                                    <span>แสดงข้อมูลทั้งหมด {filteredRecords.length} รายการ</span>
-                                    <span className="uppercase tracking-widest flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        Real-time Sync
-                                    </span>
                                 </div>
                             </div>
                         </div>
