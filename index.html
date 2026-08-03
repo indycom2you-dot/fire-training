@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลงทะเบียนสัมมนา - ประกันรถยนต์ 2+ PPP Insurance</title>
+    <title>ลงทะเบียนสัมมนา - คุ้มครองภัยน้ำท่วม PPP & KPI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
@@ -246,7 +247,7 @@
             const slideLeft = () => scrollRef.current && scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
             const slideRight = () => scrollRef.current && scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
 
-            // 🟢 ฟังก์ชันยืนยันเมนู (บังคับเลือก 2 อย่าง)
+            // ฟังก์ชันยืนยันเมนู (บังคับเลือก 2 อย่าง)
             const confirmMenuSelection = () => {
                 if (!tempDessert) {
                     setErrorMsg('กรุณาเลือก "หมวดเบเกอรี่" 1 อย่างครับ');
@@ -287,7 +288,7 @@
 
                 sheet.mergeCells('A1:I1');
                 const titleCell = sheet.getCell('A1');
-                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ประกันรถยนต์ 2+ 3+ มีรถให้ใช้ระหว่างซ่อม';
+                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท';
                 titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; 
                 titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
                 titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -340,12 +341,8 @@
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `รายงานลงทะเบียน_รถยนต์2พลัส3พลัส_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                saveAs(blob, `รายงานลงทะเบียน_คุ้มครองภัยน้ำท่วม_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
-
-            // ----------------------------------------------------
-            // RENDER VIEWS
-            // ----------------------------------------------------
 
             if (view === 'landing') {
                 return (
@@ -357,22 +354,22 @@
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-700">
                             
                             <div className="h-48 sm:h-56 w-full relative bg-slate-800 overflow-hidden group cursor-default">
-                                <img src="./777.png" alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
+                                <img src="./cover.png" alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
                             </div>
 
                             <div className="p-6 sm:p-8 relative z-10 -mt-6 bg-white rounded-t-[32px]">
                                 <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                                    ประกันรถยนต์ 2+ 3+
+                                    เมืองใกล้จม... <br className="hidden sm:block"/>คุณและธุรกิจของคุณ<br/>พร้อมรับมือแล้วหรือยัง?
                                 </h1>
-                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">หมดกังวลใจ มีรถให้ใช้ระหว่างซ่อม</p>
+                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท</p>
                                 
                                 <div className="space-y-3 mb-8">
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
                                         <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">🗓️</div>
                                         <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วันที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">17 กรกฎาคม 2569</div>
+                                            <div className="font-medium text-slate-600 flex-1">14 สิงหาคม 2569</div>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
@@ -380,8 +377,8 @@
                                         <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">เวลา:</div>
                                             <div className="flex flex-col flex-1">
-                                                <span className="font-medium text-slate-600">ลงทะเบียน 10.00 น.</span>
-                                                <span className="font-bold text-red-600 mt-0.5">เริ่มประชุม 10.30 น.</span>
+                                                <span className="font-medium text-slate-600">ลงทะเบียน 14.00 น.</span>
+                                                <span className="font-bold text-red-600 mt-0.5">เริ่มประชุม 14.30 น.</span>
                                             </div>
                                         </div>
                                     </div>
@@ -398,15 +395,9 @@
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วิทยากร:</div>
                                             <div className="flex flex-col flex-1 text-slate-800 space-y-2.5">
                                                 <div>
-                                                    <span className="font-bold block text-slate-800">1. คุณสินชัย เพ็ชร์ดำ</span>
+                                                    <span className="font-bold block text-slate-800">ผู้จัดการ สาขาหาดใหญ่</span>
                                                     <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug">
-                                                        รองเขตภาคใต้
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-bold block text-slate-800">2. คุณอัญชลี ศรีสุวรรณโณ</span>
-                                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug">
-                                                        รองเขตภาคใต้
+                                                        บมจ. กรุงไทยพานิชประกันภัย (KPI)
                                                     </span>
                                                 </div>
                                             </div>
@@ -417,14 +408,14 @@
                                         <div className="text-[14px] sm:text-[15px] flex w-full pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">รายละเอียด:</div>
                                             <div className="font-medium text-slate-600 leading-relaxed flex-1">
-                                                เจาะลึกจุดเด่นประกันรถยนต์ 2+ และ 3+ หมดกังวลเรื่องการเดินทางกับสิทธิพิเศษ <span className="text-blue-600 font-bold italic relative inline-block">บริการรถใช้ระหว่างซ่อม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> เพิ่มความสะดวกสบายให้ลูกค้าของคุณ
+                                                วิกฤตอุทกภัยรุนแรงขึ้นทุกปี ร่วมปกป้องทรัพย์สินก่อนสายเกินไปกับความ <span className="text-blue-600 font-bold italic relative inline-block">คุ้มครองภัยน้ำท่วม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> สูงสุดถึง 1 ล้านบาท พร้อมบริการซ่อมศูนย์ทั่วประเทศ และช่วยเหลือฉุกเฉิน 24 ชั่วโมง
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <button onClick={() => setView('form')} className="btn-shine relative overflow-hidden w-full py-4 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-2xl font-black text-[16px] sm:text-lg shadow-[0_10px_25px_-5px_rgba(225,29,72,0.4)] hover:shadow-[0_15px_35px_-5px_rgba(225,29,72,0.6)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 group">
-                                    <span className="relative z-10">ลงทะเบียนเข้าร่วมอบรม</span>
+                                    <span className="relative z-10">ลงทะเบียนรับสิทธิพิเศษ</span>
                                     <span className="relative z-10 group-hover:translate-x-1 transition-transform">👉</span>
                                 </button>
                             </div>
@@ -583,7 +574,7 @@
                             <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 transition-colors">← ย้อนกลับ</button>
                             <div className="text-center mb-8">
                                 <h2 className="text-2xl font-black text-slate-800 mb-1">ลงทะเบียนอบรม</h2>
-                                <p className="text-red-600 font-bold text-[15px]">"ประกันรถยนต์ 2+ คุ้มค่า จัดเต็ม"</p>
+                                <p className="text-red-600 font-bold text-[15px]">"คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท"</p>
                                 <p className="text-[11px] text-slate-400 mt-4 font-bold tracking-widest border-t pt-4 border-slate-50 uppercase">จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                             </div>
                             
@@ -694,7 +685,7 @@
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
                                     <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
-                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "ประกันรถยนต์ 2+ 3+ มีรถให้ใช้ระหว่างซ่อม"</p>
+                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท"</p>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                     <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-rose-50 transition-all shadow-sm">
