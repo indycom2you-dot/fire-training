@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบประเมินความพึงพอใจ | PPP Insurance Broker</title>
-    <meta property="og:title" content="แบบประเมินความพึงพอใจ | PPP Insurance Broker">
-    <meta property="og:description" content="แบบประเมินความพึงพอใจสำหรับผู้เข้าร่วมงานสัมมนา">
+    <title>แบบประเมินความพึงพอใจ | คุ้มครอง 11 โรคร้ายและเบาหวาน</title>
+    <meta property="og:title" content="แบบประเมินความพึงพอใจ | คุ้มครอง 11 โรคร้ายและเบาหวาน">
+    <meta property="og:description" content="แบบประเมินความพึงพอใจงาน คุ้มครอง 11 โรคร้ายและเบาหวาน วันที่ 3 กันยายน 2569">
     <meta property="og:type" content="website">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -48,6 +48,13 @@
             appId: "1:1072711188640:web:e639ef36b32ea637ab09c5",
             measurementId: "G-Z0XFPK8CJ7"
         };
+
+        // ข้อมูลงานสัมมนา
+        const EVENT_NAME = "คุ้มครอง 11 โรคร้ายและเบาหวาน";
+        const EVENT_DATE = "3 กันยายน 2569";
+        const EVENT_SPEAKER = "คุณศิริศักดิ์ วงศ์ธรรมะเลิศ (คุณเหาะ)";
+        const EVENT_SPEAKER_ROLE = "ผู้จัดการ สาขาหาดใหญ่";
+        const EVENT_KEY = "critical11-diabetes-2569-09-03";
 
         // Component สำหรับแถบให้คะแนน 1-5
         const RatingRow = ({ label, value, onChange }) => (
@@ -118,7 +125,9 @@
                         // ใช้ Collection 'evaluations' เพื่อแยกข้อมูลออกจากรายชื่อลงทะเบียน
                         unsubscribeData = db.collection('evaluations')
                             .onSnapshot((snapshot) => {
-                                const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                const items = snapshot.docs
+                                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                                    .filter(item => item.eventKey === EVENT_KEY);
                                 items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                                 setEvaluations(items);
                             }, (error) => {
@@ -228,7 +237,7 @@
                     const auth = firebase.auth();
                     const db = firebase.firestore();
                     if (!auth.currentUser) await auth.signInAnonymously();
-                    await db.collection('evaluations').add({ ...formData, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await db.collection('evaluations').add({ ...formData, eventKey: EVENT_KEY, eventName: EVENT_NAME, eventDate: EVENT_DATE, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                     setSubmitted(true);
                     setFormData({ name: '', scoreContent: 0, scoreSpeaker: 0, scoreVenue: 0, scoreOverall: 0, suggestion: '' });
                 } catch (err) { setErrorMsg("เกิดข้อผิดพลาด: " + err.message); }
@@ -273,7 +282,7 @@
 
                 dashSheet.mergeCells('B2:E3');
                 const dashTitle = dashSheet.getCell('B2');
-                dashTitle.value = 'รายงานสรุปผลประเมินสัมมนา';
+                dashTitle.value = `รายงานสรุปผลประเมินงาน: ${EVENT_NAME}`;
                 dashTitle.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
                 dashTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
                 dashTitle.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -356,7 +365,7 @@
 
                 rawSheet.mergeCells('A1:G1');
                 const rawTitleCell = rawSheet.getCell('A1');
-                rawTitleCell.value = 'ฐานข้อมูลผลแบบประเมินความพึงพอใจ';
+                rawTitleCell.value = `ฐานข้อมูลผลแบบประเมินความพึงพอใจ: ${EVENT_NAME}`;
                 rawTitleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
                 rawTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; 
                 rawTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -394,7 +403,7 @@
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `รายงานผลประเมินสัมมนา_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                saveAs(blob, `รายงานผลประเมิน_${EVENT_NAME.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
             const filteredRecords = evaluations.filter(r => 
@@ -419,6 +428,12 @@
                                     <div className="p-8 md:p-10 border-b border-slate-100 text-center">
                                         <div className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-xs font-bold uppercase tracking-widest mb-4">Feedback Form</div>
                                         <h1 className="text-2xl font-black text-slate-800 mb-2">แบบประเมินความพึงพอใจ</h1>
+                                        <p className="text-red-600 font-black text-lg leading-snug">{EVENT_NAME}</p>
+                                        <p className="text-slate-500 text-sm font-bold mt-2">วันที่ {EVENT_DATE}</p>
+                                        <div className="mt-4 pt-4 border-t border-slate-100">
+                                            <p className="text-slate-700 text-sm font-bold">วิทยากร: {EVENT_SPEAKER}</p>
+                                            <p className="text-slate-400 text-xs font-semibold mt-1">{EVENT_SPEAKER_ROLE}</p>
+                                        </div>
                                     </div>
                                     
                                     <div className="p-8 md:p-10 bg-slate-50/50">
@@ -438,7 +453,7 @@
 
                                             <div className="space-y-4 mb-10">
                                                 <h3 className="text-[15px] font-black text-slate-800 border-b-2 border-red-500 pb-2 mb-6 inline-block">ส่วนที่ 1: ให้คะแนนความพึงพอใจ</h3>
-                                                <RatingRow label="📚 1. ความมีประโยชน์ของเนื้อหาการอบรม" value={formData.scoreContent} onChange={v => setFormData({...formData, scoreContent: v})} />
+                                                <RatingRow label="📚 1. ความมีประโยชน์ของเนื้อหางาน" value={formData.scoreContent} onChange={v => setFormData({...formData, scoreContent: v})} />
                                                 <RatingRow label="🎤 2. ความรู้และการถ่ายทอดของวิทยากร" value={formData.scoreSpeaker} onChange={v => setFormData({...formData, scoreSpeaker: v})} />
                                                 <RatingRow label="🏢 3. ความเหมาะสมของสถานที่และอาหาร" value={formData.scoreVenue} onChange={v => setFormData({...formData, scoreVenue: v})} />
                                                 <RatingRow label="⭐ 4. ความพึงพอใจโดยรวมต่องานนี้" value={formData.scoreOverall} onChange={v => setFormData({...formData, scoreOverall: v})} />
@@ -515,6 +530,8 @@
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
                                     <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">ภาพรวมผลประเมิน</h2>
+                                    <p className="text-red-600 font-black mt-1">{EVENT_NAME}</p>
+                                    <p className="text-xs text-slate-400 font-bold mt-1">วันที่ {EVENT_DATE}</p>
                                 </div>
                                 <button onClick={exportExcel} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl text-sm font-bold shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-1 w-full md:w-auto">
                                     <span className="text-lg">📥</span> โหลดรายงาน Excel
@@ -540,7 +557,7 @@
                                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-blue-50 flex flex-col justify-between">
                                     <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📚</div>
                                     <div>
-                                        <p className="text-[10px] md:text-xs font-extrabold text-blue-500 uppercase tracking-widest mb-1">เนื้อหาการอบรม</p>
+                                        <p className="text-[10px] md:text-xs font-extrabold text-blue-500 uppercase tracking-widest mb-1">เนื้อหางาน</p>
                                         <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-slate-800">{calcAvg('scoreContent')}</span><span className="text-xs text-slate-400 font-bold">/ 5</span></div>
                                     </div>
                                 </div>
@@ -569,7 +586,7 @@
                             <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden mb-12">
                                 <div className="p-5 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50">
                                     <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2 w-full md:w-auto">
-                                        <span className="text-lg">💬</span> ข้อเสนอแนะจากผู้เข้าอบรม
+                                        <span className="text-lg">💬</span> ข้อเสนอแนะจากผู้เข้าร่วมงาน
                                     </h3>
                                     <div className="relative w-full md:w-[350px]">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">🔍</span>
