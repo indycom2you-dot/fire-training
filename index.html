@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลงทะเบียนสัมมนา - คุ้มครองภัยน้ำท่วม PPP & KPI</title>
+    <title>ลงทะเบียนสัมมนา - คุ้มครอง 11 โรคร้ายและเบาหวาน PPP & KPI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -53,6 +53,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script type="text/babel">
+        // =========================================================
+        // ตั้งค่ารูปปก: อัปโหลดรูปไว้ใน GitHub โฟลเดอร์เดียวกับ index.html
+        // แล้วตั้งชื่อไฟล์เป็น cover.png หรือแก้ชื่อไฟล์ตรงบรรทัดด้านล่าง
+        // =========================================================
+        const COVER_IMAGE = "./cover.png";
+
         // รหัสเชื่อมต่อ FIREBASE 
         const firebaseConfig = {
             apiKey: "AIzaSyC9-6NepYeoyU4-pluImdIcNBV6H7ThLas",
@@ -288,7 +294,7 @@
 
                 sheet.mergeCells('A1:I1');
                 const titleCell = sheet.getCell('A1');
-                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท';
+                titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: คุ้มครอง 11 โรคร้ายและเบาหวาน';
                 titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; 
                 titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
                 titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -341,7 +347,7 @@
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `รายงานลงทะเบียน_คุ้มครองภัยน้ำท่วม_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                saveAs(blob, `รายงานลงทะเบียน_คุ้มครอง11โรคร้ายและเบาหวาน_${new Date().toISOString().slice(0, 10)}.xlsx`);
             };
 
             if (view === 'landing') {
@@ -353,23 +359,30 @@
 
                         <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-700">
                             
-                            <div className="h-48 sm:h-56 w-full relative bg-slate-800 overflow-hidden group cursor-default">
-                                <img src="./cover.png" alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" onError={(e) => {e.target.src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=800"}} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                            {/* รูปปก — ใช้อัตราส่วน 16:9 และแสดงทั้งภาพโดยไม่ตัดโลโก้ */}
+                            <div className="w-full aspect-video relative bg-white overflow-hidden group cursor-default">
+                                <img
+                                    src={COVER_IMAGE}
+                                    alt="คุ้มครอง 11 โรคร้ายและเบาหวาน"
+                                    className="w-full h-full object-contain bg-white"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
                             </div>
 
-                            <div className="p-6 sm:p-8 relative z-10 -mt-6 bg-white rounded-t-[32px]">
+                            <div className="p-6 sm:p-8 relative z-10 bg-white">
                                 <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                                    เมืองใกล้จม... <br className="hidden sm:block"/>คุณและธุรกิจของคุณ<br/>พร้อมรับมือแล้วหรือยัง?
+                                    คุ้มครอง 11 โรคร้าย<br/>และเบาหวาน
                                 </h1>
-                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท</p>
+                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">เตรียมพร้อมรับมือและดูแลสุขภาพอย่างมั่นใจ</p>
                                 
                                 <div className="space-y-3 mb-8">
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
                                         <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">🗓️</div>
                                         <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วันที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">14 สิงหาคม 2569</div>
+                                            <div className="font-medium text-slate-600 flex-1">3 กันยายน 2569</div>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
@@ -392,10 +405,11 @@
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
                                         <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform shadow-sm">🎤</div>
                                         <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วิทยากร:</div>
+                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">ผู้บรรยาย:</div>
                                             <div className="flex flex-col flex-1 text-slate-800 space-y-2.5">
                                                 <div>
-                                                    <span className="font-bold block text-slate-800">ผู้จัดการ สาขาหาดใหญ่</span>
+                                                    <span className="font-bold block text-slate-800">คุณศิริศักดิ์ วงศ์ธรรมะเลิศ (คุณเหาะ)</span>
+                                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug block mt-0.5">ผู้จัดการ สาขาหาดใหญ่</span>
                                                     <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug">
                                                         บมจ. กรุงไทยพานิชประกันภัย (KPI)
                                                     </span>
@@ -408,7 +422,7 @@
                                         <div className="text-[14px] sm:text-[15px] flex w-full pt-1">
                                             <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">รายละเอียด:</div>
                                             <div className="font-medium text-slate-600 leading-relaxed flex-1">
-                                                วิกฤตอุทกภัยรุนแรงขึ้นทุกปี ร่วมปกป้องทรัพย์สินก่อนสายเกินไปกับความ <span className="text-blue-600 font-bold italic relative inline-block">คุ้มครองภัยน้ำท่วม<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> สูงสุดถึง 1 ล้านบาท พร้อมบริการซ่อมศูนย์ทั่วประเทศ และช่วยเหลือฉุกเฉิน 24 ชั่วโมง
+                                                ร่วมรับฟังข้อมูลเกี่ยวกับ <span className="text-blue-600 font-bold italic relative inline-block">การคุ้มครอง 11 โรคร้ายและเบาหวาน<span className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 -z-10 rounded"></span></span> พร้อมแนวทางทำความเข้าใจความคุ้มครองและการเตรียมความพร้อมด้านสุขภาพ
                                             </div>
                                         </div>
                                     </div>
@@ -574,7 +588,7 @@
                             <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 transition-colors">← ย้อนกลับ</button>
                             <div className="text-center mb-8">
                                 <h2 className="text-2xl font-black text-slate-800 mb-1">ลงทะเบียนอบรม</h2>
-                                <p className="text-red-600 font-bold text-[15px]">"คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท"</p>
+                                <p className="text-red-600 font-bold text-[15px]">"คุ้มครอง 11 โรคร้ายและเบาหวาน"</p>
                                 <p className="text-[11px] text-slate-400 mt-4 font-bold tracking-widest border-t pt-4 border-slate-50 uppercase">จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
                             </div>
                             
@@ -685,7 +699,7 @@
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                                 <div>
                                     <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Executive Dashboard</h1>
-                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "คุ้มครองภัยน้ำท่วมสูงสุด 1 ล้านบาท"</p>
+                                    <p className="text-sm text-slate-500 mt-1 font-medium">ภาพรวมข้อมูลผู้ลงทะเบียนสัมมนา "คุ้มครอง 11 โรคร้ายและเบาหวาน"</p>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                     <button onClick={handleDeleteSelected} disabled={loading || selectedIds.length === 0} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-rose-50 transition-all shadow-sm">
