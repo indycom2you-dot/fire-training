@@ -10,6 +10,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -18,20 +19,63 @@
     <title>แบบประเมินความพึงพอใจ | PPP Insurance Broker</title>
     <meta property="og:title" content="แบบประเมินความพึงพอใจ | PPP Insurance Broker">
     <meta property="og:description" content="แบบประเมินความพึงพอใจ • เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม • 11 พฤศจิกายน 2569">
-    <meta property="og:image" content="https://ppp-insurance.vercel.app/cover.png?v=20261105-1">
+    <meta property="og:image" content="https://ppp-insurance.vercel.app/cover.png?v=20261105-2">
     <meta property="og:url" content="https://ppp-insurance.vercel.app/evaluation.html">
     <meta property="og:type" content="website">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
-        .admin-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-        .chart-container { position: relative; width: 100%; height: 280px; background-color: white; border-radius: 16px; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        :root { --forest:#0d5b44; --emerald:#148363; --gold:#c69a45; --cream:#faf8f1; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--cream); color:#18372d; }
+        .premium-form-bg {
+            position:relative; isolation:isolate;
+            background:radial-gradient(circle at 8% 8%, rgba(213,180,108,.19), transparent 36%),
+                       radial-gradient(circle at 94% 30%, rgba(75,154,125,.18), transparent 37%), #f8f8f2;
+        }
+        .premium-form-bg:before, .premium-form-bg:after {
+            content:''; position:absolute; z-index:-1; border-radius:100%; filter:blur(65px); pointer-events:none;
+        }
+        .premium-form-bg:before { width:220px; height:220px; background:rgba(63,149,111,.12); top:7%; left:-90px; }
+        .premium-form-bg:after { width:260px; height:260px; background:rgba(204,161,74,.15); bottom:4%; right:-110px; }
+        .premium-shell {box-shadow:0 22px 75px rgba(14,67,51,.11),0 3px 20px rgba(44,64,47,.04);}
+        .premium-rule { background:linear-gradient(90deg,transparent,#d3b576 28%,#6eb49b 72%,transparent);height:2px; }
+        .progress-track {background:#e7ede7;height:10px;overflow:hidden;border-radius:99px;}
+        .progress-fill {background:linear-gradient(95deg,#128161,#58b18b 70%,#cda954);height:100%;border-radius:99px;transition:width .4s cubic-bezier(.2,.7,.2,1);}
+        .rating-card {background:#fff;border:1px solid #e3e9df;border-radius:22px;padding:20px;box-shadow:0 5px 20px rgba(21,80,60,.035);animation:soft-rise .55s both;transition:border-color .2s,box-shadow .2s;}
+        .rating-card:hover {border-color:#b9d8c7;box-shadow:0 10px 30px rgba(15,89,64,.065);}
+        .rating-card.is-answered {border-color:#a3cbb3;}
+        .rating-option {min-width:0;min-height:72px;background:#f7f9f5;border:1.5px solid #e0e9df;border-radius:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#657a70;transition:transform .16s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease;}
+        .rating-option:hover {transform:translateY(-3px);background:#eff8f1;border-color:#9ecdb8;}
+        .rating-option:focus-visible {outline:3px solid #b7d6a2;outline-offset:2px;}
+        .rating-option.selected {background:linear-gradient(145deg,#0e7558,#128f68);border-color:#0c7555;color:white;box-shadow:0 8px 18px rgba(6,110,75,.22);transform:translateY(-2px);}
+        .rating-option.selected .score-emoji {filter:drop-shadow(0 2px 2px rgba(0,0,0,.07));transform:scale(1.08);}
+        .score-emoji {font-size:24px;line-height:1.1;transition:transform .2s;}
+        .score-digit {font-size:13px;font-weight:800;line-height:1;}
+        .premium-input {width:100%;border:1px solid #dce6de;background:#fff;border-radius:16px;padding:14px 16px;color:#1f4336;outline:0;transition:border-color .2s,box-shadow .2s;}
+        .premium-input:focus {border-color:#4aab87;box-shadow:0 0 0 4px rgba(30,137,96,.12);}
+        .premium-submit {background:linear-gradient(105deg,#07533d,#118565 65%,#198f6c);box-shadow:0 12px 24px rgba(16,106,76,.22);transition:transform .18s,box-shadow .18s,filter .18s;position:relative;overflow:hidden;}
+        .premium-submit:hover:not(:disabled) {transform:translateY(-2px);box-shadow:0 15px 30px rgba(16,106,76,.28);filter:saturate(1.1);}
+        .premium-submit:disabled {opacity:.7;cursor:wait;}
+        .premium-submit:after {content:'';position:absolute;top:0;bottom:0;width:70px;left:-80px;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);}
+        .premium-submit:hover:after {animation:glide 1s ease-out;}
+        .success-mark {animation:pop-in .65s cubic-bezier(.2,1.5,.4,1) both;box-shadow:0 12px 25px rgba(18,126,89,.18);}
+        .success-halo {background:radial-gradient(circle,rgba(221,198,137,.35),rgba(131,197,157,.11) 60%,transparent 72%);}
+        .sparkle {position:absolute;font-size:20px;animation:floaty 3.2s ease-in-out infinite;}
+        .admin-gradient { background:linear-gradient(135deg,#0d5945,#092f26); }
+        .chart-container { position:relative; width:100%; height:280px; background:white; border-radius:16px; }
+        .premium-admin {background:#f6f8f4;}
+        .premium-admin .stats-grid > div {box-shadow:0 4px 20px rgba(16,73,51,.04);border:1px solid #dfe9df;transition:transform .2s,box-shadow .2s;}
+        .premium-admin .stats-grid > div:hover {transform:translateY(-2px);box-shadow:0 12px 25px rgba(20,84,62,.08);}
+        .premium-admin .admin-panel {box-shadow:0 8px 27px rgba(18,79,54,.045);border:1px solid #dfe8df;}
+        @keyframes soft-rise {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pop-in {0%{opacity:0;transform:scale(.55) rotate(-13deg)}80%{transform:scale(1.07)}100%{opacity:1;transform:scale(1)}}
+        @keyframes floaty {0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes glide {to{left:110%}}
+        ::-webkit-scrollbar {width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#abcabc;border-radius:10px;}
+        @media (max-width:390px){.rating-card{padding:14px}.rating-option{min-height:63px;border-radius:13px}.score-emoji{font-size:21px}}
+        @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
     </style>
 </head>
 <body>
@@ -66,31 +110,43 @@
         const EVENT_ID = "ppp-seminar-2026-11-11";
         const COVER_IMAGE = "./cover.png";
 
-        // Component สำหรับแถบให้คะแนน 1-5
-        const RatingRow = ({ label, value, onChange }) => (
-            <div className="mb-5 bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-red-200 transition-colors">
-                <label className="block text-[14px] font-bold text-slate-800 mb-4">{label}</label>
-                <div className="flex justify-between max-w-[320px] mx-auto gap-2">
-                    {[1, 2, 3, 4, 5].map(num => (
-                        <button
-                            type="button"
-                            key={num}
-                            onClick={() => onChange(num)}
-                            className={`w-12 h-12 rounded-full font-black text-lg transition-all flex items-center justify-center ${
-                                value === num 
-                                ? 'bg-red-600 text-white scale-110 shadow-lg shadow-red-600/40 ring-4 ring-red-100' 
-                                : 'bg-white text-slate-400 border-2 border-slate-200 hover:border-red-300 hover:text-red-600'
-                            }`}
-                        >
-                            {num}
+        const SCORE_CHOICES = [
+            {score:1, emoji:'😟', label:'ควรปรับปรุง'},
+            {score:2, emoji:'😕', label:'พอใช้'},
+            {score:3, emoji:'😐', label:'ปานกลาง'},
+            {score:4, emoji:'😊', label:'ดีมาก'},
+            {score:5, emoji:'🤩', label:'ดีเยี่ยม'}
+        ];
+
+        const RatingRow = ({ number, icon, label, value, onChange }) => (
+            <section className={`rating-card ${value ? 'is-answered' : ''}`} style={{animationDelay:`${(number - 1) * 70}ms`}}>
+                <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center text-xl" aria-hidden="true">{icon}</div>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-bold text-emerald-700 tracking-wide mb-0.5">หัวข้อที่ {number} / 4</div>
+                        <h3 className="text-[15px] sm:text-base font-bold text-slate-800 leading-relaxed" id={`score-label-${number}`}>{label}</h3>
+                    </div>
+                    {value > 0 && <span className="text-emerald-700 text-xl font-bold" aria-label="ตอบแล้ว">✓</span>}
+                </div>
+                <div className="grid grid-cols-5 gap-2" role="group" aria-labelledby={`score-label-${number}`}>
+                    {SCORE_CHOICES.map(choice => (
+                        <button type="button" key={choice.score}
+                            aria-label={`${choice.score} คะแนน ${choice.label}`}
+                            aria-pressed={value === choice.score}
+                            onClick={() => onChange(choice.score)}
+                            className={`rating-option ${value === choice.score ? 'selected' : ''}`}>
+                            <span className="score-emoji" aria-hidden="true">{choice.emoji}</span>
+                            <span className="score-digit">{choice.score}</span>
                         </button>
                     ))}
                 </div>
-                <div className="flex justify-between text-[11px] font-bold text-slate-400 mt-3 max-w-[320px] mx-auto px-2 uppercase tracking-widest">
-                    <span>1 = ปรับปรุง</span>
-                    <span>5 = ดีเยี่ยม</span>
+                <div className="flex items-center justify-between gap-3 mt-3 min-h-[22px] text-xs" aria-live="polite">
+                    <span className="text-slate-400">1 = ควรปรับปรุง</span>
+                    <span className={`font-bold ${value ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {value ? `${value}/5 · ${SCORE_CHOICES[value-1].label}` : 'แตะเลือกคะแนน'}
+                    </span>
                 </div>
-            </div>
+            </section>
         );
 
         const App = () => {
@@ -109,6 +165,14 @@
             const [formData, setFormData] = React.useState({ 
                 name: '', scoreContent: 0, scoreSpeaker: 0, scoreVenue: 0, scoreOverall: 0, suggestion: '' 
             });
+
+            const answeredCount = ['scoreContent','scoreSpeaker','scoreVenue','scoreOverall']
+                .filter(key => Number(formData[key]) >= 1).length;
+            const progressPercent = Math.round((answeredCount / 4) * 100);
+            const updateScore = (field, score) => {
+                setFormData(prev => ({...prev, [field]:score}));
+                if (errorMsg) setErrorMsg('');
+            };
 
             const chartRef = React.useRef(null);
             const chartInstance = React.useRef(null);
@@ -168,15 +232,15 @@
                     chartInstance.current = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: ['📚 เนื้อหา', '🎤 วิทยากร', '🏢 สถานที่/อาหาร', '⭐ ภาพรวม'],
+                            labels: ['📚 เนื้อหา', '🎤 วิทยากร', '🏢 สถานที่/การจัดงาน', '⭐ ภาพรวม'],
                             datasets: [{
                                 label: 'คะแนนเฉลี่ย',
                                 data: averages,
                                 backgroundColor: [
-                                    createGradient('#3b82f6', '#93c5fd'), // Blue
-                                    createGradient('#f59e0b', '#fcd34d'), // Amber
-                                    createGradient('#ec4899', '#f9a8d4'), // Pink
-                                    createGradient('#10b981', '#6ee7b7')  // Emerald
+                                    createGradient('#148363', '#91d0b0'), // Emerald
+                                    createGradient('#b48c38', '#f0dba0'), // Gold
+                                    createGradient('#789b88', '#d1dfd1'), // Sage
+                                    createGradient('#0d5b44', '#52b895')  // Forest
                                 ],
                                 borderRadius: 12,
                                 borderSkipped: false,
@@ -248,12 +312,13 @@
                     await db.collection('evaluations').add({ ...formData, eventId: EVENT_ID, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                     setSubmitted(true);
                     setFormData({ name: '', scoreContent: 0, scoreSpeaker: 0, scoreVenue: 0, scoreOverall: 0, suggestion: '' });
+                    window.scrollTo({top:0, behavior:'smooth'});
                 } catch (err) { setErrorMsg("เกิดข้อผิดพลาด: " + err.message); }
                 setLoading(false);
             };
 
             const handleDelete = async (id) => {
-                if (window.confirm("คุณอภิชิตต้องการลบข้อมูลแบบประเมินนี้ใช่หรือไม่?")) {
+                if (window.confirm("ต้องการลบข้อมูลแบบประเมินนี้ใช่หรือไม่?")) {
                     try { await firebase.firestore().collection('evaluations').doc(id).delete(); } 
                     catch (err) { alert("ลบข้อมูลไม่สำเร็จ: " + err.message); }
                 }
@@ -292,7 +357,7 @@
                 const dashTitle = dashSheet.getCell('B2');
                 dashTitle.value = 'รายงานสรุปผลประเมิน: ' + 'เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม';
                 dashTitle.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
-                dashTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
+                dashTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D5B44' } }; 
                 dashTitle.alignment = { vertical: 'middle', horizontal: 'center' };
 
                 dashSheet.mergeCells('B4:E4');
@@ -309,7 +374,7 @@
                 kpi1.font = { name: 'Sarabun', size: 16, bold: true, color: { argb: 'FF1E293B' } };
                 kpi1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
                 kpi1.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                kpi1.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thick', color:{argb:'FFDC2626'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
+                kpi1.border = { top: {style:'thin', color:{argb:'FFCBD5E1'}}, left: {style:'thin', color:{argb:'FFCBD5E1'}}, bottom: {style:'thick', color:{argb:'FF168363'}}, right: {style:'thin', color:{argb:'FFCBD5E1'}} };
 
                 dashSheet.mergeCells('D6:E8');
                 const kpi2 = dashSheet.getCell('D6');
@@ -375,7 +440,7 @@
                 const rawTitleCell = rawSheet.getCell('A1');
                 rawTitleCell.value = 'ผลประเมินสัมมนา: เลือกซ่อมรถอย่างไร | 11 พฤศจิกายน 2569';
                 rawTitleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-                rawTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; 
+                rawTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF168363' } }; 
                 rawTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
                 rawSheet.getRow(1).height = 35;
 
@@ -419,75 +484,115 @@
                 (r.suggestion || '').toLowerCase().includes(searchTerm.toLowerCase())
             );
 
-            // --- หน้าฟอร์มแบบประเมินสำหรับลูกค้า ---
+            // --- Premium Interactive Evaluation: สำหรับมือถือเป็นหลัก ---
             if (view === 'form') {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4 py-10">
-                        <div className="w-full max-w-lg">
+                    <main className="premium-form-bg min-h-screen py-6 sm:py-12 px-3 sm:px-5">
+                        <div className="max-w-[620px] mx-auto">
+                            <div className="flex justify-center items-center gap-2 mb-5 text-emerald-900/70 text-[11px] sm:text-xs font-bold tracking-[0.16em]">
+                                <span className="w-6 h-[1px] bg-amber-500/70"></span>
+                                PPP INSURANCE BROKER
+                                <span className="w-6 h-[1px] bg-amber-500/70"></span>
+                            </div>
                             {submitted ? (
-                                <div className="bg-white p-12 rounded-[32px] shadow-2xl text-center border border-slate-100 animate-in zoom-in duration-500">
-                                    <div className="text-7xl mb-6 drop-shadow-md">🙏</div>
-                                    <h2 className="text-2xl font-black mb-2 text-slate-800">ขอบคุณสำหรับคำติชมครับ</h2>
-                                    <p className="text-slate-500 mb-10 font-medium leading-relaxed">ทุกความคิดเห็นจะถูกนำไปพัฒนา<br/>เพื่อการจัดงานที่ดียิ่งขึ้นในครั้งต่อไปครับ</p>
-                                    <button onClick={() => setSubmitted(false)} className="px-10 py-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl transition-colors border border-red-200">ทำแบบประเมินอีกครั้ง</button>
-                                </div>
+                                <section className="premium-shell relative overflow-hidden bg-white border border-emerald-100 rounded-[30px] p-9 sm:p-14 text-center" role="status" aria-live="polite">
+                                    <div className="success-halo w-60 h-60 mx-auto relative flex items-center justify-center">
+                                        <span className="sparkle top-5 left-6" aria-hidden="true">✨</span>
+                                        <span className="sparkle top-8 right-8" style={{animationDelay:'.7s'}} aria-hidden="true">✦</span>
+                                        <span className="sparkle bottom-8 right-10" style={{animationDelay:'1.3s'}} aria-hidden="true">✨</span>
+                                        <div className="success-mark w-24 h-24 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[30px] rotate-[-6deg] flex items-center justify-center text-white text-6xl" aria-hidden="true">✓</div>
+                                    </div>
+                                    <div className="inline-flex items-center px-4 py-1.5 bg-emerald-50 rounded-full text-emerald-700 font-bold text-xs border border-emerald-100 mb-4">บันทึกข้อมูลสำเร็จ</div>
+                                    <h1 className="text-3xl font-black text-emerald-950 mb-3">ขอบคุณที่ร่วมประเมิน</h1>
+                                    <p className="text-slate-600 leading-relaxed mb-2">ความคิดเห็นของคุณมีคุณค่าต่อการพัฒนางานสัมมนาครั้งต่อไป</p>
+                                    <p className="text-sm font-bold text-amber-700 mb-9">PPP Insurance Broker ขอขอบคุณครับ</p>
+                                    <button type="button" onClick={() => {setSubmitted(false);setErrorMsg('');window.scrollTo({top:0,behavior:'smooth'});}}
+                                        className="px-7 py-3.5 border border-emerald-200 bg-emerald-50 text-emerald-800 rounded-2xl font-bold hover:bg-emerald-100 transition-colors">
+                                        ทำแบบประเมินอีกครั้ง
+                                    </button>
+                                </section>
                             ) : (
-                                <div className="bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative">
-                                    <img src={COVER_IMAGE} alt="ปกงานสัมมนาเลือกซ่อมรถอย่างไร" className="w-full aspect-video object-contain bg-white" />
-                                    <div className="p-8 md:p-10 border-b border-slate-100 text-center">
-                                        <div className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-xs font-bold uppercase tracking-widest mb-4">Feedback Form</div>
-                                        <h1 className="text-2xl font-black text-slate-800 mb-2">แบบประเมินความพึงพอใจ</h1>
-                                        <p className="text-[14px] text-emerald-800 font-bold leading-relaxed">เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม</p>
-                                        <p className="text-xs text-slate-500 mt-2">วันพุธที่ 11 พฤศจิกายน 2569</p>
+                                <div className="premium-shell bg-white overflow-hidden rounded-[30px] border border-emerald-100">
+                                    <div className="relative bg-white">
+                                        <img src={COVER_IMAGE} alt="โปสเตอร์งานสัมมนาเลือกซ่อมรถอย่างไร" className="block w-full h-auto aspect-video object-contain bg-white" />
                                     </div>
-                                    
-                                    <div className="p-8 md:p-10 bg-slate-50/50">
-                                        {errorMsg && <div className="mb-6 p-4 bg-rose-50 text-rose-700 rounded-2xl text-[13px] font-bold border border-rose-100 flex gap-2"><span className="text-lg leading-none">⚠️</span> <span>{errorMsg}</span></div>}
-                                        
-                                        <form onSubmit={handleSubmitEvaluation}>
-                                            <div className="mb-10">
-                                                <label className="text-[13px] font-bold text-slate-600 uppercase tracking-widest ml-1 mb-2 block">ชื่อ - นามสกุล <span className="text-slate-400 font-medium normal-case">(ไม่ระบุได้)</span></label>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="กรอกชื่อของคุณ (Optional)" 
-                                                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700"
-                                                    value={formData.name}
-                                                    onChange={e => setFormData({...formData, name: e.target.value})}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-4 mb-10">
-                                                <h3 className="text-[15px] font-black text-slate-800 border-b-2 border-red-500 pb-2 mb-6 inline-block">ส่วนที่ 1: ให้คะแนนความพึงพอใจ</h3>
-                                                <RatingRow label="📚 1. ความมีประโยชน์ของเนื้อหาการอบรม" value={formData.scoreContent} onChange={v => setFormData({...formData, scoreContent: v})} />
-                                                <RatingRow label="🎤 2. ความรู้และการถ่ายทอดของวิทยากร" value={formData.scoreSpeaker} onChange={v => setFormData({...formData, scoreSpeaker: v})} />
-                                                <RatingRow label="🏢 3. ความเหมาะสมของการจัดงานและสถานที่" value={formData.scoreVenue} onChange={v => setFormData({...formData, scoreVenue: v})} />
-                                                <RatingRow label="⭐ 4. ความพึงพอใจโดยรวมต่องานนี้" value={formData.scoreOverall} onChange={v => setFormData({...formData, scoreOverall: v})} />
-                                            </div>
-
-                                            <div className="mb-10">
-                                                <h3 className="text-[15px] font-black text-slate-800 border-b-2 border-red-500 pb-2 mb-4 inline-block">ส่วนที่ 2: ข้อเสนอแนะ</h3>
-                                                <textarea 
-                                                    rows="4" 
-                                                    placeholder="พิมพ์คำแนะนำ หรือสิ่งที่อยากให้จัดในครั้งต่อไป..." 
-                                                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 transition-all text-sm font-medium resize-none text-slate-700"
-                                                    value={formData.suggestion}
-                                                    onChange={e => setFormData({...formData, suggestion: e.target.value})}
-                                                ></textarea>
-                                            </div>
-
-                                            <button type="submit" disabled={loading} className="w-full py-5 bg-[#dc2626] text-white rounded-2xl font-black text-[18px] shadow-xl shadow-red-600/30 hover:bg-red-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                                                {loading ? <span className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></span> : "ส่งแบบประเมิน"}
-                                            </button>
-                                        </form>
-
-                                        <div className="mt-10 text-center">
-                                            <button onClick={() => setView('login')} className="text-slate-300 hover:text-red-500 text-[10px] tracking-widest uppercase font-bold transition-colors">Secure Admin Access</button>
+                                    <div className="premium-rule"></div>
+                                    <header className="px-6 sm:px-10 pt-7 pb-7 bg-white">
+                                        <div className="flex items-center justify-between gap-2 mb-3">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-full text-emerald-800 text-xs font-bold border border-emerald-100">✦ แบบประเมินหลังจบงาน</span>
+                                            <span className="text-xs font-semibold text-amber-800/80">11 พฤศจิกายน 2569</span>
                                         </div>
+                                        <h1 className="text-[26px] sm:text-[32px] leading-tight font-black text-emerald-950 mb-3">แบบประเมิน<br/><span className="text-emerald-700">ความพึงพอใจ</span></h1>
+                                        <p className="text-[14px] sm:text-[15px] leading-relaxed font-bold text-slate-700">เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม</p>
+                                        <div className="flex flex-wrap gap-2 mt-4 text-[12px] font-semibold text-slate-600">
+                                            <span className="bg-stone-50 border border-stone-200 rounded-lg py-1.5 px-2.5">📍 ร้าน ณ คุณ</span>
+                                            <span className="bg-stone-50 border border-stone-200 rounded-lg py-1.5 px-2.5">🕐 13:00–15:30 น.</span>
+                                        </div>
+                                    </header>
+
+                                    <div className="px-6 sm:px-10 py-5 bg-[#f6faf6] border-y border-emerald-100" id="evaluation-progress">
+                                        <div className="flex items-center justify-between gap-3 mb-2.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-black text-emerald-900">ความคืบหน้า</span>
+                                                {answeredCount === 4 && <span className="text-[11px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">พร้อมส่งแล้ว ✓</span>}
+                                            </div>
+                                            <span className="text-sm font-black text-emerald-700 tabular-nums">{answeredCount} / 4 ข้อ</span>
+                                        </div>
+                                        <div className="progress-track" role="progressbar" aria-label="ความคืบหน้าแบบประเมิน" aria-valuenow={answeredCount} aria-valuemin="0" aria-valuemax="4">
+                                            <div className="progress-fill" style={{width:`${progressPercent}%`}}></div>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2.5">ให้คะแนนเพียง 4 หัวข้อ ใช้เวลาไม่นาน และไม่จำเป็นต้องระบุชื่อ</p>
                                     </div>
+
+                                    <form onSubmit={handleSubmitEvaluation} className="px-5 sm:px-9 pt-7 pb-8 bg-[#fbfcf9]">
+                                        {errorMsg && (
+                                            <div role="alert" className="mb-6 p-4 bg-rose-50 text-rose-700 rounded-2xl text-sm font-bold border border-rose-200 flex gap-2">
+                                                <span aria-hidden="true">⚠️</span><span>{errorMsg}</span>
+                                            </div>
+                                        )}
+
+                                        <section className="mb-7">
+                                            <label htmlFor="participant-name" className="block text-sm font-bold text-emerald-950 mb-2">ชื่อ - นามสกุล <span className="font-normal text-slate-400">(ไม่บังคับ)</span></label>
+                                            <input id="participant-name" type="text" maxLength={120} autoComplete="name" value={formData.name}
+                                                onChange={e => setFormData(prev=>({...prev,name:e.target.value}))}
+                                                placeholder="ระบุชื่อ หรือเว้นว่างได้" className="premium-input" />
+                                        </section>
+                                        <div className="flex items-center justify-between gap-3 mb-4">
+                                            <h2 className="text-base sm:text-lg font-black text-emerald-950">ประเมินความพึงพอใจ</h2>
+                                            <span className="text-xs font-semibold text-slate-500">เลือกคะแนน 1–5</span>
+                                        </div>
+                                        <div className="space-y-3.5">
+                                            <RatingRow number={1} icon="📚" label="ความมีประโยชน์ของเนื้อหาการอบรม" value={formData.scoreContent} onChange={score=>updateScore('scoreContent',score)} />
+                                            <RatingRow number={2} icon="🎤" label="ความรู้และการถ่ายทอดของวิทยากร" value={formData.scoreSpeaker} onChange={score=>updateScore('scoreSpeaker',score)} />
+                                            <RatingRow number={3} icon="🏢" label="ความเหมาะสมของการจัดงานและสถานที่" value={formData.scoreVenue} onChange={score=>updateScore('scoreVenue',score)} />
+                                            <RatingRow number={4} icon="⭐" label="ความพึงพอใจโดยรวมต่องานนี้" value={formData.scoreOverall} onChange={score=>updateScore('scoreOverall',score)} />
+                                        </div>
+
+                                        <section className="mt-8 mb-7">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xl" aria-hidden="true">✍️</span>
+                                                <label htmlFor="participant-feedback" className="font-black text-emerald-950">ข้อเสนอแนะเพิ่มเติม</label>
+                                                <span className="text-xs text-slate-400 font-normal">(ไม่บังคับ)</span>
+                                            </div>
+                                            <textarea id="participant-feedback" rows={4} maxLength={1500} value={formData.suggestion}
+                                                onChange={e=>setFormData(prev=>({...prev,suggestion:e.target.value}))}
+                                                placeholder="สิ่งที่ชอบ สิ่งที่อยากให้ปรับปรุง หรือหัวข้อที่อยากฟังครั้งต่อไป..."
+                                                className="premium-input resize-y min-h-[105px] text-sm leading-relaxed"></textarea>
+                                            <div className="mt-1.5 text-right text-[11px] text-slate-400">{formData.suggestion.length} / 1500</div>
+                                        </section>
+                                        <button type="submit" disabled={loading} className="premium-submit w-full rounded-2xl py-4 sm:py-5 px-5 text-white font-black text-[17px] sm:text-lg flex items-center justify-center gap-2">
+                                            {loading ? <><span className="w-5 h-5 rounded-full border-[3px] border-white/40 border-t-white animate-spin" aria-hidden="true"></span><span>กำลังบันทึก...</span></> : <><span>ส่งแบบประเมิน</span><span aria-hidden="true">→</span></>}
+                                        </button>
+                                        <p className="text-center text-[11px] text-slate-400 mt-3">ระบบบันทึกคะแนนเมื่อกดส่งสำเร็จเท่านั้น</p>
+                                        <div className="mt-7 pt-5 border-t border-emerald-100 text-center">
+                                            <p className="text-xs text-slate-400 mb-2">จัดโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
+                                            <button type="button" onClick={() => {setErrorMsg('');setView('login');}} className="text-[10px] text-slate-400 hover:text-emerald-700 font-bold tracking-widest uppercase transition-colors">Secure Admin Access</button>
+                                        </div>
+                                    </form>
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </main>
                 );
             }
 
@@ -496,13 +601,13 @@
                 return (
                     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-white">
                         <div className="w-full max-w-sm bg-white/10 backdrop-blur-xl p-8 rounded-[32px] border border-white/10 shadow-2xl">
-                            <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🔐</div>
+                            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-200 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🔐</div>
                             <h2 className="text-2xl font-black mb-8 text-center tracking-tight">Admin Login</h2>
-                            {errorMsg && <div className="mb-6 p-4 bg-red-500/20 text-red-200 border border-red-500/30 rounded-xl text-sm font-bold text-center">{errorMsg}</div>}
+                            {errorMsg && <div className="mb-6 p-4 bg-red-500/20 text-red-200 border border-emerald-500/30 rounded-xl text-sm font-bold text-center">{errorMsg}</div>}
                             <form onSubmit={handleAdminLogin} className="space-y-4">
-                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl bg-slate-800/50 border border-slate-700 outline-none focus:border-red-500 focus:bg-slate-800 transition-all text-white placeholder-slate-500 font-medium" value={username} onChange={e => setUsername(e.target.value)} />
-                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl bg-slate-800/50 border border-slate-700 outline-none focus:border-red-500 focus:bg-slate-800 transition-all text-white placeholder-slate-500 font-medium" value={password} onChange={e => setPassword(e.target.value)} />
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg mt-2">{loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}</button>
+                                <input type="text" placeholder="Username" required className="w-full px-5 py-4 rounded-xl bg-slate-800/50 border border-slate-700 outline-none focus:border-emerald-400 focus:bg-slate-800 transition-all text-white placeholder-slate-500 font-medium" value={username} onChange={e => setUsername(e.target.value)} />
+                                <input type="password" placeholder="Password" required className="w-full px-5 py-4 rounded-xl bg-slate-800/50 border border-slate-700 outline-none focus:border-emerald-400 focus:bg-slate-800 transition-all text-white placeholder-slate-500 font-medium" value={password} onChange={e => setPassword(e.target.value)} />
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg mt-2">{loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}</button>
                                 <button type="button" onClick={() => setView('form')} className="w-full text-slate-400 hover:text-white text-sm mt-4 transition-colors font-medium">← กลับหน้าฟอร์ม</button>
                             </form>
                         </div>
@@ -516,17 +621,17 @@
                 const calcAvg = (key) => totalEvals > 0 ? (evaluations.reduce((sum, ev) => sum + ev[key], 0) / totalEvals).toFixed(2) : "0.00";
                 
                 return (
-                    <div className="min-h-screen bg-slate-50 font-sans pb-12">
+                    <div className="premium-admin min-h-screen font-sans pb-12">
                         {/* Top Navbar */}
                         <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-30 flex justify-between items-center shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
+                                <div className="w-10 h-10 bg-emerald-800 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
                                 <div>
                                     <h1 className="text-lg font-black text-slate-800 leading-tight">Evaluation Dashboard</h1>
                                     <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">PPP Insurance Broker</p>
                                 </div>
                             </div>
-                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
+                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-emerald-700 transition-colors bg-slate-50 hover:bg-emerald-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
                                 ออกจากระบบ
                             </button>
                         </nav>
@@ -543,9 +648,9 @@
                             </div>
 
                             {/* KPI Cards */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+                            <div className="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
                                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
-                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">👥</div>
+                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-700 rounded-2xl flex items-center justify-center text-2xl mb-4">👥</div>
                                     <div>
                                         <p className="text-[10px] md:text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">ผู้ประเมินทั้งหมด</p>
                                         <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-slate-800">{totalEvals}</span><span className="text-xs text-slate-400 font-bold">ท่าน</span></div>
@@ -559,24 +664,24 @@
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-blue-50 flex flex-col justify-between">
-                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📚</div>
+                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-700 rounded-2xl flex items-center justify-center text-2xl mb-4">📚</div>
                                     <div>
-                                        <p className="text-[10px] md:text-xs font-extrabold text-blue-500 uppercase tracking-widest mb-1">เนื้อหาการอบรม</p>
+                                        <p className="text-[10px] md:text-xs font-extrabold text-emerald-600 uppercase tracking-widest mb-1">เนื้อหาการอบรม</p>
                                         <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-slate-800">{calcAvg('scoreContent')}</span><span className="text-xs text-slate-400 font-bold">/ 5</span></div>
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-amber-50 flex flex-col justify-between">
-                                    <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mb-4">🎤</div>
+                                    <div className="w-12 h-12 bg-amber-50 text-amber-700 rounded-2xl flex items-center justify-center text-2xl mb-4">🎤</div>
                                     <div>
-                                        <p className="text-[10px] md:text-xs font-extrabold text-amber-500 uppercase tracking-widest mb-1">วิทยากร/สถานที่</p>
+                                        <p className="text-[10px] md:text-xs font-extrabold text-amber-500 uppercase tracking-widest mb-1">วิทยากร / สถานที่</p>
                                         <div className="flex items-baseline gap-1"><span className="text-3xl md:text-4xl font-black text-slate-800">{((parseFloat(calcAvg('scoreSpeaker')) + parseFloat(calcAvg('scoreVenue')))/2).toFixed(2)}</span><span className="text-xs text-slate-400 font-bold">/ 5</span></div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Chart Card */}
-                            <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-sm border border-slate-100 mb-8">
-                                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <div className="admin-panel bg-white rounded-[24px] p-6 md:p-8 mb-8">
+                                <h3 className="text-sm font-extrabold text-emerald-950 uppercase tracking-widest mb-6 flex items-center gap-2">
                                     <span className="text-lg">📊</span> กราฟวิเคราะห์คะแนนเฉลี่ยรายหัวข้อ
                                 </h3>
                                 {evaluations.length > 0 ? (
@@ -587,7 +692,7 @@
                             </div>
 
                             {/* Search & Feedback Table */}
-                            <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden mb-12">
+                            <div className="admin-panel bg-white rounded-[24px] overflow-hidden mb-12">
                                 <div className="p-5 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50">
                                     <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2 w-full md:w-auto">
                                         <span className="text-lg">💬</span> ข้อเสนอแนะจากผู้เข้าอบรม
@@ -597,7 +702,7 @@
                                         <input 
                                             type="text" 
                                             placeholder="ค้นหาชื่อ หรือ ข้อเสนอแนะ..." 
-                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm"
+                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm"
                                             value={searchTerm}
                                             onChange={e => setSearchTerm(e.target.value)}
                                         />
@@ -620,13 +725,13 @@
                                             {filteredRecords.map(r => (
                                                 <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
                                                     <td className="py-4 px-6 font-bold text-sm text-slate-800">{r.name || <span className="text-slate-400 italic font-medium">ไม่ประสงค์ออกนาม</span>}</td>
-                                                    <td className="py-4 px-4 text-center font-black text-blue-500">{r.scoreContent}</td>
+                                                    <td className="py-4 px-4 text-center font-black text-emerald-600">{r.scoreContent}</td>
                                                     <td className="py-4 px-4 text-center font-black text-amber-500">{r.scoreSpeaker}</td>
-                                                    <td className="py-4 px-4 text-center font-black text-pink-500">{r.scoreVenue}</td>
+                                                    <td className="py-4 px-4 text-center font-black text-amber-700">{r.scoreVenue}</td>
                                                     <td className="py-4 px-4 text-center"><span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg font-black">{r.scoreOverall}</span></td>
                                                     <td className="py-4 px-6 text-sm text-slate-600 font-medium min-w-[200px]">{r.suggestion || <span className="text-slate-300">-</span>}</td>
                                                     <td className="py-4 px-6 text-right">
-                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:bg-red-100 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100">
+                                                        <button onClick={() => handleDelete(r.id)} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-300 hover:bg-emerald-100 hover:text-emerald-700 transition-all opacity-0 group-hover:opacity-100">
                                                             🗑️
                                                         </button>
                                                     </td>
