@@ -10,7 +10,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -89,9 +88,8 @@
         const COVER_IMAGE = "./cover.png";
         // แยกผู้ลงทะเบียนแต่ละงาน โดยไม่ลบข้อมูลจากงานก่อน
         const EVENT_ID = "ppp-seminar-2026-11-11";
-        // ยังไม่มีการยืนยันการรับออร์เดอร์อาหารและเงื่อนไข 300 บาทสำหรับงานใหม่
-        // ปิดเฉพาะหน้าฟอร์มและการบังคับเลือกเมนูไว้ก่อน (เปิดใหม่ได้ภายหลัง)
-        const ENABLE_FOOD_SELECTION = false;
+        // ใช้เฉพาะเมนูเครื่องดื่ม 1 รายการ และคงเงื่อนไขการลงทะเบียนตามงานเดิม
+        const ENABLE_FOOD_SELECTION = true;
 
         // รหัสเชื่อมต่อ FIREBASE 
         const firebaseConfig = {
@@ -105,7 +103,6 @@
         };
 
         const menuData = {
-            desserts: ["บานอฟฟี่", "พานาคอตต้า", "เค้กส้ม", "คัสตาร์ด", "เค้กฝอยทอง", "เค้กนมสด", "ไม่รับเบเกอรี่"],
             drinks: {
                 "☕ หมวดกาแฟ (Coffee)": ["อเมริกาโน", "ลาเต้", "เอสเพรสโซ่", "มอคคา", "คาปูชิโน่", "อเมริกาโน่น้ำผึ้งมะนาว", "อเมริกาโน่น้ำส้ม", "อเมริกาโน่น้ำมะพร้าว"],
                 "🍵 หมวดชาและนม": ["ชาไทย", "ชาเขียว", "ชามิกซ์", "โกโก้", "โกโก้พิงค์", "นมชมพู", "นมสดสตรอเบอรี่", "นมสดสตรอเบอรี่ชาไทย", "นมสดสตรอเบอรี่ชาเขียว", "นมสดสตรอเบอรี่โกโก้", "สตรอเบอรี่ลาเต้", "สตรอเบอรี่ช็อคมิ้นท์"],
@@ -135,7 +132,6 @@
 
             const [isMenuSelectorOpen, setIsMenuSelectorOpen] = React.useState(false);
             const [enlargedImage, setEnlargedImage] = React.useState(null);
-            const [tempDessert, setTempDessert] = React.useState('');
             const [tempDrink, setTempDrink] = React.useState('');
             const scrollRef = React.useRef(null);
             const [searchTerm, setSearchTerm] = React.useState('');
@@ -186,7 +182,7 @@
                 if (!formData.phone.trim()) { setErrorMsg('กรุณากรอก "เบอร์โทรศัพท์" ด้วยครับ'); return; }
 
                 if (ENABLE_FOOD_SELECTION && formData.attendance === 'เข้าร่วม') {
-                    if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาเลือกเมนู ขนม และ เครื่องดื่ม ด้วยครับ\n(สามารถกดปุ่มสีส้มเพื่อจิ้มเลือกจากรูปได้เลยครับ)'); return; }
+                    if (!formData.foodMenu.trim()) { setErrorMsg('กรุณาเลือกเครื่องดื่ม 1 อย่างครับ\n(สามารถกดปุ่มเลือกเมนูเพื่อดูรายการเครื่องดื่มได้เลยครับ)'); return; }
                     if (!formData.acceptedTerms) { setErrorMsg('กรุณาติ๊กเครื่องหมายถูกที่ช่อง "รับทราบและยอมรับเงื่อนไข" ก่อนกดยืนยันครับ'); return; }
                 }
 
@@ -289,19 +285,14 @@
             const slideLeft = () => scrollRef.current && scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
             const slideRight = () => scrollRef.current && scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
 
-            // ฟังก์ชันยืนยันเมนู (บังคับเลือก 2 อย่าง)
+            // ยืนยันการเลือกเครื่องดื่มเพียง 1 รายการ
             const confirmMenuSelection = () => {
-                if (!tempDessert) {
-                    setErrorMsg('กรุณาเลือก "หมวดเบเกอรี่" 1 อย่างครับ');
-                    return;
-                }
                 if (!tempDrink) {
-                    setErrorMsg('กรุณาเลือก "หมวดเครื่องดื่ม" 1 อย่างครับ');
+                    setErrorMsg('กรุณาเลือกเครื่องดื่ม 1 อย่างครับ');
                     return;
                 }
-                
-                const combinedMenu = `${tempDessert} + ${tempDrink}`;
-                setFormData({...formData, foodMenu: combinedMenu});
+
+                setFormData({...formData, foodMenu: tempDrink});
                 setIsMenuSelectorOpen(false);
                 setErrorMsg('');
             };
@@ -322,7 +313,7 @@
                     { header: 'เบอร์โทรศัพท์', key: 'phone', width: 15 },
                     { header: 'อีเมล', key: 'email', width: 28 },
                     { header: 'สถานะ', key: 'attendance', width: 10 },
-                    { header: 'เมนู ขนม/เครื่องดื่ม', key: 'foodMenu', width: 35 }, 
+                    { header: 'เครื่องดื่มที่เลือก', key: 'foodMenu', width: 35 }, 
                     { header: 'วันที่บันทึก', key: 'date', width: 18 }
                 ];
 
@@ -435,8 +426,8 @@
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
                                         <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">📍</div>
                                         <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">หัวข้อ:</div>
-                                            <div className="font-medium text-slate-600 flex-1">อู่ซ่อมรถ สี อะไหล่ และคุณภาพงานซ่อม</div>
+                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">สถานที่:</div>
+                                            <div className="font-medium text-slate-600 flex-1">ร้าน ณ คุณ</div>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
@@ -509,8 +500,8 @@
                                 <div className="bg-white w-full h-full md:h-auto md:max-h-[85vh] md:max-w-2xl md:rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
                                     <div className="p-4 md:p-5 border-b flex justify-between items-center bg-white z-10 shadow-sm md:rounded-t-3xl shrink-0">
                                         <div>
-                                            <h3 className="font-black text-slate-800 text-lg">🍽️ เลือกเมนูเบเกอรี่และเครื่องดื่ม</h3>
-                                            <p className="text-xs text-red-600 font-bold mt-0.5 animate-pulse">⚠️ บังคับเลือก: เบเกอรี่ 1 อย่าง และ น้ำ 1 อย่าง</p>
+                                            <h3 className="font-black text-slate-800 text-lg">🥤 เลือกเมนูเครื่องดื่ม</h3>
+                                            <p className="text-xs text-red-600 font-bold mt-0.5 animate-pulse">เลือกเครื่องดื่ม 1 อย่างจากหมวดที่ต้องการ</p>
                                         </div>
                                         <button onClick={() => setIsMenuSelectorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 transition-colors font-bold">✕</button>
                                     </div>
@@ -520,7 +511,7 @@
                                         <div className="mb-6 relative">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-3 border-b border-slate-200/60">
                                                 <div>
-                                                    <h4 className="font-black text-slate-800 text-base">📸 อัลบั้มเมนูของร้าน</h4>
+                                                    <h4 className="font-black text-slate-800 text-base">📸 ภาพเมนูของร้าน (ประกอบการเลือกเครื่องดื่ม)</h4>
                                                     <p className="text-[12px] text-slate-500 font-medium mt-1">สามารถใช้นิ้วปัด หรือคลิกลูกศร ซ้าย-ขวา เพื่อดูภาพเพิ่มเติมได้ครับ</p>
                                                 </div>
                                                 <div className="hidden md:flex items-center gap-2 mt-2 sm:mt-0">
@@ -543,31 +534,6 @@
                                         </div>
 
                                         <hr className="border-slate-200" />
-
-                                        {/* หมวดขนม */}
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-3 mt-4">
-                                                <h4 className="font-black text-slate-800 text-base">🍰 เลือกเบเกอรี่ (เลือก 1 อย่าง)</h4>
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                {menuData.desserts.map((item, idx) => {
-                                                    const isSelected = tempDessert === item;
-                                                    return (
-                                                        <button key={idx} type="button" onClick={() => setTempDessert(isSelected ? '' : item)} className={`p-3 text-[13.5px] font-bold text-center rounded-xl border-2 transition-all relative flex items-center justify-center min-h-[50px] ${isSelected ? 'bg-orange-50 border-orange-500 text-orange-700 shadow-md scale-[1.02]' : 'bg-white border-slate-200 text-slate-600 hover:border-orange-300 hover:bg-orange-50/30'}`}>
-                                                            {isSelected && <span className="absolute -top-2 -right-2 bg-orange-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm border-2 border-white">✓</span>}
-                                                            <span className="leading-tight">{item}</span>
-                                                        </button>
-                                                    )
-                                                })}
-                                            </div>
-                                            
-                                            {/* 🟢 ป้ายเตือนให้เลื่อนลง (สำหรับมือถือ) */}
-                                            <div className="md:hidden flex items-center justify-center pt-6 pb-2">
-                                                <div className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold animate-bounce shadow-sm border border-red-200">
-                                                    👇 เลื่อนหน้าจอลงด้านล่าง เพื่อเลือกเมนูเครื่องดื่ม 👇
-                                                </div>
-                                            </div>
-                                        </div>
 
                                         {/* หมวดเครื่องดื่ม */}
                                         {Object.entries(menuData.drinks).map(([categoryName, items], catIdx) => (
@@ -595,26 +561,22 @@
                                     <div className="p-4 bg-white border-t shadow-[0_-10px_20px_rgba(0,0,0,0.05)] md:rounded-b-3xl shrink-0 z-20">
                                         <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-1.5">
                                             <div className="flex justify-between items-center text-sm">
-                                                <span className="font-bold text-slate-500">ขนมที่เลือก:</span>
-                                                <span className="font-black text-orange-600 truncate max-w-[150px] text-right">{tempDessert || '- ยังไม่เลือก -'}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-sm">
                                                 <span className="font-bold text-slate-500">เครื่องดื่มที่เลือก:</span>
                                                 <span className="font-black text-emerald-600 truncate max-w-[150px] text-right">{tempDrink || '- ยังไม่เลือก -'}</span>
                                             </div>
                                             {/* โชว์สเตตัสให้ลูกค้าดูว่าเลือกครบหรือยัง */}
-                                            {(!tempDessert || !tempDrink) ? (
-                                                <div className="text-[10px] text-red-500 font-bold text-center mt-1 animate-pulse">⚠️ กรุณาเลือกให้ครบทั้ง 2 อย่างครับ</div>
+                                            {!tempDrink ? (
+                                                <div className="text-[10px] text-red-500 font-bold text-center mt-1 animate-pulse">⚠️ กรุณาเลือกเครื่องดื่ม 1 อย่างครับ</div>
                                             ) : (
-                                                <div className="text-[10px] text-emerald-500 font-bold text-center mt-1">✅ เลือกครบเรียบร้อย สามารถกดยืนยันได้เลยครับ</div>
+                                                <div className="text-[10px] text-emerald-500 font-bold text-center mt-1">✅ เลือกเครื่องดื่มเรียบร้อย สามารถกดยืนยันได้เลยครับ</div>
                                             )}
                                         </div>
                                         <button 
                                             type="button" 
                                             onClick={confirmMenuSelection} 
-                                            className={`w-full py-4 rounded-xl font-bold transition-colors shadow-lg active:scale-95 text-white ${(tempDessert && tempDrink) ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-300'}`}
+                                            className={`w-full py-4 rounded-xl font-bold transition-colors shadow-lg active:scale-95 text-white ${tempDrink ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-300'}`}
                                         >
-                                            ยืนยันเมนูอาหาร
+                                            ยืนยันเครื่องดื่ม
                                         </button>
                                     </div>
                                 </div>
@@ -646,18 +608,18 @@
                                 {ENABLE_FOOD_SELECTION && formData.attendance === 'เข้าร่วม' && (
                                     <div className="space-y-4 animate-in fade-in pt-4 border-t border-slate-100 mt-4">
                                         <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                                            <label className="block text-sm font-bold text-slate-800 mb-3">🍽️ ระบุเมนู ขนม และ เครื่องดื่ม ที่ต้องการ <span className="text-red-500">*</span></label>
-                                            <button type="button" onClick={() => { if(formData.foodMenu.includes('+')) { const parts = formData.foodMenu.split('+').map(p=>p.trim()); setTempDessert(parts[0] || ''); setTempDrink(parts[1] || ''); } else { setTempDessert(''); setTempDrink(''); } setIsMenuSelectorOpen(true); }} className="w-full py-4 mb-3 bg-gradient-to-r from-orange-400 to-amber-500 text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-orange-500 hover:to-amber-600 transition-all flex items-center justify-center gap-2">
-                                                <span className="text-lg">👆</span> คลิกเพื่อเลือกเมนูจากร้าน
+                                            <label className="block text-sm font-bold text-slate-800 mb-3">🥤 เลือกเครื่องดื่มที่ต้องการ (1 อย่าง) <span className="text-red-500">*</span></label>
+                                            <button type="button" onClick={() => { setTempDrink(formData.foodMenu || ''); setIsMenuSelectorOpen(true); }} className="w-full py-4 mb-3 bg-gradient-to-r from-orange-400 to-amber-500 text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-orange-500 hover:to-amber-600 transition-all flex items-center justify-center gap-2">
+                                                <span className="text-lg">👆</span> คลิกเพื่อเลือกเครื่องดื่ม
                                             </button>
-                                            <input type="text" placeholder="หรือพิมพ์เมนูเองที่นี่..." className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-orange-400 outline-none transition-all font-bold text-slate-800 text-sm" value={formData.foodMenu} onChange={e => setFormData({...formData, foodMenu: e.target.value})} />
-                                            {formData.foodMenu && <p className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center gap-1">✅ รับทราบเมนูที่เลือกแล้ว</p>}
+                                            <input type="text" placeholder="หรือพิมพ์ชื่อเครื่องดื่มเองที่นี่..." className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-orange-400 outline-none transition-all font-bold text-slate-800 text-sm" value={formData.foodMenu} onChange={e => setFormData({...formData, foodMenu: e.target.value})} />
+                                            {formData.foodMenu && <p className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center gap-1">✅ รับทราบเครื่องดื่มที่เลือกแล้ว</p>}
                                         </div>
 
                                         <div className="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-4 -mt-4 z-0"></div>
                                             <p className="text-[13px] font-bold text-red-600 mb-1 relative z-10 flex items-center gap-1"><span className="text-base">📌</span> หมายเหตุสำคัญ</p>
-                                            <p className="text-[12px] text-slate-600 leading-relaxed mb-3 relative z-10">หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท <br/>(ค่าสั่งอาหารและเครื่องดื่มล่วงหน้า)</p>
+                                            <p className="text-[12px] text-slate-600 leading-relaxed mb-3 relative z-10">หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท <br/>(ค่าเตรียมเครื่องดื่มล่วงหน้า)</p>
                                             <label className="flex items-start gap-3 cursor-pointer group relative z-10">
                                                 <div className="relative flex items-center justify-center mt-0.5">
                                                     <input type="checkbox" className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-red-600 checked:border-red-600 transition-colors cursor-pointer" checked={formData.acceptedTerms} onChange={(e) => setFormData({...formData, acceptedTerms: e.target.checked})} />
@@ -798,7 +760,7 @@
                                                 <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลผู้ลงทะเบียน</th>
                                                 <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลการติดต่อ</th>
                                                 <th className="py-4 px-4 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">สถานะ</th>
-                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">เมนูที่เลือก</th>
+                                                <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">เครื่องดื่มที่เลือก</th>
                                                 <th className="py-4 pr-6 pl-4 text-right text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">จัดการ</th>
                                             </tr>
                                         </thead>
@@ -831,7 +793,7 @@
                                                     <td className="py-4 px-4 align-top pt-5">
                                                         {r.attendance === 'เข้าร่วม' ? (
                                                             <div className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 inline-block max-w-[200px] truncate" title={r.foodMenu}>
-                                                                🍽️ {r.foodMenu || '-'}
+                                                                🥤 {r.foodMenu || '-'}
                                                             </div>
                                                         ) : (
                                                             <span className="text-slate-300 font-bold">-</span>
