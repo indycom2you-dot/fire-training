@@ -7,9 +7,6 @@
 
 
 
-
-
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -162,7 +159,6 @@
         };
 
         const overviewImages = [
-            "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/77775555.png",
             "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246828831.jpg",
             "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246840708.jpg",
             "https://raw.githubusercontent.com/indycom2you-dot/fire-training/main/1778246833650.jpg",
@@ -185,7 +181,7 @@
             const [tempDrink, setTempDrink] = React.useState('');
             const [activeDrinkCategory, setActiveDrinkCategory] = React.useState('ทั้งหมด');
             const [drinkSearch, setDrinkSearch] = React.useState('');
-            const [showDrinkPhotos, setShowDrinkPhotos] = React.useState(false);
+            const [showDrinkPhotos, setShowDrinkPhotos] = React.useState(true);
             const [showTopics, setShowTopics] = React.useState(false);
             const [registrationReceipt, setRegistrationReceipt] = React.useState(null);
             const scrollRef = React.useRef(null);
@@ -451,10 +447,11 @@
 
             if (view === 'landing') {
                 return (
-                    <div className="premium-shell relative overflow-hidden px-3 sm:px-5 py-6 sm:py-9 flex items-center">
+                    <div className="premium-shell relative min-h-screen overflow-hidden px-3 sm:px-5 py-6 sm:py-10">
                         <div className="premium-corner-mark w-64 h-64 -top-24 -left-24"></div>
                         <div className="premium-corner-mark w-96 h-96 -bottom-36 -right-32"></div>
-                        <main className="relative z-10 w-full max-w-7xl mx-auto">
+                        {/* หน้าแรกแนวตั้งคอลัมน์เดียวทุกขนาดจอ: ภาพปก → รายละเอียด → ปุ่มลงทะเบียน */}
+                        <main className="relative z-10 w-full max-w-[590px] mx-auto">
                             <div className="flex items-center justify-between gap-3 mb-5 premium-enter">
                                 <div className="flex items-center gap-3">
                                     <div className="w-11 h-11 shrink-0 rounded-2xl bg-emerald-900 text-white flex items-center justify-center font-black tracking-tight text-lg shadow-lg">PPP</div>
@@ -466,78 +463,67 @@
                                 <span className="premium-badge hidden sm:inline-flex">SEMINAR 2026</span>
                             </div>
 
-                            {/* หน้าแรกแบบแถวเดียว: ปกทางซ้าย + รายละเอียดทั้งหมดและปุ่มลงทะเบียนทางขวา */}
-                            <div className="premium-card rounded-[27px] md:rounded-[35px] overflow-hidden premium-enter premium-delay">
-                                <div className="grid lg:grid-cols-[46%_54%]">
-                                    <div className="bg-[#f7f7ee] lg:border-r border-emerald-100 flex flex-col justify-center">
-                                        <div className="p-3 sm:p-5 lg:p-6">
-                                            <img src={COVER_IMAGE} alt="โปสเตอร์งานสัมมนาเลือกซ่อมรถอย่างไร" className="w-full h-auto object-contain rounded-[16px] shadow-sm" onError={e => {e.currentTarget.style.display='none';}} />
+                            <div className="premium-card rounded-[27px] sm:rounded-[35px] overflow-hidden premium-enter premium-delay">
+                                <div className="bg-[#f7f7ee] border-b border-emerald-100">
+                                    <img src={COVER_IMAGE} alt="โปสเตอร์งานสัมมนาเลือกซ่อมรถอย่างไร" className="block w-full h-auto object-contain" onError={e => {e.currentTarget.style.display='none';}} />
+                                </div>
+                                <div className="bg-white p-5 sm:p-8">
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        <span className="premium-tag">✦ สัมมนาพิเศษ</span>
+                                        <span className="premium-badge">เปิดลงทะเบียนออนไลน์</span>
+                                    </div>
+                                    <h1 className="premium-title font-black text-[23px] sm:text-[29px] text-[#123e31] mb-3">เลือกซ่อมรถอย่างไร <span className="text-[#20845f]">ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม</span></h1>
+                                    <div className="premium-rule w-32 mb-5"></div>
+                                    <p className="text-sm leading-relaxed text-slate-600 mb-5">เรียนรู้การเลือกอู่ซ่อมรถ อะไหล่ และวิธีตรวจสอบคุณภาพงานซ่อมอย่างมั่นใจ</p>
+
+                                    {/* รายละเอียดเรียงเป็นแถวเดียวในแนวตั้งเหมือนหน้าแรกเดิม */}
+                                    <div className="space-y-3 mb-5">
+                                        <div className="flex items-start gap-3">
+                                            <span className="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center text-xl">🗓️</span>
+                                            <div><p className="text-xs text-slate-500 font-bold">วันจัดงาน</p><p className="font-black text-[#234c3b] text-sm sm:text-base">วันพุธที่ 11 พฤศจิกายน 2569</p></div>
                                         </div>
-                                        <div className="px-5 pb-5 sm:px-7 sm:pb-7 lg:px-8 lg:pb-9">
-                                            <div className="flex flex-wrap gap-2 mb-3">
-                                                <span className="premium-tag">✦ สัมมนาพิเศษ</span>
-                                                <span className="premium-badge">เปิดลงทะเบียนออนไลน์</span>
+                                        <div className="flex items-start gap-3">
+                                            <span className="w-10 h-10 shrink-0 rounded-xl bg-amber-50 flex items-center justify-center text-xl">⏰</span>
+                                            <div><p className="text-xs text-slate-500 font-bold">เวลา</p><p className="font-black text-[#234c3b] text-sm sm:text-base">13:00–15:30 น.</p><p className="text-xs text-slate-500">ลงทะเบียน 13:00 น. • บรรยาย 13:30–14:30 น.</p></div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center text-xl">📍</span>
+                                            <div><p className="text-xs text-slate-500 font-bold">สถานที่</p><p className="font-black text-[#234c3b] text-sm sm:text-base">ร้าน ณ คุณ</p></div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className="w-10 h-10 shrink-0 rounded-xl bg-[#faf6e9] flex items-center justify-center text-xl">🎤</span>
+                                            <div>
+                                                <p className="text-xs text-slate-500 font-bold">วิทยากร</p>
+                                                <p className="font-black text-[#174b38] text-sm sm:text-base">คุณวงศ์วรท ภมรภักดีพิสุทธิ์</p>
+                                                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">ผู้บริหาร บริษัท เอ็ม.วาย.คาร์เซอร์วิส จำกัด<br/>ศูนย์ซ่อมสีและตัวถังรถยนต์</p>
                                             </div>
-                                            <p className="text-sm leading-relaxed text-[#557365]">เรียนรู้การเลือกอู่ซ่อมรถ อะไหล่ และตรวจสอบคุณภาพงานซ่อมอย่างมั่นใจ</p>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white px-5 py-6 sm:px-8 sm:py-8 lg:px-9 lg:py-8 xl:px-11 flex flex-col justify-center">
-                                        <div className="premium-tag self-start mb-3">PPP INSURANCE • EVENT REGISTRATION</div>
-                                        <h1 className="premium-title font-black text-[23px] sm:text-[29px] xl:text-[31px] text-[#123e31] mb-3">เลือกซ่อมรถอย่างไร <span className="text-[#20845f]">ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม</span></h1>
-                                        <div className="premium-rule w-32 mb-4"></div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
-                                            <div className="premium-soft-panel p-3">
-                                                <p className="text-[11px] text-slate-500 font-bold mb-1">🗓️ วันจัดงาน</p>
-                                                <p className="text-[13px] font-black text-[#234c3b] leading-snug">พุธ 11 พ.ย. 2569</p>
-                                            </div>
-                                            <div className="premium-soft-panel p-3">
-                                                <p className="text-[11px] text-slate-500 font-bold mb-1">⏰ เวลา</p>
-                                                <p className="text-[13px] font-black text-[#234c3b] leading-snug">13:00–15:30 น.</p>
-                                            </div>
-                                            <div className="premium-soft-panel p-3">
-                                                <p className="text-[11px] text-slate-500 font-bold mb-1">📍 สถานที่</p>
-                                                <p className="text-[13px] font-black text-[#234c3b] leading-snug">ร้าน ณ คุณ</p>
-                                            </div>
+                                    <div className="rounded-[18px] border border-[#ece7d8] bg-[#fffdf8] p-4 mb-6">
+                                        <div className="flex justify-between items-center gap-3 mb-3">
+                                            <h2 className="text-sm font-black text-[#806437]">กำหนดการสัมมนา</h2>
+                                            <button type="button" onClick={() => setShowTopics(!showTopics)} aria-expanded={showTopics} className="text-[11px] font-black text-emerald-700 border border-emerald-200 rounded-full px-3 py-1.5 hover:bg-emerald-50">{showTopics ? 'ซ่อนหัวข้อ −' : 'ดูหัวข้อ +'}</button>
                                         </div>
-
-                                        <div className="rounded-[18px] border border-emerald-100 bg-[#f8fbf6] p-4 mb-3">
-                                            <div className="flex gap-3 items-start">
-                                                <span className="w-10 h-10 shrink-0 rounded-xl bg-emerald-100 flex items-center justify-center text-xl">🎤</span>
-                                                <div>
-                                                    <p className="text-[11px] font-black tracking-wider text-[#9b7c40] mb-1">วิทยากรรับเชิญ</p>
-                                                    <p className="text-sm sm:text-base font-black text-[#174b38]">คุณวงศ์วรท ภมรภักดีพิสุทธิ์</p>
-                                                    <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">ผู้บริหาร บริษัท เอ็ม.วาย.คาร์เซอร์วิส จำกัด • ศูนย์ซ่อมสีและตัวถังรถยนต์</p>
-                                                </div>
-                                            </div>
+                                        <div className="space-y-2 text-xs sm:text-[13px] leading-relaxed text-slate-700">
+                                            <p><span className="font-black text-emerald-700">13:00</span> PPP ลงทะเบียน + อัปเดตข่าวสาร</p>
+                                            <p><span className="font-black text-emerald-700">13:30–14:30</span> บรรยายโดยวิทยากร</p>
                                         </div>
-
-                                        <div className="rounded-[18px] border border-[#ece7d8] bg-[#fffdf8] p-4 mb-5">
-                                            <div className="flex justify-between items-center gap-3 mb-2">
-                                                <p className="text-[12px] font-black text-[#806437]">กำหนดการสัมมนา</p>
-                                                <button type="button" onClick={() => setShowTopics(!showTopics)} aria-expanded={showTopics} className="text-[11px] font-black text-emerald-700 border border-emerald-200 rounded-full px-3 py-1.5 hover:bg-emerald-50">{showTopics ? 'ซ่อนหัวข้อ −' : 'ดูหัวข้อ +'}</button>
-                                            </div>
-                                            <div className="grid sm:grid-cols-2 gap-1 sm:gap-3 text-xs sm:text-[13px] text-slate-700">
-                                                <p><span className="font-black text-emerald-700">13:00</span> ลงทะเบียน + อัปเดตข่าวสาร PPP</p>
-                                                <p><span className="font-black text-emerald-700">13:30–14:30</span> บรรยายโดยวิทยากร</p>
-                                            </div>
-                                            {showTopics && <div className="mt-3 pt-3 border-t border-[#ece7d8] grid sm:grid-cols-2 gap-1.5 text-xs text-slate-600 premium-enter">
-                                                <p>✓ ประเภทและมาตรฐานของอู่ซ่อม</p>
-                                                <p>✓ ผลิตภัณฑ์สีรถยนต์</p>
-                                                <p>✓ อะไหล่เก่าแท้และอะไหล่ใหม่แท้</p>
-                                                <p>✓ วิธีตรวจคุณภาพงานซ่อม</p>
-                                            </div>}
-                                        </div>
-
-                                        <button type="button" onClick={() => {setErrorMsg('');setView('form');window.scrollTo({top:0,behavior:'smooth'});}} className="premium-button w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3">
-                                            ลงทะเบียนเข้าร่วมงาน <span aria-hidden="true" className="text-xl">→</span>
-                                        </button>
-                                        <p className="text-center text-[11px] text-slate-400 mt-3">ลงทะเบียนง่าย ๆ พร้อมเลือกเครื่องดื่ม 1 รายการ</p>
+                                        {showTopics && <div className="mt-3 pt-3 border-t border-[#ece7d8] space-y-2 text-xs leading-relaxed text-slate-600 premium-enter">
+                                            <p>✓ เข้าใจประเภทและมาตรฐานของอู่ซ่อม</p>
+                                            <p>✓ ผลิตภัณฑ์สีมีแบบไหนบ้าง</p>
+                                            <p>✓ รู้จักอะไหล่เก่าแท้ อะไหล่ใหม่แท้</p>
+                                            <p>✓ เช็กคุณภาพงานซ่อมให้มั่นใจ ปลอดภัย และคุ้มค่า</p>
+                                        </div>}
                                     </div>
+
+                                    <button type="button" onClick={() => {setErrorMsg('');setView('form');window.scrollTo({top:0,behavior:'smooth'});}} className="premium-button w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3">
+                                        ลงทะเบียนเข้าร่วมงาน <span aria-hidden="true" className="text-xl">→</span>
+                                    </button>
+                                    <p className="text-center text-[11px] text-slate-400 mt-3">ลงทะเบียนง่าย ๆ พร้อมเลือกเครื่องดื่ม 1 รายการ</p>
                                 </div>
                             </div>
-                            <div className="text-center mt-4 text-xs text-slate-400">
+                            <div className="text-center mt-5 text-xs text-slate-400">
                                 จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด
                                 <div><button type="button" onClick={() => {setErrorMsg('');setView('login');}} className="text-[10px] text-slate-400 hover:text-emerald-700 mt-2 underline underline-offset-4">Admin Access</button></div>
                             </div>
@@ -584,18 +570,26 @@
                                         </div>
                                     </div>
                                     <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 bg-[#f8faf7]">
-                                        <div className="mb-5">
-                                            <button type="button" className="text-xs font-black text-emerald-700 flex items-center gap-2 hover:underline" onClick={() => setShowDrinkPhotos(!showDrinkPhotos)} aria-expanded={showDrinkPhotos}>
-                                                📷 {showDrinkPhotos ? 'ซ่อนภาพเมนูจากร้าน' : 'ดูภาพเมนูจากร้าน'} <span>{showDrinkPhotos ? '−' : '+'}</span>
-                                            </button>
-                                            {showDrinkPhotos && <div className="mt-3 flex gap-3 overflow-x-auto hide-scroll pb-2" ref={scrollRef}>
+                                        {/* คืนอัลบั้มรูปเมนูเดิม: แสดงทันทีเมื่อเปิดตัวเลือก ไม่ซ่อนหลังปุ่มกด */}
+                                        <section className="mb-5 rounded-2xl bg-white border border-emerald-100 p-3 sm:p-4">
+                                            <div className="flex items-center justify-between gap-2 mb-3">
+                                                <div>
+                                                    <h4 className="text-sm font-black text-[#174b38]">📷 ภาพเมนูเครื่องดื่มร้าน ณ คุณ</h4>
+                                                    <p className="text-[11px] text-slate-500 mt-1">เลื่อนซ้าย–ขวาและแตะภาพเพื่อขยาย</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button type="button" aria-label="ดูภาพก่อนหน้า" onClick={() => scrollRef.current && scrollRef.current.scrollBy({left:-260,behavior:'smooth'})} className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-900 font-bold">←</button>
+                                                    <button type="button" aria-label="ดูภาพถัดไป" onClick={() => scrollRef.current && scrollRef.current.scrollBy({left:260,behavior:'smooth'})} className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-900 font-bold">→</button>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-3 overflow-x-auto hide-scroll pb-2 snap-x snap-mandatory" ref={scrollRef}>
                                                 {overviewImages.map((src, idx) => (
-                                                    <button type="button" key={idx} onClick={() => setEnlargedImage(src)} className="shrink-0 rounded-xl overflow-hidden border border-emerald-100 bg-white" aria-label={`ดูรูปเมนูที่ ${idx+1} ขนาดใหญ่`}>
-                                                        <img src={src} alt={`ภาพเมนูร้าน ณ คุณ ${idx+1}`} loading="lazy" className="h-40 w-auto max-w-[260px] object-contain" />
+                                                    <button type="button" key={idx} onClick={() => setEnlargedImage(src)} className="shrink-0 snap-start rounded-xl overflow-hidden border border-emerald-100 bg-[#f9faf7] min-w-[120px] min-h-[168px] flex items-center justify-center" aria-label={`ขยายภาพเมนูเครื่องดื่มที่ ${idx+1}`}>
+                                                        <img src={src} alt={`ภาพเมนูเครื่องดื่มร้าน ณ คุณ ${idx+1}`} loading="lazy" className="h-40 w-auto max-w-[240px] object-contain" onError={e => {e.currentTarget.alt = 'ไม่สามารถโหลดภาพเมนูได้';}} />
                                                     </button>
                                                 ))}
-                                            </div>}
-                                        </div>
+                                            </div>
+                                        </section>
                                         <div className="flex items-center justify-between mb-3">
                                             <p className="text-xs font-bold text-slate-500">{visibleDrinkCount} รายการ</p>
                                             <p className="text-xs font-extrabold text-[#166b50]">เลือกได้ 1 รายการ</p>
