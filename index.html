@@ -61,6 +61,56 @@
             transform: skewX(-20deg); transition: all 0.5s; z-index: 1;
         }
         .btn-shine:hover::before { animation: shine 0.7s; }
+
+        :root { --ppp-green: #12664a; --ppp-deep: #0b4032; --ppp-gold: #cba763; --ppp-cream: #fbfaf6; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Sarabun', sans-serif; background: #f7f9f5; }
+        .premium-shell {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 9% 8%, rgba(218, 195, 136, 0.19), transparent 32%),
+                radial-gradient(circle at 91% 12%, rgba(41, 132, 92, 0.11), transparent 33%),
+                linear-gradient(145deg, #fafbf8 0%, #f5f9f5 58%, #fdf9f1 100%);
+        }
+        .premium-card { background: rgba(255,255,255,.98); border: 1px solid rgba(22,101,72,.09); box-shadow: 0 24px 75px rgba(23,67,49,.10), 0 3px 18px rgba(27,60,39,.035); }
+        .premium-enter { animation: premium-rise .6s cubic-bezier(.2,.8,.2,1) both; }
+        .premium-delay { animation-delay: .13s; }
+        .premium-delay-2 { animation-delay: .24s; }
+        .premium-tag { display: inline-flex; align-items: center; gap: .45rem; border: 1px solid #e6e2d5; background: #faf6eb; color: #826633; border-radius: 999px; font-size: 12px; font-weight: 800; padding: .4rem .85rem; }
+        .premium-badge { background: #edf7ef; border: 1px solid #d9eadc; color: #136249; border-radius: 999px; padding: .35rem .75rem; font-size: 11px; font-weight: 800; }
+        .premium-rule { height: 3px; border-radius: 100px; background: linear-gradient(90deg,#c7a661 0%,#e9dcb9 47%, transparent 100%); }
+        .premium-title { letter-spacing: -.025em; line-height: 1.28; }
+        .premium-button { position: relative; isolation: isolate; overflow: hidden; color: white; background: linear-gradient(112deg,#0b5640 0%,#178260 76%,#228d68 100%); box-shadow: 0 13px 27px rgba(21,112,75,.22); transition: transform .22s ease, box-shadow .22s ease; }
+        .premium-button:hover { transform: translateY(-2px); box-shadow: 0 18px 29px rgba(21,112,75,.29); }
+        .premium-button:active { transform: translateY(0); }
+        .premium-button::before { content:''; position:absolute; inset:0; transform:translateX(-120%) skewX(-22deg); width:48%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent); transition:transform .75s ease; pointer-events:none; }
+        .premium-button:hover::before { transform: translateX(300%) skewX(-22deg); }
+        .premium-button:disabled { opacity: .6; cursor: wait; box-shadow: none; }
+        .premium-field { width:100%; min-height:51px; padding: 12px 16px; background: #fafbf9; border: 1.5px solid #e2e9df; border-radius: 14px; font-weight: 600; color: #263c31; outline: none; transition: border-color .2s, box-shadow .2s, background .2s; }
+        .premium-field:focus { background: #fff; border-color: #2f956b; box-shadow: 0 0 0 4px rgba(41,132,92,.11); }
+        .premium-field::placeholder { color: #9aa79d; font-weight:400; }
+        .premium-field-label { display:block; margin-bottom:7px; font-size:13px; color:#35564a; font-weight:800; }
+        .premium-field-valid { border-color: #a2d5ba; }
+        .premium-switch { border: 1.5px solid #e0e8de; background: #f8faf7; border-radius: 15px; padding: 6px; display:grid; grid-template-columns: 1fr 1fr; gap:6px; }
+        .premium-switch button { border-radius: 11px; min-height:47px; font-weight:800; transition: background .2s, transform .2s, box-shadow .2s; }
+        .premium-switch-on { background: #166b50; color:#fff; box-shadow: 0 5px 15px rgba(20,99,72,.18); }
+        .premium-switch-off { background: #fff; color:#5d6e66; border:1px solid #dce5df; }
+        .premium-progress { height: 8px; border-radius: 100px; background: #e5eee6; overflow:hidden; }
+        .premium-progress-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#b99a57,#267b5b); transition: width .35s ease; }
+        .premium-soft-panel { background:linear-gradient(140deg,#f6faf6,#fcfbf7); border:1px solid #e4ebe1; border-radius:20px; }
+        .premium-corner-mark { position:absolute; border-radius:100%; background:rgba(207,178,103,.10); filter:blur(4px); pointer-events:none; }
+        .premium-chip { white-space:nowrap; font-size:13px; padding: 9px 14px; border-radius:999px; border:1px solid #dfe9df; background:#fff; color:#557168; font-weight:800; transition: all .18s ease; }
+        .premium-chip-active { border-color:#176c50; color:#fff; background:#176c50; box-shadow:0 5px 12px rgba(25,105,75,.16); }
+        .premium-drink { min-height:57px; padding: 12px; border-radius:14px; text-align:left; border:1.5px solid #e2eae2; color:#4b6256; background:white; font-weight:700; transition:all .18s; }
+        .premium-drink:hover { border-color:#9ccbb0; background:#f5faf6; }
+        .premium-drink-active { border-color:#237e5a; color:#115b40; background:#edf8f0; box-shadow: 0 0 0 2px rgba(37,121,87,.06); }
+        .premium-success-check { display:grid; place-items:center; width:90px; height:90px; border-radius:999px; color:white; background:linear-gradient(135deg,#0c5e44,#39a878); box-shadow:0 15px 30px rgba(25,121,81,.2); font-size:46px; animation: premium-pop .6s cubic-bezier(.2,1.4,.4,1) .12s both; }
+        @keyframes premium-rise { from { opacity:0; transform:translateY(17px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes premium-pop { 0% { opacity:0; transform:scale(.55) rotate(-12deg); } 100% { opacity:1; transform:scale(1) rotate(0); } }
+        @media (prefers-reduced-motion: reduce) {
+            .premium-enter, .premium-success-check { animation:none !important; }
+            .premium-button, .premium-field, .premium-progress-fill, .premium-chip, .premium-drink { transition:none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-100">
@@ -133,6 +183,11 @@
             const [isMenuSelectorOpen, setIsMenuSelectorOpen] = React.useState(false);
             const [enlargedImage, setEnlargedImage] = React.useState(null);
             const [tempDrink, setTempDrink] = React.useState('');
+            const [activeDrinkCategory, setActiveDrinkCategory] = React.useState('ทั้งหมด');
+            const [drinkSearch, setDrinkSearch] = React.useState('');
+            const [showDrinkPhotos, setShowDrinkPhotos] = React.useState(false);
+            const [showTopics, setShowTopics] = React.useState(false);
+            const [registrationReceipt, setRegistrationReceipt] = React.useState(null);
             const scrollRef = React.useRef(null);
             const [searchTerm, setSearchTerm] = React.useState('');
             const [selectedIds, setSelectedIds] = React.useState([]);
@@ -140,6 +195,17 @@
             const [formData, setFormData] = React.useState({
                 name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false
             });
+
+            // แสดงความคืบหน้าโดยไม่เพิ่ม/เปลี่ยนฟิลด์ของ Firebase
+            const phoneValid = /^\d{9,10}$/.test(formData.phone.replace(/[\s-]/g, ''));
+            const baseDone = [formData.name.trim(), formData.company.trim(), phoneValid].filter(Boolean).length;
+            const needsDrink = formData.attendance === 'เข้าร่วม' && ENABLE_FOOD_SELECTION;
+            const formTotal = needsDrink ? 5 : 3;
+            const formDone = baseDone + (needsDrink && formData.foodMenu.trim() ? 1 : 0) + (needsDrink && formData.acceptedTerms ? 1 : 0);
+            const formPercent = Math.round(formDone / formTotal * 100);
+            const visibleDrinkCount = Object.entries(menuData.drinks)
+                .filter(([category]) => activeDrinkCategory === 'ทั้งหมด' || activeDrinkCategory === category)
+                .reduce((total, [, drinks]) => total + drinks.filter(drink => drink.toLocaleLowerCase('th').includes(drinkSearch.trim().toLocaleLowerCase('th'))).length, 0);
 
             React.useEffect(() => {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -219,6 +285,12 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
+                    // เก็บข้อมูลใบยืนยันในหน้าจอหลังบันทึกสำเร็จเท่านั้น (ไม่สร้างข้อมูลเพิ่มในฐานข้อมูล)
+                    setRegistrationReceipt({
+                        name: formData.name.trim(),
+                        attendance: formData.attendance,
+                        drink: formData.attendance === 'เข้าร่วม' ? formData.foodMenu.trim() : ''
+                    });
                     setView('success');
                     setFormData({ name: '', nickname: '', company: '', email: '', phone: '', attendance: 'เข้าร่วม', foodMenu: '', acceptedTerms: false });
                 } catch (err) { 
@@ -323,7 +395,7 @@
                 const titleCell = sheet.getCell('A1');
                 titleCell.value = 'รายงานผู้ลงทะเบียนสัมมนา: ' + 'เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม' + ' | 11 พฤศจิกายน 2569';
                 titleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }; 
-                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB91C1C' } }; 
+                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF145C46' } }; 
                 titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
                 sheet.getRow(1).height = 35; 
 
@@ -338,7 +410,7 @@
                 const headerRow = sheet.getRow(3);
                 headerRow.eachCell((cell) => {
                     cell.font = { name: 'Sarabun', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }; 
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } }; 
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A7857' } }; 
                     cell.alignment = { vertical: 'middle', horizontal: 'center' };
                     cell.border = { top: {style:'thin', color:{argb:'FFB91C1C'}}, left: {style:'thin', color:{argb:'FFB91C1C'}}, bottom: {style:'thin', color:{argb:'FFB91C1C'}}, right: {style:'thin', color:{argb:'FFB91C1C'}} };
                 });
@@ -379,274 +451,264 @@
 
             if (view === 'landing') {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 overflow-hidden relative">
-                        {/* แสงออร่าพื้นหลัง */}
-                        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-red-400/20 rounded-full blur-3xl animate-pulse"></div>
-                        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
-
-                        <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-700">
-                            
-                            {/* รูปปก — ใช้อัตราส่วน 16:9 และแสดงทั้งภาพโดยไม่ตัดโลโก้ */}
-                            <div className="w-full aspect-video relative bg-white overflow-hidden group cursor-default">
-                                <img
-                                    src={COVER_IMAGE}
-                                    alt="เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม"
-                                    className="w-full h-full object-contain bg-white"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
-
-                            <div className="p-6 sm:p-8 relative z-10 bg-white">
-                                <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                                    เลือกซ่อมรถอย่างไร<br/>ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม
-                                </h1>
-                                <p className="text-red-600 font-bold text-base sm:text-lg mb-6 sm:mb-8 inline-block border-b-2 border-red-100 pb-1">ร่วมเรียนรู้การเลือกอู่ซ่อม อะไหล่ สี และการตรวจคุณภาพงานซ่อม</p>
-                                
-                                <div className="space-y-3 mb-8">
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">🗓️</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">วันที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">วันพุธที่ 11 พฤศจิกายน 2569</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform shadow-sm">⏰</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">เวลา:</div>
-                                            <div className="flex flex-col flex-1">
-                                                <span className="font-medium text-slate-600">13:00 น. ลงทะเบียนและอัปเดตข่าวสาร PPP</span>
-                                                <span className="font-bold text-red-600 mt-0.5">13:30–14:30 น. ฟังบรรยายพิเศษ</span>
-                                                <span className="text-xs text-slate-500 mt-0.5">กำหนดการโดยรวม 13:00–15:30 น.</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">📍</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">สถานที่:</div>
-                                            <div className="font-medium text-slate-600 flex-1">ร้าน ณ คุณ</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform shadow-sm">🎤</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full leading-relaxed pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">ผู้บรรยาย:</div>
-                                            <div className="flex flex-col flex-1 text-slate-800 space-y-2.5">
-                                                <div>
-                                                    <span className="font-bold block text-slate-800">คุณวงศ์วรท ภมรภักดีพิสุทธิ์</span>
-                                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug block mt-0.5">ผู้บริหาร บริษัท เอ็ม.วาย.คาร์เซอร์วิส จำกัด</span>
-                                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-500 leading-snug">
-                                                        
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 sm:gap-4 group p-2 -m-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-default">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm">💡</div>
-                                        <div className="text-[14px] sm:text-[15px] flex w-full pt-1">
-                                            <div className="font-bold text-slate-800 w-[70px] sm:w-[80px] shrink-0">รายละเอียด:</div>
-                                            <div className="font-medium text-slate-600 leading-relaxed flex-1">
-                                                เรียนรู้<span className="text-emerald-700 font-bold">มาตรฐานอู่ซ่อมและประเภทอู่</span> ผลิตภัณฑ์สี อะไหล่เก่าแท้/ใหม่แท้ และวิธีตรวจคุณภาพงานซ่อมให้มั่นใจ ปลอดภัย และคุ้มค่า
-                                            </div>
-                                        </div>
+                    <div className="premium-shell relative overflow-hidden px-4 py-7 sm:py-12">
+                        <div className="premium-corner-mark w-64 h-64 -top-24 -left-24"></div>
+                        <div className="premium-corner-mark w-96 h-96 -bottom-36 -right-32"></div>
+                        <main className="relative z-10 max-w-5xl mx-auto">
+                            <div className="flex items-center justify-between gap-3 mb-6 premium-enter">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 shrink-0 rounded-2xl bg-emerald-900 text-white flex items-center justify-center font-black tracking-tight text-lg shadow-lg">PPP</div>
+                                    <div>
+                                        <p className="text-xs uppercase tracking-[.13em] font-black text-emerald-900">PPP Insurance Broker</p>
+                                        <p className="text-xs text-slate-500 font-medium">สัมมนาและแลกเปลี่ยนความรู้</p>
                                     </div>
                                 </div>
-                                
-                                <button onClick={() => setView('form')} className="btn-shine relative overflow-hidden w-full py-4 bg-gradient-to-r from-red-600 to-rose-500 text-white rounded-2xl font-black text-[16px] sm:text-lg shadow-[0_10px_25px_-5px_rgba(225,29,72,0.4)] hover:shadow-[0_15px_35px_-5px_rgba(225,29,72,0.6)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 group">
-                                    <span className="relative z-10">ลงทะเบียนเข้าร่วมสัมมนา</span>
-                                    <span className="relative z-10 group-hover:translate-x-1 transition-transform">👉</span>
-                                </button>
+                                <span className="premium-badge hidden sm:inline-flex">11 NOV 2026</span>
                             </div>
-                            <div className="py-4 text-center border-t border-slate-100 bg-slate-50 relative z-10">
-                                <button onClick={() => setView('login')} className="text-[10px] font-bold tracking-widest text-slate-300 hover:text-slate-500 uppercase transition-colors">Secure Admin Access</button>
+
+                            <div className="premium-card rounded-[30px] md:rounded-[36px] overflow-hidden premium-enter premium-delay">
+                                <div className="grid lg:grid-cols-[1.08fr_.92fr]">
+                                    <div className="relative bg-[#f8f8f1] flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-emerald-100">
+                                        <img src={COVER_IMAGE} alt="โปสเตอร์งานสัมมนาเลือกซ่อมรถอย่างไร" className="w-full h-auto object-contain" onError={e => {e.currentTarget.style.display='none';}} />
+                                        <div className="px-5 pb-5 sm:px-7 sm:pb-7 flex flex-wrap gap-2">
+                                            <span className="premium-tag">✦ เสวนาความรู้เรื่องรถยนต์</span>
+                                            <span className="premium-badge">ลงทะเบียนออนไลน์</span>
+                                        </div>
+                                    </div>
+                                    <div className="px-6 py-7 sm:px-9 sm:py-10 flex flex-col justify-center">
+                                        <div className="premium-tag self-start mb-5">สัมมนาพิเศษ • PPP INSURANCE</div>
+                                        <h1 className="premium-title font-black text-[27px] sm:text-[34px] text-[#123e31] mb-4">เลือกซ่อมรถอย่างไร <span className="text-[#20845f]">ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม</span></h1>
+                                        <div className="premium-rule w-32 mb-6"></div>
+                                        <p className="text-sm leading-relaxed text-slate-600 mb-6">เรียนรู้หลักการเลือกอู่ อะไหล่ สีรถ และวิธีตรวจสอบคุณภาพงานซ่อม เพื่อช่วยให้ตัดสินใจได้อย่างมั่นใจ</p>
+                                        <div className="space-y-3 mb-7">
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center text-lg">🗓️</span>
+                                                <div><p className="text-xs text-slate-400 font-bold">วันจัดงาน</p><p className="font-bold text-[#234c3b] text-sm sm:text-base">พุธที่ 11 พฤศจิกายน 2569</p></div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-10 h-10 shrink-0 rounded-xl bg-amber-50 flex items-center justify-center text-lg">⏰</span>
+                                                <div><p className="text-xs text-slate-400 font-bold">เวลา</p><p className="font-bold text-[#234c3b] text-sm sm:text-base">13:00–15:30 น.</p><p className="text-xs text-slate-500">เริ่มบรรยาย 13:30 น.</p></div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center text-lg">📍</span>
+                                                <div><p className="text-xs text-slate-400 font-bold">สถานที่</p><p className="font-bold text-[#234c3b] text-sm sm:text-base">ร้าน ณ คุณ</p></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" onClick={() => {setErrorMsg('');setView('form');window.scrollTo({top:0,behavior:'smooth'});}} className="premium-button w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3">
+                                            ลงทะเบียนเข้าร่วมงาน <span aria-hidden="true" className="text-xl">→</span>
+                                        </button>
+                                        <p className="text-center text-[11px] text-slate-400 mt-3">กรอกข้อมูลไม่กี่ขั้นตอน • เลือกเครื่องดื่มได้ 1 รายการ</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+
+                            <div className="grid md:grid-cols-[.95fr_1.05fr] gap-4 mt-5 premium-enter premium-delay-2">
+                                <section className="premium-card rounded-[23px] p-5 sm:p-6">
+                                    <p className="text-[11px] tracking-[.1em] font-extrabold text-[#a48746] mb-2">GUEST SPEAKER</p>
+                                    <h2 className="text-lg font-black text-[#174b38]">คุณวงศ์วรท ภมรภักดีพิสุทธิ์</h2>
+                                    <p className="text-sm text-slate-600 mt-1">ผู้บริหาร บริษัท เอ็ม.วาย.คาร์เซอร์วิส จำกัด</p>
+                                    <p className="text-xs text-slate-400 mt-1">ศูนย์ซ่อมสีและตัวถังรถยนต์</p>
+                                </section>
+                                <section className="premium-card rounded-[23px] p-5 sm:p-6">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div><p className="text-[11px] tracking-[.1em] font-extrabold text-[#a48746] mb-2">EVENT AGENDA</p><h2 className="text-base font-black text-[#174b38]">กำหนดการและเนื้อหาสัมมนา</h2></div>
+                                        <button type="button" onClick={() => setShowTopics(!showTopics)} aria-expanded={showTopics} className="text-xs font-black text-emerald-700 border border-emerald-200 rounded-full px-3 py-2 shrink-0 hover:bg-emerald-50">{showTopics ? 'ย่อรายละเอียด −' : 'ดูเพิ่มเติม +'}</button>
+                                    </div>
+                                    <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                        <p><span className="font-black text-emerald-700 mr-2">13:00</span> PPP ลงทะเบียนและอัปเดตข่าวสาร</p>
+                                        <p><span className="font-black text-emerald-700 mr-2">13:30–14:30</span> บรรยายโดยคุณวงศ์วรท</p>
+                                        {showTopics && <div className="mt-3 pt-3 border-t border-emerald-100 text-xs leading-relaxed space-y-2 premium-enter">
+                                            <p>✓ ประเภทและมาตรฐานของอู่ซ่อม</p>
+                                            <p>✓ ผลิตภัณฑ์สีรถยนต์</p>
+                                            <p>✓ อะไหล่เก่าแท้และอะไหล่ใหม่แท้</p>
+                                            <p>✓ วิธีตรวจคุณภาพงานซ่อมให้ปลอดภัยและคุ้มค่า</p>
+                                        </div>}
+                                    </div>
+                                </section>
+                            </div>
+                            <div className="text-center mt-6 text-xs text-slate-400 pb-3">
+                                จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด
+                                <div><button type="button" onClick={() => {setErrorMsg('');setView('login');}} className="text-[10px] text-slate-400 hover:text-emerald-700 mt-3 underline underline-offset-4">Admin Access</button></div>
+                            </div>
+                        </main>
                     </div>
                 );
             }
 
             if (view === 'form') {
                 return (
-                    <div className={`min-h-screen flex items-center justify-center p-4 py-10 relative bg-slate-100 ${(isMenuSelectorOpen || enlargedImage || errorMsg) ? 'overflow-hidden' : ''}`}>
-                        
-                        {/* 🟢 Modal ขยายรูปภาพ */}
+                    <div className="premium-shell relative min-h-screen px-3 sm:px-5 py-7 sm:py-10">
+                        {/* ดูภาพเมนูขยายเต็มจอ */}
                         {enlargedImage && (
-                            <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out" onClick={() => setEnlargedImage(null)}>
-                                <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" />
-                                <button onClick={() => setEnlargedImage(null)} className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
-                                <div className="absolute bottom-6 text-white/70 text-sm animate-pulse">แตะพื้นที่ว่างเพื่อปิด</div>
+                            <div className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setEnlargedImage(null)}>
+                                <img src={enlargedImage} alt="ภาพเมนูเครื่องดื่มขนาดใหญ่" className="max-w-full max-h-[85vh] object-contain rounded-xl" />
+                                <button type="button" onClick={() => setEnlargedImage(null)} aria-label="ปิดภาพ" className="absolute top-5 right-5 bg-white/20 text-white rounded-full w-12 h-12 font-bold text-lg">✕</button>
                             </div>
                         )}
-
-                        {/* 🟢 Modal แจ้งเตือน (Smart Alert) */}
+                        {/* ข้อความเตือนชัดเจนบนมือถือ */}
                         {errorMsg && (
-                            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-                                <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
-                                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-red-100">⚠️</div>
-                                    <h3 className="text-xl font-black text-slate-800 mb-2">แจ้งเตือน</h3>
-                                    <p className="text-sm text-slate-600 mb-8 whitespace-pre-line leading-relaxed">{errorMsg}</p>
-                                    <button type="button" onClick={() => setErrorMsg('')} className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 transition-all active:scale-95">รับทราบ</button>
+                            <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#10291f]/60 backdrop-blur-sm p-4" role="alertdialog" aria-modal="true" aria-label="แจ้งเตือน">
+                                <div className="premium-card bg-white rounded-[26px] p-7 max-w-sm w-full text-center premium-enter">
+                                    <div className="text-4xl mb-4">⚠️</div>
+                                    <h3 className="font-black text-xl text-[#174b38] mb-2">โปรดตรวจสอบข้อมูล</h3>
+                                    <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed mb-7">{errorMsg}</p>
+                                    <button type="button" onClick={() => setErrorMsg('')} className="premium-button w-full rounded-xl py-3.5 font-bold">รับทราบ</button>
                                 </div>
                             </div>
                         )}
-
-                        {/* 🟢 Modal เลือกระบบเมนู (Interactive Menu Selector) */}
+                        {/* กล่องเลือกเครื่องดื่ม: กรองตามหมวดและค้นหาได้ */}
                         {ENABLE_FOOD_SELECTION && isMenuSelectorOpen && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
-                                <div className="bg-white w-full h-full md:h-auto md:max-h-[85vh] md:max-w-2xl md:rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
-                                    <div className="p-4 md:p-5 border-b flex justify-between items-center bg-white z-10 shadow-sm md:rounded-t-3xl shrink-0">
-                                        <div>
-                                            <h3 className="font-black text-slate-800 text-lg">🥤 เลือกเมนูเครื่องดื่ม</h3>
-                                            <p className="text-xs text-red-600 font-bold mt-0.5 animate-pulse">เลือกเครื่องดื่ม 1 อย่างจากหมวดที่ต้องการ</p>
+                            <div className="fixed inset-0 z-[60] bg-[#0b2219]/75 backdrop-blur-sm flex justify-center items-end sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="เลือกเครื่องดื่ม">
+                                <div className="bg-white w-full sm:max-w-2xl h-[94dvh] sm:h-[min(88dvh,780px)] rounded-t-[28px] sm:rounded-[26px] flex flex-col overflow-hidden shadow-2xl premium-enter">
+                                    <div className="bg-white shrink-0 p-4 sm:p-5 border-b border-[#e6eee7]">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div><p className="text-[11px] text-[#bc9957] tracking-widest font-black">DRINK SELECTION</p><h3 className="text-xl font-black text-[#174b38] mt-1">🥤 เลือกเครื่องดื่ม 1 อย่าง</h3><p className="text-xs text-slate-500 mt-1">เลือกจากรายการ หรือกลับไปพิมพ์ชื่อเครื่องดื่มเองก็ได้</p></div>
+                                            <button type="button" onClick={() => {setIsMenuSelectorOpen(false);setDrinkSearch('');}} className="shrink-0 w-10 h-10 rounded-full bg-slate-100 hover:bg-emerald-50 font-black text-slate-600" aria-label="ปิดเมนู">✕</button>
                                         </div>
-                                        <button onClick={() => setIsMenuSelectorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 transition-colors font-bold">✕</button>
+                                        <input type="search" aria-label="ค้นหาชื่อเครื่องดื่ม" value={drinkSearch} onChange={e => setDrinkSearch(e.target.value)} className="premium-field mt-4" placeholder="🔎 ค้นหาเครื่องดื่ม เช่น ลาเต้, โกโก้..." />
+                                        <div className="flex gap-2 mt-3 overflow-x-auto pb-1 hide-scroll" aria-label="หมวดเครื่องดื่ม">
+                                            {['ทั้งหมด', ...Object.keys(menuData.drinks)].map(category => (
+                                                <button type="button" key={category} onClick={() => setActiveDrinkCategory(category)} className={`premium-chip ${activeDrinkCategory === category ? 'premium-chip-active' : ''}`}>{category}</button>
+                                            ))}
+                                        </div>
                                     </div>
-                                    
-                                    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 space-y-8 pb-32 md:pb-6 relative">
-                                        {/* อัลบั้มรูปร้าน */}
-                                        <div className="mb-6 relative">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sticky top-0 bg-slate-50/90 backdrop-blur z-20 py-3 border-b border-slate-200/60">
-                                                <div>
-                                                    <h4 className="font-black text-slate-800 text-base">📸 ภาพเมนูของร้าน (ประกอบการเลือกเครื่องดื่ม)</h4>
-                                                    <p className="text-[12px] text-slate-500 font-medium mt-1">สามารถใช้นิ้วปัด หรือคลิกลูกศร ซ้าย-ขวา เพื่อดูภาพเพิ่มเติมได้ครับ</p>
-                                                </div>
-                                                <div className="hidden md:flex items-center gap-2 mt-2 sm:mt-0">
-                                                    <button onClick={slideLeft} className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">←</button>
-                                                    <button onClick={slideRight} className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center transition-colors shadow-sm">→</button>
-                                                </div>
-                                            </div>
-                                            <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scroll scroll-smooth">
+                                    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 bg-[#f8faf7]">
+                                        <div className="mb-5">
+                                            <button type="button" className="text-xs font-black text-emerald-700 flex items-center gap-2 hover:underline" onClick={() => setShowDrinkPhotos(!showDrinkPhotos)} aria-expanded={showDrinkPhotos}>
+                                                📷 {showDrinkPhotos ? 'ซ่อนภาพเมนูจากร้าน' : 'ดูภาพเมนูจากร้าน'} <span>{showDrinkPhotos ? '−' : '+'}</span>
+                                            </button>
+                                            {showDrinkPhotos && <div className="mt-3 flex gap-3 overflow-x-auto hide-scroll pb-2" ref={scrollRef}>
                                                 {overviewImages.map((src, idx) => (
-                                                    <div key={idx} className="relative shrink-0 snap-center cursor-zoom-in group" onClick={() => setEnlargedImage(src)}>
-                                                        <img src={src} className="h-56 md:h-64 w-auto object-cover rounded-2xl shadow-md border border-slate-200 group-hover:opacity-90 transition-opacity" alt={`เมนู ${idx+1}`} />
-                                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
-                                                            <span className="bg-white/95 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
-                                                                <span className="text-sm">🔍</span> แตะเพื่อขยาย
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                    <button type="button" key={idx} onClick={() => setEnlargedImage(src)} className="shrink-0 rounded-xl overflow-hidden border border-emerald-100 bg-white" aria-label={`ดูรูปเมนูที่ ${idx+1} ขนาดใหญ่`}>
+                                                        <img src={src} alt={`ภาพเมนูร้าน ณ คุณ ${idx+1}`} loading="lazy" className="h-40 w-auto max-w-[260px] object-contain" />
+                                                    </button>
                                                 ))}
-                                            </div>
+                                            </div>}
                                         </div>
-
-                                        <hr className="border-slate-200" />
-
-                                        {/* หมวดเครื่องดื่ม */}
-                                        {Object.entries(menuData.drinks).map(([categoryName, items], catIdx) => (
-                                            <div key={catIdx}>
-                                                <div className="flex items-center gap-2 mb-3 mt-4 border-t border-slate-100 pt-4">
-                                                    <h4 className="font-black text-slate-800 text-base">{categoryName}</h4>
-                                                    {catIdx === 0 && <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">เลือก 1 อย่าง</span>}
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-xs font-bold text-slate-500">{visibleDrinkCount} รายการ</p>
+                                            <p className="text-xs font-extrabold text-[#166b50]">เลือกได้ 1 รายการ</p>
+                                        </div>
+                                        {Object.entries(menuData.drinks).filter(([category]) => activeDrinkCategory === 'ทั้งหมด' || activeDrinkCategory === category).map(([category, items]) => {
+                                            const filtered = items.filter(drink => drink.toLocaleLowerCase('th').includes(drinkSearch.trim().toLocaleLowerCase('th')));
+                                            if (!filtered.length) return null;
+                                            return (<section key={category} className="mb-5">
+                                                <h4 className="font-black text-sm text-[#174b38] mb-3">{category}</h4>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                                    {filtered.map(drink => (
+                                                        <button type="button" key={drink} onClick={() => setTempDrink(drink)} aria-pressed={tempDrink === drink} className={`premium-drink flex items-center justify-between gap-1 ${tempDrink === drink ? 'premium-drink-active' : ''}`}>
+                                                            <span className="leading-snug text-[13px]">{drink}</span>
+                                                            {tempDrink === drink && <span className="w-5 h-5 shrink-0 rounded-full bg-emerald-700 text-white text-xs flex items-center justify-center">✓</span>}
+                                                        </button>
+                                                    ))}
                                                 </div>
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                    {items.map((item, idx) => {
-                                                        const isSelected = tempDrink === item;
-                                                        return (
-                                                            <button key={idx} type="button" onClick={() => setTempDrink(isSelected ? '' : item)} className={`p-3 text-[13.5px] font-bold text-center rounded-xl border-2 transition-all relative flex items-center justify-center min-h-[50px] ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-md scale-[1.02]' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/30'}`}>
-                                                                {isSelected && <span className="absolute -top-2 -right-2 bg-emerald-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] z-10 shadow-sm border-2 border-white">✓</span>}
-                                                                <span className="leading-tight">{item}</span>
-                                                            </button>
-                                                        )
-                                                    })}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            </section>);
+                                        })}
+                                        {visibleDrinkCount === 0 && <div className="text-center py-10 text-slate-500 text-sm">ไม่พบเครื่องดื่มที่ค้นหา ลองคำอื่นหรือพิมพ์ชื่อเองในหน้าลงทะเบียนได้ครับ</div>}
                                     </div>
-                                    
-                                    {/* แถบสรุปผลและยืนยัน */}
-                                    <div className="p-4 bg-white border-t shadow-[0_-10px_20px_rgba(0,0,0,0.05)] md:rounded-b-3xl shrink-0 z-20">
-                                        <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-1.5">
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="font-bold text-slate-500">เครื่องดื่มที่เลือก:</span>
-                                                <span className="font-black text-emerald-600 truncate max-w-[150px] text-right">{tempDrink || '- ยังไม่เลือก -'}</span>
-                                            </div>
-                                            {/* โชว์สเตตัสให้ลูกค้าดูว่าเลือกครบหรือยัง */}
-                                            {!tempDrink ? (
-                                                <div className="text-[10px] text-red-500 font-bold text-center mt-1 animate-pulse">⚠️ กรุณาเลือกเครื่องดื่ม 1 อย่างครับ</div>
-                                            ) : (
-                                                <div className="text-[10px] text-emerald-500 font-bold text-center mt-1">✅ เลือกเครื่องดื่มเรียบร้อย สามารถกดยืนยันได้เลยครับ</div>
-                                            )}
+                                    <div className="shrink-0 bg-white border-t border-emerald-100 p-4 sm:p-5 shadow-[0_-8px_25px_rgba(0,0,0,.04)]">
+                                        <div className="flex items-center justify-between gap-3 mb-3 text-sm">
+                                            <span className="font-bold text-slate-500">เครื่องดื่มที่เลือก</span>
+                                            <span className="font-black text-emerald-800 text-right truncate max-w-[65%]">{tempDrink || 'ยังไม่ได้เลือก'}</span>
                                         </div>
-                                        <button 
-                                            type="button" 
-                                            onClick={confirmMenuSelection} 
-                                            className={`w-full py-4 rounded-xl font-bold transition-colors shadow-lg active:scale-95 text-white ${tempDrink ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-300'}`}
-                                        >
-                                            ยืนยันเครื่องดื่ม
-                                        </button>
+                                        <button type="button" disabled={!tempDrink} onClick={confirmMenuSelection} className="premium-button w-full rounded-xl py-3.5 font-black disabled:cursor-not-allowed">{tempDrink ? 'ยืนยันเครื่องดื่มนี้ ✓' : 'เลือกเครื่องดื่มก่อนยืนยัน'}</button>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        <div className="max-w-md w-full bg-white rounded-[32px] shadow-2xl overflow-hidden p-6 md:p-8 animate-in slide-in-from-right-4 duration-300 relative z-10">
-                            <button onClick={() => setView('landing')} className="text-sm font-bold text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 transition-colors">← ย้อนกลับ</button>
-                            <div className="text-center mb-8">
-                                <img src={COVER_IMAGE} alt="ปกสัมมนาเลือกซ่อมรถอย่างไร" className="w-full aspect-video object-contain rounded-xl mb-5 border border-slate-100" />
-                                <h2 className="text-2xl font-black text-slate-800 mb-1">ลงทะเบียนสัมมนา</h2>
-                                <p className="text-emerald-700 font-bold text-[15px]">"เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม"</p>
-                                <p className="text-slate-500 text-xs mt-1 font-medium">วันพุธที่ 11 พฤศจิกายน 2569 • 13:00–15:30 น.</p>
-                                <p className="text-[11px] text-slate-400 mt-4 font-bold tracking-widest border-t pt-4 border-slate-50 uppercase">จัดทำโดย บริษัท พีพีพี อินชัวรันส์ โบรคเกอร์ จำกัด</p>
-                            </div>
-                            
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <input type="text" placeholder="ชื่อ - นามสกุล *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                                <input type="text" placeholder="ชื่อเล่น (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} />
-                                <input type="text" placeholder="บริษัท / หน่วยงาน *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                                <input type="email" placeholder="อีเมล (ถ้ามี)" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                <input type="tel" placeholder="เบอร์โทรศัพท์ *" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-700" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                                
-                                <div className="bg-slate-50 p-1.5 rounded-2xl flex border border-slate-200 mt-4">
-                                    <button type="button" onClick={() => setFormData({...formData, attendance: 'เข้าร่วม'})} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'เข้าร่วม' ? 'bg-white text-red-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>เข้าร่วม</button>
-                                    <button type="button" onClick={() => { setFormData({...formData, attendance: 'ไม่เข้าร่วม', foodMenu: '', acceptedTerms: false}); setErrorMsg(''); }} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${formData.attendance === 'ไม่เข้าร่วม' ? 'bg-white text-slate-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>ไม่เข้าร่วม</button>
+                        <main className="relative z-10 max-w-[660px] mx-auto premium-enter">
+                            <button type="button" onClick={() => {setErrorMsg('');setView('landing');window.scrollTo({top:0,behavior:'smooth'});}} className="mb-4 inline-flex items-center gap-2 text-sm font-black text-[#3b6552] hover:text-[#174b38]">← กลับไปดูรายละเอียดงาน</button>
+                            <div className="premium-card overflow-hidden rounded-[28px] sm:rounded-[33px]">
+                                <div className="bg-[#f8faf5] relative border-b border-emerald-100">
+                                    <img src={COVER_IMAGE} alt="ปกงานสัมมนา 11 พฤศจิกายน 2569" className="w-full max-h-[280px] object-contain" onError={e => {e.currentTarget.style.display='none';}} />
                                 </div>
+                                <div className="px-5 py-7 sm:px-9 sm:py-9">
+                                    <span className="premium-tag mb-3">✦ PPP INSURANCE BROKER</span>
+                                    <h1 className="premium-title text-[25px] sm:text-[30px] font-black text-[#174b38] mt-3">ลงทะเบียนเข้าร่วมสัมมนา</h1>
+                                    <p className="text-sm text-slate-600 mt-2 leading-relaxed">เลือกซ่อมรถอย่างไร ให้เข้าใจทั้งอู่ ทั้งอะไหล่ และคุณภาพงานซ่อม</p>
+                                    <div className="mt-4 flex gap-x-4 gap-y-2 flex-wrap text-xs font-bold text-[#527361]"><span>🗓 11 พ.ย. 2569</span><span>⏰ 13:00–15:30 น.</span><span>📍 ร้าน ณ คุณ</span></div>
 
-                                {ENABLE_FOOD_SELECTION && formData.attendance === 'เข้าร่วม' && (
-                                    <div className="space-y-4 animate-in fade-in pt-4 border-t border-slate-100 mt-4">
-                                        <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                                            <label className="block text-sm font-bold text-slate-800 mb-3">🥤 เลือกเครื่องดื่มที่ต้องการ (1 อย่าง) <span className="text-red-500">*</span></label>
-                                            <button type="button" onClick={() => { setTempDrink(formData.foodMenu || ''); setIsMenuSelectorOpen(true); }} className="w-full py-4 mb-3 bg-gradient-to-r from-orange-400 to-amber-500 text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-orange-500 hover:to-amber-600 transition-all flex items-center justify-center gap-2">
-                                                <span className="text-lg">👆</span> คลิกเพื่อเลือกเครื่องดื่ม
-                                            </button>
-                                            <input type="text" placeholder="หรือพิมพ์ชื่อเครื่องดื่มเองที่นี่..." className="w-full px-5 py-3.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-orange-400 outline-none transition-all font-bold text-slate-800 text-sm" value={formData.foodMenu} onChange={e => setFormData({...formData, foodMenu: e.target.value})} />
-                                            {formData.foodMenu && <p className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center gap-1">✅ รับทราบเครื่องดื่มที่เลือกแล้ว</p>}
+                                    <div className="premium-soft-panel p-4 sm:p-5 mt-6 mb-7">
+                                        <div className="flex justify-between items-center gap-3 mb-3">
+                                            <div><p className="text-sm font-black text-[#174b38]">ความคืบหน้าการลงทะเบียน</p><p className="text-[11px] text-slate-500">ข้อมูลที่จำเป็น {formDone} จาก {formTotal} รายการ</p></div>
+                                            <span className="text-lg font-black text-emerald-700">{formPercent}%</span>
                                         </div>
-
-                                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-4 -mt-4 z-0"></div>
-                                            <p className="text-[13px] font-bold text-red-600 mb-1 relative z-10 flex items-center gap-1"><span className="text-base">📌</span> หมายเหตุสำคัญ</p>
-                                            <p className="text-[12px] text-slate-600 leading-relaxed mb-3 relative z-10">หากลงทะเบียนยืนยันเข้าร่วมแล้ว ไม่มา ขอสงวนสิทธิ์เก็บเงิน 300 บาท <br/>(ค่าเตรียมเครื่องดื่มล่วงหน้า)</p>
-                                            <label className="flex items-start gap-3 cursor-pointer group relative z-10">
-                                                <div className="relative flex items-center justify-center mt-0.5">
-                                                    <input type="checkbox" className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-red-600 checked:border-red-600 transition-colors cursor-pointer" checked={formData.acceptedTerms} onChange={(e) => setFormData({...formData, acceptedTerms: e.target.checked})} />
-                                                    {formData.acceptedTerms && <span className="absolute text-white pointer-events-none text-xs">✓</span>}
-                                                </div>
-                                                <span className="text-[13px] font-bold text-slate-800 group-hover:text-red-600 transition-colors">รับทราบและยอมรับเงื่อนไข</span>
-                                            </label>
-                                        </div>
+                                        <div className="premium-progress" role="progressbar" aria-valuenow={formPercent} aria-valuemin="0" aria-valuemax="100" aria-label="ความคืบหน้าการกรอกข้อมูล"><div className="premium-progress-fill" style={{width: `${formPercent}%`}}></div></div>
                                     </div>
-                                )}
-                                <button type="submit" disabled={loading} className="w-full py-4.5 bg-[#dc2626] text-white rounded-[20px] font-black text-[16px] shadow-xl shadow-red-600/20 hover:bg-red-700 hover:-translate-y-0.5 transition-all mt-6 flex justify-center items-center h-14">
-                                    {loading ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div> : "ยืนยันการลงทะเบียน"}
-                                </button>
-                            </form>
-                        </div>
+
+                                    <form onSubmit={handleSubmit} className="space-y-5">
+                                        <div className="flex items-center gap-3 mb-1"><span className="bg-emerald-800 rounded-full text-white font-black w-8 h-8 flex items-center justify-center text-sm">1</span><h2 className="font-black text-[#174b38]">ข้อมูลผู้ลงทะเบียน</h2></div>
+                                        <div className="grid sm:grid-cols-2 gap-4">
+                                            <div className="sm:col-span-2"><label className="premium-field-label" htmlFor="reg-fullname">ชื่อ - นามสกุล <span className="text-red-500">*</span></label><input id="reg-fullname" autoComplete="name" type="text" className={`premium-field ${formData.name.trim() ? 'premium-field-valid' : ''}`} placeholder="ระบุชื่อ - นามสกุล" value={formData.name} onChange={e => setFormData({...formData, name:e.target.value})}/></div>
+                                            <div><label className="premium-field-label" htmlFor="reg-nickname">ชื่อเล่น <span className="text-slate-400 font-normal">(ถ้ามี)</span></label><input id="reg-nickname" type="text" className="premium-field" placeholder="ชื่อเล่น" value={formData.nickname} onChange={e => setFormData({...formData,nickname:e.target.value})}/></div>
+                                            <div><label className="premium-field-label" htmlFor="reg-phone">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label><input id="reg-phone" autoComplete="tel" inputMode="tel" type="tel" className={`premium-field ${phoneValid ? 'premium-field-valid' : ''}`} placeholder="08xxxxxxxx" value={formData.phone} onChange={e => setFormData({...formData,phone:e.target.value})}/></div>
+                                            <div className="sm:col-span-2"><label className="premium-field-label" htmlFor="reg-company">บริษัท / หน่วยงาน <span className="text-red-500">*</span></label><input id="reg-company" autoComplete="organization" type="text" className={`premium-field ${formData.company.trim() ? 'premium-field-valid' : ''}`} placeholder="ชื่อบริษัทหรือหน่วยงาน" value={formData.company} onChange={e => setFormData({...formData,company:e.target.value})}/></div>
+                                            <div className="sm:col-span-2"><label className="premium-field-label" htmlFor="reg-email">อีเมล <span className="text-slate-400 font-normal">(ถ้ามี)</span></label><input id="reg-email" type="email" autoComplete="email" className="premium-field" placeholder="example@email.com" value={formData.email} onChange={e => setFormData({...formData,email:e.target.value})}/></div>
+                                        </div>
+
+                                        <div className="border-t border-emerald-100 pt-5">
+                                            <div className="flex items-center gap-3 mb-4"><span className="bg-emerald-800 rounded-full text-white font-black w-8 h-8 flex items-center justify-center text-sm">2</span><h2 className="font-black text-[#174b38]">ยืนยันการเข้าร่วม</h2></div>
+                                            <div className="premium-switch" role="group" aria-label="สถานะเข้าร่วมงาน">
+                                                <button type="button" aria-pressed={formData.attendance === 'เข้าร่วม'} className={formData.attendance === 'เข้าร่วม' ? 'premium-switch-on' : 'premium-switch-off'} onClick={() => setFormData({...formData,attendance:'เข้าร่วม'})}>✓ เข้าร่วมงาน</button>
+                                                <button type="button" aria-pressed={formData.attendance === 'ไม่เข้าร่วม'} className={formData.attendance === 'ไม่เข้าร่วม' ? 'premium-switch-on' : 'premium-switch-off'} onClick={() => {setFormData({...formData,attendance:'ไม่เข้าร่วม',foodMenu:'',acceptedTerms:false});setErrorMsg('');}}>ไม่เข้าร่วม</button>
+                                            </div>
+                                        </div>
+
+                                        {ENABLE_FOOD_SELECTION && formData.attendance === 'เข้าร่วม' && (
+                                            <div className="premium-enter space-y-4">
+                                                <div className="premium-soft-panel p-4 sm:p-5">
+                                                    <div className="flex gap-3 items-start mb-4"><span className="w-11 h-11 bg-emerald-100 rounded-2xl text-xl flex items-center justify-center shrink-0">🥤</span><div><h3 className="font-black text-[#174b38]">เลือกเครื่องดื่ม 1 อย่าง <span className="text-red-500">*</span></h3><p className="text-xs text-slate-500 mt-1">เลือกจากเมนูร้าน ณ คุณ หรือพิมพ์ชื่อเอง</p></div></div>
+                                                    <button type="button" className="w-full rounded-xl py-3.5 font-black bg-[#e1f1e4] text-emerald-900 border border-[#b8d8c2] hover:bg-[#d0e8d6] transition-colors" onClick={() => {setTempDrink(formData.foodMenu || '');setDrinkSearch('');setActiveDrinkCategory('ทั้งหมด');setIsMenuSelectorOpen(true);}}>
+                                                        {formData.foodMenu ? 'เปลี่ยนเครื่องดื่มที่เลือก ↗' : 'ดูเมนูและเลือกเครื่องดื่ม ↗'}
+                                                    </button>
+                                                    <div className="relative my-3 text-center text-xs text-slate-400">หรือพิมพ์ชื่อเอง</div>
+                                                    <input type="text" aria-label="พิมพ์ชื่อเครื่องดื่มเอง" placeholder="พิมพ์ชื่อเครื่องดื่มที่ต้องการ" className="premium-field bg-white" value={formData.foodMenu} onChange={e => setFormData({...formData,foodMenu:e.target.value})}/>
+                                                    {formData.foodMenu.trim() && <p className="text-xs text-emerald-700 font-bold mt-3 flex items-center gap-2">✓ เลือกแล้ว: {formData.foodMenu}</p>}
+                                                </div>
+                                                <div className="rounded-2xl p-4 sm:p-5 bg-[#fffaf0] border border-[#f0e2bd]">
+                                                    <p className="font-black text-[#89672c] text-sm mb-2">📌 เงื่อนไขการลงทะเบียน</p>
+                                                    <p className="text-[13px] leading-relaxed text-slate-600 mb-3">หากลงทะเบียนยืนยันเข้าร่วมแล้วไม่มา ขอสงวนสิทธิ์เก็บเงิน <strong className="text-[#7c5c22]">300 บาท</strong> (ค่าเตรียมเครื่องดื่มล่วงหน้า)</p>
+                                                    <label className="flex items-center gap-3 text-[13px] font-black text-[#284a3a] cursor-pointer">
+                                                        <input type="checkbox" checked={formData.acceptedTerms} onChange={e => setFormData({...formData, acceptedTerms:e.target.checked})} className="w-5 h-5 shrink-0 accent-[#147253] cursor-pointer"/>
+                                                        รับทราบและยอมรับเงื่อนไข
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {formData.attendance === 'ไม่เข้าร่วม' && <div className="rounded-2xl p-4 bg-slate-50 border border-slate-200 text-sm text-slate-600 premium-enter">ระบบจะบันทึกสถานะว่า <strong>ไม่เข้าร่วม</strong> โดยไม่ต้องเลือกเครื่องดื่มหรือยอมรับเงื่อนไขอาหาร</div>}
+                                        <button type="submit" disabled={loading} className="premium-button w-full rounded-2xl py-4 text-base font-black flex justify-center items-center gap-2">
+                                            {loading ? 'กำลังบันทึกข้อมูล...' : '✓ ยืนยันการลงทะเบียน'}
+                                        </button>
+                                        <p className="text-[11px] text-center text-slate-400">ข้อมูลจะถูกบันทึกหลังจากกดยืนยันสำเร็จเท่านั้น</p>
+                                    </form>
+                                </div>
+                            </div>
+                            <p className="text-center text-xs text-slate-400 mt-6 mb-2">PPP Insurance Broker • 11 November 2026</p>
+                        </main>
                     </div>
                 );
             }
 
             if (view === 'success') {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4">
-                        <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-2xl text-center animate-in zoom-in duration-300">
-                            <div className="text-6xl mb-6">✅</div>
-                            <h2 className="text-2xl font-black mb-2 text-slate-800">บันทึกเรียบร้อย</h2>
-                            <p className="text-slate-500 mb-8 font-medium">ระบบได้รับข้อมูลการลงทะเบียนของคุณแล้ว ขอบคุณครับ</p>
-                            <button onClick={() => setView('landing')} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">กลับหน้าแรก</button>
+                    <div className="premium-shell min-h-screen flex items-center justify-center px-4 py-8">
+                        <div className="premium-card rounded-[30px] p-7 sm:p-10 w-full max-w-[490px] text-center relative overflow-hidden premium-enter">
+                            <div className="flex justify-center mb-6"><div className="premium-success-check" aria-hidden="true">✓</div></div>
+                            <span className="premium-tag mb-4">PPP INSURANCE BROKER</span>
+                            <h1 className="text-[27px] font-black text-[#174b38] mt-4">บันทึกข้อมูลสำเร็จ</h1>
+                            <p className="text-slate-600 text-sm leading-relaxed mt-3">
+                                {registrationReceipt?.attendance === 'ไม่เข้าร่วม' ? 'ระบบบันทึกสถานะไม่เข้าร่วมของคุณแล้ว ขอบคุณที่แจ้งให้ทราบ' : 'ขอบคุณสำหรับการลงทะเบียน แล้วพบกันในวันสัมมนาครับ'}
+                            </p>
+                            <div className="premium-soft-panel mt-6 p-5 text-left space-y-3 text-sm">
+                                <div className="flex justify-between gap-3"><span className="text-slate-500">ชื่อ</span><strong className="text-emerald-900 text-right">{registrationReceipt?.name || '-'}</strong></div>
+                                <div className="flex justify-between gap-3"><span className="text-slate-500">สถานะ</span><strong className="text-emerald-900 text-right">{registrationReceipt?.attendance || '-'}</strong></div>
+                                {registrationReceipt?.attendance === 'เข้าร่วม' && <div className="flex justify-between gap-3"><span className="text-slate-500">เครื่องดื่ม</span><strong className="text-emerald-900 text-right">{registrationReceipt?.drink || '-'}</strong></div>}
+                                <div className="border-t border-emerald-100 pt-3 flex justify-between gap-3"><span className="text-slate-500">วันจัดงาน</span><strong className="text-emerald-900 text-right">11 พฤศจิกายน 2569</strong></div>
+                                <div className="flex justify-between gap-3"><span className="text-slate-500">สถานที่</span><strong className="text-emerald-900">ร้าน ณ คุณ</strong></div>
+                            </div>
+                            <button type="button" onClick={() => {setRegistrationReceipt(null);setView('landing');window.scrollTo({top:0,behavior:'smooth'});}} className="premium-button w-full rounded-2xl py-4 font-black mt-7">กลับหน้าหลัก →</button>
+                            <p className="text-[11px] text-slate-400 mt-4">ข้อมูลถูกบันทึกในระบบแล้ว</p>
                         </div>
                     </div>
                 );
@@ -685,13 +747,13 @@
                     <div className="min-h-screen bg-slate-50 font-sans pb-12">
                         <nav className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-0 z-50 flex justify-between items-center shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
+                                <div className="w-10 h-10 bg-emerald-700 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-md">P</div>
                                 <div>
                                     <div className="font-black text-slate-800 leading-tight">PPP Admin</div>
                                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Management System</div>
                                 </div>
                             </div>
-                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
+                            <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-emerald-700 transition-colors bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-lg border border-slate-200 hover:border-red-200">
                                 ออกจากระบบ
                             </button>
                         </nav>
@@ -713,14 +775,14 @@
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-emerald-600 hover:shadow-md transition-shadow">
                                     <div>
                                         <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">ลงทะเบียนทั้งหมด</p>
                                         <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-slate-800">{totalReg}</span><span className="text-sm font-bold text-slate-400">ท่าน</span></div>
                                     </div>
                                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-2xl">👥</div>
                                 </div>
-                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-emerald-500 hover:shadow-md transition-shadow">
+                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between border-l-4 border-l-emerald-600 hover:shadow-md transition-shadow">
                                     <div>
                                         <p className="text-xs font-extrabold text-emerald-500 uppercase tracking-widest mb-1">ยืนยันเข้าร่วม</p>
                                         <div className="flex items-baseline gap-1"><span className="text-4xl font-black text-emerald-600">{attending}</span><span className="text-sm font-bold text-emerald-400">ท่าน</span></div>
@@ -756,7 +818,7 @@
                                     <table className="w-full text-left whitespace-nowrap">
                                         <thead className="bg-white border-b border-slate-200">
                                             <tr>
-                                                <th className="py-4 pl-6 pr-3 w-12"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer" checked={filteredRecords.length > 0 && selectedIds.length === filteredRecords.length} onChange={handleSelectAll} /></th>
+                                                <th className="py-4 pl-6 pr-3 w-12"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-emerald-700 focus:ring-red-500 cursor-pointer" checked={filteredRecords.length > 0 && selectedIds.length === filteredRecords.length} onChange={handleSelectAll} /></th>
                                                 <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลผู้ลงทะเบียน</th>
                                                 <th className="py-4 px-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">ข้อมูลการติดต่อ</th>
                                                 <th className="py-4 px-4 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">สถานะ</th>
@@ -766,8 +828,8 @@
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredRecords.length > 0 ? filteredRecords.map(r => (
-                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-red-50/40' : 'hover:bg-slate-50/60'} transition-colors group`}>
-                                                    <td className="py-4 pl-6 pr-3 align-top pt-5"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
+                                                <tr key={r.id} className={`${selectedIds.includes(r.id) ? 'bg-emerald-50/40' : 'hover:bg-slate-50/60'} transition-colors group`}>
+                                                    <td className="py-4 pl-6 pr-3 align-top pt-5"><input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-emerald-700 focus:ring-red-500 cursor-pointer" checked={selectedIds.includes(r.id)} onChange={() => handleSelectRow(r.id)} /></td>
                                                     <td className="py-4 px-4">
                                                         <div className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                                                             {r.name} 
